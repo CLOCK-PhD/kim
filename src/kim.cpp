@@ -1,7 +1,7 @@
 #include <iostream>
+#include <unordered_map>
 #include "optionparser.h"
 #include "file_reader.h"
-#include "variant_kmer_association.h"
 #include "variant_kmer_index.h"
 #include "variant_identification.h"
 
@@ -109,16 +109,16 @@ int main(int argc, char **argv) {
   cout << "Index directory: '" << index_directory << "'" << endl;
   VariantKmerIndex kim_index(index_directory);
   size_t k = kim_index.getKmerLength();
-  map<VariantIdentification::key_type, VariantIdentification> variants_map;
+  unordered_map<VariantKmerIndex::VariantID_type, VariantIdentification> variants_map;
 
   // For each input file
   for (int i = 0; i < parse.nonOptionsCount(); ++i) { 
     cout << "Processing file '" << parse.nonOption(i) << "'" << endl;
     FileReader reader(parse.nonOption(i), k);
     for (std::string kmer = reader.getNextKmer(); !kmer.empty(); kmer = reader.getNextKmer()) {
-      list<VariantIdentification::key_type> variant_ids = kim_index.search(kmer);
-      for (list<VariantIdentification::key_type>::const_iterator it = variant_ids.cbegin(); it != variant_ids.cend(); ++it) {
-        VariantIdentification &v_ident = variants_map[*it];
+      list<VariantKmerIndex::VariantKmerAssociation> variant_ids = kim_index.search(kmer);
+      for (list<VariantKmerIndex::VariantKmerAssociation>::const_iterator it = variant_ids.cbegin(); it != variant_ids.cend(); ++it) {
+        VariantIdentification &v_ident = variants_map[it->rs_id];
         v_ident.add(reader.getCurrentRead(), reader.getCurrentKmerRelativePosition());
       }
     }
@@ -126,13 +126,13 @@ int main(int argc, char **argv) {
 
   cout << "---" << endl
        << "SNPs:" << endl;
-  for (map<VariantIdentification::key_type, VariantIdentification>::const_iterator it = variants_map.cbegin();
+  for (unordered_map<VariantKmerIndex::VariantID_type, VariantIdentification>::const_iterator it = variants_map.cbegin();
        it != variants_map.cend();
        ++it) {
     cout << "  - id: " << it->first << endl
          << "    reads:" << endl;
-    list<VariantIdentification::read_type> reads = it->second.getReads();
-    for (list<VariantIdentification::read_type>::const_iterator read_it = reads.begin();
+    list<VariantIdentification::ReadID_type> reads = it->second.getReads();
+    for (list<VariantIdentification::ReadID_type>::const_iterator read_it = reads.begin();
          read_it != reads.end();
          ++read_it) {
       cout << "      - " << *read_it << ":" << it->second.getReadScore(*read_it) << endl;

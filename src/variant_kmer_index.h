@@ -3,19 +3,46 @@
 
 #include <cstdlib>
 #include <list>
-#include <map>
+#include <vector>
+#include <unordered_map>
 #include <string>
+
 #include <variant_identification.h>
-#include <variant_kmer_association.h>
 
 
 class VariantKmerIndex {
 
+
+  public:
+
+    /**
+     * The type of the variant identifier.
+     */
+    typedef std::string VariantID_type;
+
+    /**
+     * The association between some given k-mer and some variant
+     */
+    struct VariantKmerAssociation {
+      /**
+       * The variant ID.
+       */
+      VariantID_type rs_id;
+      /**
+       * The rank of the k-mer in the variant k-mer markers.
+       */
+      size_t kmer_rank;
+      /**
+       * True if the k-mer appears natively in the genome.
+       */
+      bool in_genome;
+    };
+    
   private:
   
     size_t k, k1, k2;
     
-    std::map<size_t, VariantKmerAssociation> index;
+    std::vector<std::unordered_multimap<VariantID_type, VariantKmerAssociation> > index;
 
   public:
 
@@ -40,7 +67,7 @@ class VariantKmerIndex {
      *
      * \return Returns the list of variant identifications involving the given k-mer.
      */
-    std::list<VariantIdentification::key_type> search(const std::string &kmer) const;    
+    std::list<VariantKmerAssociation> search(const std::string &kmer) const;
 
 };
 

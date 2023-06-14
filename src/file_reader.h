@@ -3,12 +3,14 @@
 
 #include <cstdlib>
 #include <string>
+#include <fstream>
 
-class FileReader {
+class FileReader: public std::ifstream {
 
   private:
   
     const char *filename;
+    std::ifstream ifs;
     size_t line, col;
     size_t k;
     std::string read_id;
@@ -20,11 +22,18 @@ class FileReader {
     /**
      * Creates a (fastq) file reader.
      *
+     * The file is open as an input file stream.
+     *
      * \param filename The name of the fastq file to read.
      *
      * \param k The length of the k-mers to extract.
      */
     FileReader(const char *filename, size_t k);
+    
+    /**
+     * Closes the file stream before destruction.
+     */
+    ~FileReader();
 
     /**
      * Get the next k-mer from this file reader object.

@@ -3,7 +3,7 @@
 
 
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <list>
 
 class VariantIdentification {
@@ -11,18 +11,13 @@ class VariantIdentification {
   public:
 
     /**
-     * The type of the variant identifier.
-     */
-    typedef std::string key_type;
-
-    /**
      * The type of the read identifier.
      */
-    typedef std::string read_type;
+    typedef std::string ReadID_type;
 
   private:
 
-    std::map<read_type, std::list<size_t> > informations;
+    std::unordered_multimap<ReadID_type, size_t> informations;
 
   public:
 
@@ -42,25 +37,25 @@ class VariantIdentification {
      *
      * \return Return the updated variant information.
      */
-    VariantIdentification &add(read_type read_id, size_t pos);
+    VariantIdentification &add(ReadID_type read_id, size_t pos);
 
     /**
      * Get the list of read IDs.
      *
      * \return Return the list of the read IDs.
      */
-    std::list<read_type> getReads() const;
+    std::list<ReadID_type> getReads() const;
 
     /**
      * Get the score associated to the given read for the variant detection.
      *
      * TODO: explain how the score is computed and whqat it means.
      *
-     * \param ID The read ID.
+     * \param read_id The read ID.
      *
      * \return Returns the computed score value. 
      */
-    double getReadScore(read_type ID) const;
+    double getReadScore(ReadID_type read_id) const;
 
 };
 

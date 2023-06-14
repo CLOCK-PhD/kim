@@ -9,6 +9,7 @@ doc/docs
 doc/doxygen.cfg
 
 src/.deps
+src/kim
 
 Makefile
 *~
