@@ -1,4 +1,30 @@
-2023-06-14  Remy Costa  <remy.costa@igh.cnrs.fr>
+2023-06-14  Ositofeliz <remy.costa@live.fr>
 
-	* kim: initial version.
+	* .gitignore, src/Makefile.am, src/Makefile.in,
+	src/file_reader.cpp, src/file_reader.h, src/kim.cpp,
+	src/variant_identification.cpp, src/variant_identification.h,
+	src/variant_kmer_association.h, src/variant_kmer_index.cpp,
+	src/variant_kmer_index.h: Make a first attempt for KIM.
+
+2023-06-14  Ositofeliz <remy.costa@live.fr>
+
+	* .gitignore, src/Makefile.am, src/Makefile.in, src/file_reader.h,
+	src/kim.cpp, src/optionparser.h, src/variant_identification.h,
+	src/variant_kmer_association.h, src/variant_kmer_index.h: Add header
+	files and the main kim skeletton.
+
+2023-06-14  Ositofeliz <remy.costa@live.fr>
+
+	* .gitignore, AUTHORS, ChangeLog, LICENSE-CeCILL-en.md,
+	LICENSE-CeCILL-fr.md, LICENSE.md, Makefile.am, Makefile.in, NEWS,
+	README.md, aclocal.m4, config/compile, config/config.guess,
+	config/config.h.in, config/config.sub, config/depcomp,
+	config/install-sh, config/m4/ax_compare_version.m4,
+	config/m4/ax_prog_doxygen.m4, config/missing, configure,
+	configure.ac, doc/Makefile.am, doc/Makefile.in, doc/doxygen.cfg.in: 
+	Adding autotools.
+
+2023-06-14  Rémy Costa <remy.costa.bioinfo@gmail.com>
+
+	* Initial commit
 
