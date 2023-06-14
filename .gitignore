@@ -1,10 +1,16 @@
-*~
-autom4te.cache
+autom4te.cache/
+
 config.log
 config.status
 config/config.h
 config/stamp-h1
+
 doc/docs
 doc/doxygen.cfg
 
+src/.deps
+
 Makefile
+*~
+*.o
+
