@@ -94,6 +94,9 @@
 #define __KIM_CONFIG_H__
 
 
+/* Starts the kim namespace. */
+#undef BEGIN_KIM_NAMESPACE
+
 /* Define to 1 if the `closedir' function returns void instead of `int'. */
 #undef CLOSEDIR_VOID
 
@@ -105,15 +108,16 @@
 /* Define to 1 if using `alloca.c'. */
 #undef C_ALLOCA
 
+/* Ends the kim namespace. */
+#undef END_KIM_NAMESPACE
+
 /* Define to 1 if you have `alloca', as a function or macro. */
 #undef HAVE_ALLOCA
 
-/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
-   */
+/* Define to 1 if you have the <alloca.h> header file. */
 #undef HAVE_ALLOCA_H
 
-/* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
-   */
+/* Define to 1 if you have the <dirent.h> header file. */
 #undef HAVE_DIRENT_H
 
 /* Define to 1 if you have the <fcntl.h> header file. */
@@ -131,7 +135,7 @@
 /* Define to 1 if you have the `mkfifo' function. */
 #undef HAVE_MKFIFO
 
-/* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
+/* Define to 1 if you have the <ndir.h> header file. */
 #undef HAVE_NDIR_H
 
 /* Define to 1 if you have the <stdint.h> header file. */
@@ -160,8 +164,7 @@
 /* Define to 1 if you have the <sys/mkdev.h> header file. */
 #undef HAVE_SYS_MKDEV_H
 
-/* Define to 1 if you have the <sys/ndir.h> header file, and it defines `DIR'.
-   */
+/* Define to 1 if you have the <sys/ndir.h> header file. */
 #undef HAVE_SYS_NDIR_H
 
 /* Define to 1 if you have the <sys/param.h> header file. */
@@ -198,6 +201,9 @@
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
+
+/* Description of this package. */
+#undef PACKAGE_DESCRIPTION
 
 /* Define to the full name of this package. */
 #undef PACKAGE_NAME

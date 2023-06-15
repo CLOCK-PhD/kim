@@ -1,29 +1,74 @@
+2023-06-15  DoccY <alban.mancheron@lirmm.fr>
+
+	* INSTALL, Makefile.am, Makefile.in, TODO, aclocal.m4,
+	config/config.h.in, config/git-release, config/git-version-gen,
+	config/version, config/version.configure.ac, configure,
+	configure.ac, doc/Makefile.in, doc/doxygen.cfg.in,
+	resources/Makefile.am, resources/Makefile.in,
+	resources/kim.bash_completion, src/Makefile.am, src/Makefile.in,
+	src/file_reader.cpp, src/file_reader.h, src/kim.cpp,
+	src/variant_identification.cpp, src/variant_identification.h,
+	src/variant_kmer_index.cpp, src/variant_kmer_index.h:
+	Add a 'resources' directory.
+	Update configure script in order to use the magic version generator from libGkArrays-MPI.
+	Update INSTALL instructions.
+	Add a namespace for `kim` headers.
+	Add a (not compatible) bash completion script.
+	Update documentation
+	Fix some installation issues.
+	
+	
+2023-06-15  DoccY <alban.mancheron@lirmm.fr>
+
+	* Makefile.am, Makefile.in, config/config.h.in, configure,
+	configure.ac, doc/Makefile.am, doc/Makefile.in, doc/doxygen.cfg.in,
+	src/Makefile.am, src/Makefile.in:
+	Add copyright notices and fix some mistakes.
+	
+	
+2023-06-15  DoccY <alban.mancheron@lirmm.fr>
+
+	* AUTHORS, README.md:
+	Updateing AUTHORS and README files.
+	
+	
+2023-06-15  DoccY <alban.mancheron@lirmm.fr>
+
+	* COPYING, LICENSE-CeCILL-en.md => LICENSE-en.md,
+	LICENSE-CeCILL-fr.md => LICENSE-fr.md, LICENSE.md:
+	Fix licence.
+	
+	
 2023-06-14  Ositofeliz <remy.costa@live.fr>
 
 	* .gitignore, src/Makefile.am, src/Makefile.in,
 	src/file_reader.cpp, src/file_reader.h, src/kim.cpp,
 	src/variant_identification.cpp, src/variant_identification.h,
 	src/variant_kmer_association.h, src/variant_kmer_index.cpp,
-	src/variant_kmer_index.h: Make a first attempt for KIM.
-
+	src/variant_kmer_index.h:
+	Make a first attempt for KIM.
+	
+	
 2023-06-14  Ositofeliz <remy.costa@live.fr>
 
 	* .gitignore, src/Makefile.am, src/Makefile.in, src/file_reader.h,
 	src/kim.cpp, src/optionparser.h, src/variant_identification.h,
-	src/variant_kmer_association.h, src/variant_kmer_index.h: Add header
-	files and the main kim skeletton.
-
+	src/variant_kmer_association.h, src/variant_kmer_index.h:
+	Add header files and the main kim skeletton.
+	
+	
 2023-06-14  Ositofeliz <remy.costa@live.fr>
 
-	* .gitignore, AUTHORS, ChangeLog, LICENSE-CeCILL-en.md,
-	LICENSE-CeCILL-fr.md, LICENSE.md, Makefile.am, Makefile.in, NEWS,
-	README.md, aclocal.m4, config/compile, config/config.guess,
-	config/config.h.in, config/config.sub, config/depcomp,
-	config/install-sh, config/m4/ax_compare_version.m4,
-	config/m4/ax_prog_doxygen.m4, config/missing, configure,
-	configure.ac, doc/Makefile.am, doc/Makefile.in, doc/doxygen.cfg.in: 
+	* .gitignore, AUTHORS, LICENSE-CeCILL-en.md, LICENSE-CeCILL-fr.md,
+	LICENSE.md, Makefile.am, Makefile.in, NEWS, README.md, aclocal.m4,
+	config/compile, config/config.guess, config/config.h.in,
+	config/config.sub, config/depcomp, config/install-sh,
+	config/m4/ax_compare_version.m4, config/m4/ax_prog_doxygen.m4,
+	config/missing, configure, configure.ac, doc/Makefile.am,
+	doc/Makefile.in, doc/doxygen.cfg.in:
 	Adding autotools.
-
+	
+	
 2023-06-14  Rémy Costa <remy.costa.bioinfo@gmail.com>
 
 	* Initial commit

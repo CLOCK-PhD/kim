@@ -87,22 +87,50 @@
 #                                                                             #
 ###############################################################################
 
-AM_CXXFLAGS = -I@top_srcdir@ \
-              -DCXX="\"$(CXX)\"" \
-              -DARCH="\"$(build_cpu)\"" \
-              -DOS="\"$(build_os)\"" \
-              -DPACKAGE_DATADIR="\"$(pkgdatadir)\""
+STATS_FILE = @PACKAGE@-@PACKAGE_VERSION@.stats
 
-bin_PROGRAMS = kim
+dist_pkgdata_DATA =         \
+  kim.bash_completion    \
+  $(STATS_FILE)
 
-kim_SOURCES = \
-  file_reader.h file_reader.cpp \
-  kim.h kim.cpp \
-  optionparser.h \
-  variant_identification.h variant_identification.cpp \
-  variant_kmer_index.h variant_kmer_index.cpp
+
+force-renew:
+
+$(STATS_FILE): force-renew
+	@echo "# $@ #" | sed 'h;s/./#/g;p;x;p;x' > "$@"
+	@echo >> "$@"
+	@TMPFILE=$$(mktemp -u);							\
+	git ls-tree --name-only -r  HEAD "$(abs_top_srcdir)" > $${TMPFILE};	\
+	echo "CLoC summary" | sed 'h;s/./=/g;p;x;p;x' >> "$@" ;			\
+	echo >> "$@";								\
+	if [ "@CLOC@" == "" ]; then						\
+	  echo "You should install cloc (source code line counter) and reconfigure this package.";\
+	  echo "CLoC isn't installed. No report created" >> "$@";		\
+	else									\
+	  echo >> "$@";								\
+	  @CLOC@ --list-file=$${TMPFILE} --quiet | tail -n +2 >> "$@";		\
+	fi;									\
+	echo >> "$@";								\
+	echo "OhCount summary" | sed 'h;s/./=/g;p;x;p;x' >> "$@";		\
+	if [ "@OHCOUNT@" == "" ]; then						\
+	  echo "You should install ohcount (source code line counter) and reconfigure this package.";\
+	  echo >> "$@";								\
+	  echo "OhCount isn't installed. No report created" >> "$@";		\
+	else									\
+	  @OHCOUNT@ $$(cat $${TMPFILE}) | tail -n +2 >> "$@";			\
+	fi;									\
+	echo >> "$@";								\
+	printf "%.78d\n" | tr 0 - >> "$@";					\
+	echo >> "$@";								\
+	cat "$@";								\
+	rm $${TMPFILE}
+
+update-stats:
+	@rm -f $(STATS_FILE)
+	$(MAKE) $(AM_MAKEFLAGS) $(STATS_FILE)
+
 
 MOSTLYCLEANFILES=*~
-CLEANFILES=*~
+CLEANFILES=*~ $(STATS_FILE)
 DISTCLEANFILES=*~
 MAINTAINERCLEANFILES=*~

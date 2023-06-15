@@ -1,0 +1,63 @@
+function _kim () {
+  local cur prev kim_opts completion_opts i x opts
+
+  _init_completion -s || return
+
+  COMP_WORDBREAKS=${COMP_WORDBREAKS/:/}
+
+  COMPREPLY=()
+
+  kim_opts=
+  kim_opts+=" -d"
+  kim_opts+=" --index-directory # <dir>
+  kim_opts+=" -o" # <filename>
+  kim_opts+=" --output" # <filename>
+  kim_opts+=" -v"
+  kim_opts+=" --verbose"
+  kim_opts+=" -q"
+  kim_opts+=" --quiet"
+  kim_opts+=" -h"
+  kim_opts+=" --help"
+  kim_opts+=" -V"
+  kim_opts+=" --version"
+
+  kim_opts+=" --completion"
+  kim_opts+=" --completion=" # <completion_option>
+
+  completion_opts=
+  completion_opts+=" bash"
+
+  function _kim_option_opt_arg() {
+    if [ "${COMP_LINE: -1}" != " " ]; then
+      COMPREPLY=($(compgen -W "${1}" -- ${cur}))
+    else
+      _filedir
+      COMPREPLY+=($(compgen -W "${kim_opts}" -- ${cur}))
+    fi
+  }
+
+  case "${prev}" in
+    --completion)
+      _kim_option_opt_arg "${completion_opts}"
+      ;;
+    -d|--index-directory|\
+    -o|--output)
+      _filedir
+      ;;
+    *)
+      if [[ "${cur}" == -* ]]; then
+        COMPREPLY=($(compgen -W "${kim_opts}" -- ${cur}))
+      else
+        _filedir
+        COMPREPLY+=($(compgen -W "${kim_opts}" -- ${cur}))
+      fi
+      ;;
+  esac
+
+  unset -f _kim_option_opt_arg
+
+} && complete -F _kim -o default kim
+
+### Local Variables:
+### mode: shell-script
+### End:

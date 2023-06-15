@@ -85,17 +85,23 @@ dnl
 dnl The fact that you are presently reading this means that you have had
 dnl knowledge of the CeCILL license and that you accept its terms.
 
-AC_PREREQ([2.64])
+AC_PREREQ([2.69])
 
+m4_define([VERSION_MAJOR], [m4_esyscmd_s([./config/git-version-gen | sed 's,^[^0-9]*\([0-9]*\)\.\([0-9]*\)\.\(.*\)$,\1,'])])
+m4_define([VERSION_MINOR], [m4_esyscmd_s([./config/git-version-gen | sed 's,^[^0-9]*\([0-9]*\)\.\([0-9]*\)\.\(.*\)$,\2,'])])
+m4_define([VERSION_MICRO], [m4_esyscmd_s([./config/git-version-gen | sed 's,^[^0-9]*\([0-9]*\)\.\([0-9]*\)\.\(.*\)$,\3,'])])
 
 AC_INIT([kim],
-        [0.0.0],
+        [VERSION_MAJOR.VERSION_MINOR.VERSION_MICRO],
         [remy.costa@igh.cnrs.fr],
         [kim],
         [https://github.com/CLOCK-PhD/kim])
 
 PACKAGE_DESCRIPTION="Kim is a k-mer identification metric"
 AC_SUBST([PACKAGE_DESCRIPTION])
+AC_DEFINE_UNQUOTED([PACKAGE_DESCRIPTION], ["${PACKAGE_DESCRIPTION}"], [Description of this package.])
+AC_DEFINE_UNQUOTED([BEGIN_KIM_NAMESPACE], [namespace kim {], [Starts the kim namespace.])
+AC_DEFINE_UNQUOTED([END_KIM_NAMESPACE], [}], [Ends the kim namespace.])
 
 
 AC_COPYRIGHT([
@@ -193,7 +199,7 @@ AC_CONFIG_SRCDIR([src/kim.cpp])
 
 AC_CONFIG_AUX_DIR([config])
 dnl create a config.h file (Automake will add -DHAVE_CONFIG_H)
-AM_CONFIG_HEADER([config/config.h])
+AC_CONFIG_HEADERS([config/config.h])
 AH_TOP([
 /******************************************************************************
 *                                                                             *
@@ -300,12 +306,16 @@ AC_CONFIG_MACRO_DIR([config/m4])
 
 AC_CANONICAL_HOST
 
-
-
 dnl Checks for programs.
 AC_PROG_INSTALL
 AC_PROG_CC
 AC_PROG_CXX
+AC_PROG_SED
+
+AC_REVISION([m4_esyscmd_s([./config/git-version-gen --timestamp --force-update configure.ac])])
+
+ARCH=`uname -m | sed s/i.86/i386/ | sed s/x86_64/amd64/`
+AC_SUBST(ARCH)
 
 AC_PATH_PROG([CLOC], [cloc])
 AC_PATH_PROG([OHCOUNT], [ohcount])
@@ -350,6 +360,13 @@ dnl Checks for libraries.
 
 dnl Checks for header files.
 AC_HEADER_STDC
+AC_HEADER_MAJOR
+AC_FUNC_ALLOCA
+AC_STRUCT_TM
+AC_STRUCT_ST_BLOCKS
+AC_FUNC_CLOSEDIR_VOID
+AC_CHECK_FUNCS(mkfifo)
+AC_CHECK_FUNC(mknod)
 AC_CHECK_HEADERS([\
   unistd.h \
   sys/param.h sys/time.h \
@@ -359,19 +376,12 @@ AC_CHECK_HEADERS([\
   sys/ndir.h \
   ndir.h alloca.h locale.h])
 
-AC_HEADER_MAJOR
-AC_FUNC_ALLOCA
-AC_STRUCT_TM
-AC_STRUCT_ST_BLOCKS
-AC_FUNC_CLOSEDIR_VOID
-AC_CHECK_FUNCS(mkfifo)
-AC_CHECK_FUNC(mknod)
-
 dnl Checks for typedefs, structures, and compiler characteristics.
 
 dnl Checks for library functions.
 
-AC_OUTPUT([
+AC_CONFIG_FILES([
   Makefile src/Makefile
+  resources/Makefile
 ])
-
+AC_OUTPUT

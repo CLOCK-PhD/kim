@@ -1,0 +1,5 @@
+Implement the fastq file reader.
+Add gzip support.
+Implement index reader.
+
+

@@ -277,15 +277,15 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
-DIST_SUBDIRS = src doc
+DIST_SUBDIRS = resources src doc
 am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/config/compile \
 	$(top_srcdir)/config/config.guess \
 	$(top_srcdir)/config/config.h.in \
 	$(top_srcdir)/config/config.sub \
 	$(top_srcdir)/config/install-sh $(top_srcdir)/config/missing \
-	AUTHORS ChangeLog NEWS config/compile config/config.guess \
-	config/config.sub config/depcomp config/install-sh \
-	config/missing
+	AUTHORS COPYING ChangeLog INSTALL NEWS TODO config/compile \
+	config/config.guess config/config.sub config/depcomp \
+	config/install-sh config/missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -332,6 +332,7 @@ ACLOCAL = @ACLOCAL@
 ALLOCA = @ALLOCA@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+ARCH = @ARCH@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -401,6 +402,7 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
@@ -457,14 +459,14 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = src $(am__append_1)
+SUBDIRS = resources src $(am__append_1)
 dist_pkgdata_DATA = \
   AUTHORS ChangeLog README.md \
-  LICENSE-CeCILL-en.md LICENSE-CeCILL-fr.md \
-  LICENSE.md
+  LICENSE.md LICENSE-fr.md LICENSE-en.md
 
 EXTRA_DIST = \
-  COPYING INSTALL NEWS
+  COPYING INSTALL NEWS \
+  config/git-version-gen config/version config/version.configure.ac
 
 ACLOCAL_AMFLAGS = -I config/m4
 MOSTLYCLEANFILES = *~ config/*~
