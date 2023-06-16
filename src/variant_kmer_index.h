@@ -134,11 +134,23 @@ namespace kim {
       bool in_genome;
     };
 
+    /**
+     * The type of the (partial) index associated to some k-mer
+     * prefix.
+     */
+    typedef std::unordered_multimap<VariantID_type, VariantKmerAssociation> PartialIndex_type;
+
   private:
 
     size_t k, k1, k2;
 
-    std::vector<std::unordered_multimap<VariantID_type, VariantKmerAssociation> > index;
+    std::vector<PartialIndex_type> index;
+
+    bool warn;
+
+    size_t checkFilenameCorrectness(const std::string &filename);
+
+    void parseFile(const std::string &filename, size_t prefix, bool is_first);
 
   public:
 
@@ -147,8 +159,11 @@ namespace kim {
      * form the given directory.
      *
      * \param path Directory where index files are stored.
+     *
+     * \param warn Activate (default) or deactivate warnings while
+     * loading index.
      */
-    VariantKmerIndex(const char *path);
+    VariantKmerIndex(const char *path, bool warn = true);
 
     /**
      * Get the length of the k-mers.

@@ -91,54 +91,171 @@
 #include "config.h"
 
 #include <algorithm>
+#include <fstream>
+#include <sstream>
 #include <iostream>
+#include <dirent.h>
+#include <sys/types.h>
 
 using namespace std;
 
 BEGIN_KIM_NAMESPACE
 
+
+/////////////// Some stuff to handling parse error ///////////////
+
+class VariantKmerIndexParseError: public exception {
+
+private:
+  string s;
+
+public:
+
+  VariantKmerIndexParseError() {
+  }
+
+  inline virtual const char *what() const noexcept {
+    return s.c_str();
+  }
+
+  template <typename T>
+  inline VariantKmerIndexParseError &operator<<(const T &t) {
+    stringstream ss;
+    ss << t;
+    s += ss.str();
+    return *this ;
+  }
+
+};
+
+#define WARNING_MSG(warn, msg)  \
+  if (warn) {                   \
+    cerr << "Warning:"          \
+         << msg << endl;        \
+  }                             \
+  (void) 0
+
+#define ERROR_MSG(msg)          \
+  VariantKmerIndexParseError e; \
+  e << msg;                     \
+  throw e
+
+//////////////////////////////////////////////////////////////////
+
+
 size_t encode(char c) {
-  return ((c == 'A')
-          ? 0
-          : ((c == 'C')
-             ? 1
-            : ((c == 'G')
-               ? 2
-               : ((c == 'T')
-                  ? 3
-                  : -1))));
+  size_t v = ((c == 'A')
+              ? 0
+              : ((c == 'C')
+                 ? 1
+                 : ((c == 'G')
+                    ? 2
+                    : ((c == 'T')
+                       ? 3
+                       : -1))));
+  if (v == -1) {
+    ERROR_MSG("Unable to encode character '" << c << "'");
+  }
+  return v;
 }
 
 size_t encode(const string &kmer, size_t k1) {
   size_t v = 0;
   for (size_t i = 0; i < k1; ++i) {
     v <<= 2; // equiv v *= 4;
-    v + encode(kmer[i]);
+    v += encode(kmer[i]);
   }
   return v;
 }
 
-VariantKmerIndex::VariantKmerIndex(const char *path): k(0), k1(0), k2(0), index() {
-  // TODO
-  cerr << "TODO:" << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << endl;
+size_t VariantKmerIndex::checkFilenameCorrectness(const string &filename) {
+  if (filename.length() != k1) {
+    ERROR_MSG("Name of the index file '" << filename << "' should have length " << k1);
+  }
+  size_t prefix;
+  try {
+    prefix = encode(filename, k1);
+  } catch (...) {
+    ERROR_MSG("Name of the index file '" << filename
+              << "' should contains only 'A', 'C', 'G', 'T' or 'U' character.\n");
+  }
+  return prefix;
+}
+
+void VariantKmerIndex::parseFile(const string &filename, size_t prefix, bool is_first) {
+  ifstream ifs(filename);
+  size_t line = 0;
+  if (!ifs) {
+    ERROR_MSG("Unable to open index file '" << filename << "'");
+  }
+  while (ifs) {
+    string suffix;
+    VariantKmerAssociation assoc;
+    ifs >> assoc.rs_id >> suffix >> assoc.kmer_rank >> assoc.in_genome;
+    if (ifs) {
+      ++line;
+      if (is_first) {
+        k2 = suffix.length();
+        is_first = false;
+      } else {
+        if (suffix.length() != k2) {
+          ERROR_MSG("Badly formatted index file '" << filename << "' (line " << line << ": suffix '" << suffix << "' should have length " << k2 << ").");
+        }
+      }
+      index[prefix].emplace(suffix, assoc);
+    }
+  }
+  ifs.close();
+}
+
+VariantKmerIndex::VariantKmerIndex(const char *path, bool warn):
+  k(0), k1(0), k2(0),
+  index(),
+  warn(warn)
+{
+  DIR *dir = opendir(path);
+  if (dir == NULL) {
+    ERROR_MSG("Unable to open the given directory index '" << path << "'");
+  }
+
+  struct dirent *entry;
+  size_t cpt = 0;
+  while ((entry = readdir(dir))) {
+    string fname(entry->d_name);
+    if (!fname.empty() && (fname[0] != '.')) {
+      if (!cpt) {
+        k1 = fname.length();
+        index.resize(1 << (k1 << 1));
+      }
+      size_t prefix = checkFilenameCorrectness(fname);
+      fname = path;
+      fname += "/";
+      fname += entry->d_name;
+      parseFile(fname, prefix, !cpt);
+      ++cpt;
+    }
+  }
+  closedir(dir);
+  k = k1 + k2;
+  if (cpt != 1 << (k1 << 1)) {
+    WARNING_MSG(warn, "There is some missing files in the '" << path << "' index directory.");
+  }
 }
 
 size_t VariantKmerIndex::getKmerLength() const {
   return k;
 }
 
-typedef unordered_multimap<VariantKmerIndex::VariantID_type, VariantKmerIndex::VariantKmerAssociation> _mymap;
-
-VariantKmerIndex::VariantKmerAssociation get_second(const _mymap::value_type v) {
+VariantKmerIndex::VariantKmerAssociation getSecond(const VariantKmerIndex::PartialIndex_type::value_type v) {
   return v.second;
 }
 
 list<VariantKmerIndex::VariantKmerAssociation> VariantKmerIndex::search(const string &kmer) const {
   list<VariantKmerAssociation> l;
   size_t prefix = encode(kmer, k1);
-  const _mymap &variant_kmer_assoc = index[prefix];
-  pair<_mymap::const_iterator, _mymap::const_iterator> range = variant_kmer_assoc.equal_range(kmer.substr(k1));
-  transform(range.first, range.second, l.begin(), get_second);
+  const PartialIndex_type &variant_kmer_assoc = index[prefix];
+  pair<PartialIndex_type::const_iterator, PartialIndex_type::const_iterator> range = variant_kmer_assoc.equal_range(kmer.substr(k1));
+  transform(range.first, range.second, l.begin(), getSecond);
   return l;
 }
 
