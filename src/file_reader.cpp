@@ -132,9 +132,9 @@ public:
 
 };
 
-#define ALERT_MSG(header, msg)  \
+#define WARNING_MSG(msg)        \
   if (warn) {                   \
-    cerr << header << ":"       \
+    cerr << "Warning:"          \
          << filename << ":"     \
          << (line + 1) << ":"   \
          << col << ": "         \
@@ -142,8 +142,10 @@ public:
   }                             \
   (void) 0
 
-#define WARNING_MSG(msg) ALERT_MSG("Warning", msg)
-#define ERROR_MSG(msg) FileReaderParseError e(*this); e << msg; throw e
+#define ERROR_MSG(msg)           \
+  FileReaderParseError e(*this); \
+  e << msg;                      \
+  throw e
 
 //////////////////////////////////////////////////////////////////
 
