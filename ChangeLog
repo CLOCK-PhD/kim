@@ -1,3 +1,27 @@
+2023-06-16  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/variant_kmer_index.cpp, src/variant_kmer_index.h:
+	Implement a quick and not fully controlled index loading strategy.
+	
+	
+2023-06-16  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/file_reader.cpp:
+	Make code a little bit simpler.
+	
+	
+2023-06-16  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/file_reader.cpp, src/file_reader.h, src/kim.cpp:
+	Complete the implementation of file parsing.
+	
+	
+2023-06-15  DoccY <alban.mancheron@lirmm.fr>
+
+	* config/version.configure.ac:
+	Update configure.ac version.
+	
+	
 2023-06-15  DoccY <alban.mancheron@lirmm.fr>
 
 	* INSTALL, Makefile.am, Makefile.in, TODO, aclocal.m4,
