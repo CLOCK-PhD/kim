@@ -90,31 +90,240 @@
 #include "file_reader.h"
 #include "config.h"
 
-#include <fstream>
+#include <sstream>
 #include <iostream>
+#include <exception>
 
 using namespace std;
 
 BEGIN_KIM_NAMESPACE
 
-FileReader::FileReader(const char *filename, size_t k):
-  filename(filename), ifs(filename),
-  line(0), col(0),
-  k(0), read_id(), kmer(), kmer_pos(-1) {
+
+/////////////// Some stuff to handling parse error ///////////////
+
+class FileReaderParseError: public exception {
+
+private:
+  string s;
+
+public:
+
+  FileReaderParseError(FileReader &reader) {
+    if (reader.getFilename().empty()) return;
+    stringstream ss;
+    ss << "File '" << reader.getFilename() << "'"
+       << ": line " << reader.getFileLineNumber()
+       << ": column " << reader.getFileColumnNumber()
+       << ": ";
+    s = ss.str();
+  }
+
+  inline virtual const char *what() const noexcept {
+    return s.c_str();
+  }
+
+  template <typename T>
+  inline FileReaderParseError &operator<<(const T &t) {
+    stringstream ss;
+    ss << t;
+    s += ss.str();
+    return *this ;
+  }
+
+};
+
+#define ALERT_MSG(header, msg)  \
+  if (warn) {                   \
+    cerr << header << ":"       \
+         << filename << ":"     \
+         << (line + 1) << ":"   \
+         << col << ": "         \
+         << msg << endl;        \
+  }                             \
+  (void) 0
+
+#define WARNING_MSG(msg) ALERT_MSG("Warning", msg)
+#define ERROR_MSG(msg) FileReaderParseError e(*this); e << msg; throw e
+
+//////////////////////////////////////////////////////////////////
+
+
+FileReader::FileReader(const char *filename, size_t k, bool warn) {
+  open(filename, k, warn);
 }
 
 FileReader::~FileReader() {
   ifs.close();
 }
 
+void FileReader::open(const char *filename, size_t k, bool warn) {
+  if (ifs.is_open()) {
+    ifs.close();
+  }
+  if (!k) {
+    ERROR_MSG("The length of k-mer must be strictly positive!");
+  }
+  this->filename = filename;
+  ifs.open(filename);
+  if (ifs) {
+    line = col = 0;
+    start_sequence_state = true;
+    nb_nucl = nb_valid_nucl = 0;
+    this->k = k;
+    read_id = "";
+    kmer = string(k, '?');
+    kmer_pos = 0;
+    this->warn = warn;
+  }
+}
+
+const string &FileReader::getFilename() const {
+  return filename;
+}
+
+size_t FileReader::getFileLineNumber() const {
+  return line + 1;
+}
+
+size_t FileReader::getFileColumnNumber() const {
+  return col + 1;
+}
+
+
+#define IUPAC_A 1
+#define IUPAC_C 2
+#define IUPAC_G 4
+#define IUPAC_T 8
+#define IUPAC_GAP 16
+#define IUPAC_UNDEFINED 0
+
+uint8_t getIUPACNucleotide(char c) {
+  if ((c >= 'a') && (c <= 'z')) {
+    c += 'A' - 'a'; // Upcase
+  }
+  switch (c) {
+  case 'A': return IUPAC_A;
+  case 'C': return IUPAC_C;
+  case 'G': return IUPAC_G;
+  case 'T':
+  case 'U': return IUPAC_T;
+  case 'R': return IUPAC_A | IUPAC_G; // Purine
+  case 'Y': return IUPAC_C | IUPAC_T; // Pyrimidine
+  case 'S': return IUPAC_C | IUPAC_G; // Strong
+  case 'W': return IUPAC_A | IUPAC_T; // Weak
+  case 'B': return IUPAC_C | IUPAC_G | IUPAC_T; // Not A
+  case 'D': return IUPAC_A | IUPAC_G | IUPAC_T; // Not C
+  case 'H': return IUPAC_A | IUPAC_C | IUPAC_T; // Not G
+  case 'V': return IUPAC_A | IUPAC_C | IUPAC_G; // Not T neither U
+  case 'N': return IUPAC_A | IUPAC_C | IUPAC_G | IUPAC_T; // Any
+  case '.':
+  case '-': return IUPAC_GAP; // Gap is valid in IUPAC even if it's
+                              // not a nucleotide
+  default:
+    return IUPAC_UNDEFINED;
+  }
+}
+
+char FileReader::nextVisibleCharacter() {
+  int c = -1;
+  while (ifs && ((c = ifs.get()) <= 32)) {
+    switch (c) {
+    case '\t':
+    case ' ':
+      ++col;
+      break;
+    case '\n':
+      ++line;
+      col = 0;
+      break;
+    default:
+      if (ifs) {
+        WARNING_MSG("Unexpected non printable character (code " << c << ")");
+      }
+    }
+  }
+  ++col;
+  return ((c != -1) ? c : 0);
+}
+
 const string &FileReader::getNextKmer() {
-  // TODO
-  cerr << "TODO:" << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << endl;
-  return kmer;
+  do {
+    int c = nextVisibleCharacter();
+    if (c) {
+      if (start_sequence_state) {
+        if (col == 1) {
+          switch (c) {
+          case '@':
+            start_sequence_state = false;
+            std::getline(ifs, read_id);
+            ++line;
+            col = 0;
+            nb_nucl = 0;
+            nb_valid_nucl = 0;
+            kmer_pos = 0;
+            break;
+          default:
+            ERROR_MSG("Badly formatted file. Character '" << (char) c << "' found while expecting '@'.");
+          }
+        } else {
+          ERROR_MSG("Badly formatted file. Unexpected character '" << (char) c << "'.");
+        }
+      } else {
+        uint8_t nucl = getIUPACNucleotide(c);
+        switch (nucl) {
+        case IUPAC_A:
+        case IUPAC_C:
+        case IUPAC_G:
+        case IUPAC_T:
+          if (nb_valid_nucl >= k) {
+            for (size_t i = 1; i < k; ++i) {
+              kmer[i - 1] = kmer[i];
+            }
+            kmer[k - 1] = c;
+          } else {
+            kmer[nb_valid_nucl] = c;
+          }
+          if (++nb_valid_nucl >= k) {
+            ++kmer_pos;
+          }
+          ++nb_nucl;
+          break;
+        case IUPAC_GAP:
+          // ignore gaps
+          break;
+        case IUPAC_UNDEFINED:
+          if ((col == 1) && (c == '+')) {
+            // End of the sequence, let's skip the quality
+            string header;
+            std::getline(ifs, header);
+            ++line;
+            col = 0;
+            if (!header.empty() && (header != read_id)) {
+              WARNING_MSG("Badly formatted file. The header following the '+' sign (" << header << ") is not the expected one (" << read_id << ").");
+            }
+            while (nb_nucl--) {
+              c = nextVisibleCharacter();
+            }
+            start_sequence_state = true;
+          } else {
+            WARNING_MSG("Badly formatted file. Unexpected character '" << (char) c << "'.");
+          }
+        default:
+          // This is a degeneracy symbol
+          ++nb_nucl;
+          nb_valid_nucl = 0;
+        }
+      }
+    } else {
+      kmer_pos = 0;
+    }
+  } while (ifs && !kmer_pos);
+  return getCurrentKmer();
 }
 
 const string &FileReader::getCurrentKmer() const {
-  return kmer;
+  static const string empty_string;
+  return (kmer_pos ? kmer : empty_string);
 }
 
 const string &FileReader::getCurrentRead() const {

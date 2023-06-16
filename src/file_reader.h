@@ -103,31 +103,87 @@ namespace kim {
 
   private:
 
-    const char *filename;
+    std::string filename;
     std::ifstream ifs;
     size_t line, col;
+    bool start_sequence_state;
+    size_t nb_nucl, nb_valid_nucl;
     size_t k;
     std::string read_id;
     std::string kmer;
     size_t kmer_pos;
+    bool warn;
+
+    /**
+     * Get the next visible character (ASCII code > 32) from the
+     * input stream.
+     *
+     * This method automatically updates the number of lines and columns.
+     *
+     * If a some blank character is found but is different from space,
+     * tabulation or newline, a warning may be emitted (according to
+     * the settings).
+     *
+     * \return Returns the next visible character or nul if an error
+     * occured or if the end of the stream is reached.
+     */
+    char nextVisibleCharacter();
 
   public:
 
     /**
      * Creates a (fastq) file reader.
      *
-     * The file is open as an input file stream.
+     * This internally calls the open method.
      *
      * \param filename The name of the fastq file to read.
      *
      * \param k The length of the k-mers to extract.
+     *
+     * \param warn Activate (default) or deactivate warnings during
+     * file processing.
      */
-    FileReader(const char *filename, size_t k);
+    FileReader(const char *filename, size_t k, bool warn = true);
 
     /**
      * Closes the file stream before destruction.
      */
     ~FileReader();
+
+    /**
+     * Get the filename associated to this reader.
+     *
+     * \return Returns the associated filename.
+     */
+    const std::string &getFilename() const;
+
+    /**
+     * Open the given filename.
+     *
+     * This method closes the previously associated file stream.
+     *
+     * \param filename The name of the fastq file to read.
+     *
+     * \param k The length of the k-mers to extract.
+     *
+     * \param warn Activate (default) or deactivate warnings during
+     * file processing.
+     */
+    void open(const char *filename, size_t k, bool warn = true);
+
+    /**
+     * Get the current processed line number.
+     *
+     * \return Return the current line number of the processed file.
+     */
+    size_t getFileLineNumber() const;
+
+    /**
+     * Get the current processed column number.
+     *
+     * \return Return the current column number of the processed file.
+     */
+    size_t getFileColumnNumber() const;
 
     /**
      * Get the next k-mer from this file reader object.
