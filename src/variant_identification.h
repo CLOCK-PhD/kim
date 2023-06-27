@@ -147,7 +147,7 @@ namespace kim {
      * Get the score associated to the given read for the variant
      * detection.
      *
-     * TODO: explain how the score is computed and whqat it means.
+     * TODO: explain how the score is computed and what it means.
      *
      * \param read_id The read ID.
      *

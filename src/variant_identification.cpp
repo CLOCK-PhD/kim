@@ -107,21 +107,17 @@ VariantIdentification &VariantIdentification::add(VariantIdentification::ReadID_
   return *this;
 }
 
-bool cmp_key(_mymap::value_type i, _mymap::value_type j) {
-  return i.first == j.first;
-}
-
 list<VariantIdentification::ReadID_type> VariantIdentification::getReads() const {
   list<VariantIdentification::ReadID_type> l;
   _mymap::const_iterator it_prev = informations.cbegin();
+  if (it_prev != informations.cend()) {
+    l.push_back(it_prev->first);
+  }
   for (_mymap::const_iterator it = informations.cbegin(); it != informations.cend(); ++it) {
     if (it_prev->first != it->first) {
       l.push_back(it->first);
       it_prev = it;
     }
-  }
-  if (it_prev != informations.cend()) {
-    l.push_back(it_prev->first);
   }
   return l;
 }

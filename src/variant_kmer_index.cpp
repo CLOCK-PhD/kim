@@ -191,7 +191,8 @@ void VariantKmerIndex::parseFile(const string &filename, size_t prefix, bool is_
   while (ifs) {
     string suffix;
     VariantKmerAssociation assoc;
-    ifs >> assoc.rs_id >> suffix >> assoc.kmer_rank >> assoc.in_genome;
+    // Lecture de la ligne
+    ifs >> suffix >> assoc.rs_id >> assoc.kmer_rank >> assoc.in_genome;
     if (ifs) {
       ++line;
       if (is_first) {
@@ -237,7 +238,7 @@ VariantKmerIndex::VariantKmerIndex(const char *path, bool warn):
   }
   closedir(dir);
   k = k1 + k2;
-  if (cpt != 1 << (k1 << 1)) {
+  if (cpt != (1 << (k1 << 1))) {
     WARNING_MSG(warn, "There is some missing files in the '" << path << "' index directory.");
   }
 }

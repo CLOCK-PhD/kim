@@ -132,13 +132,14 @@ namespace kim {
        * True if the k-mer appears natively in the genome.
        */
       bool in_genome;
+
     };
 
     /**
      * The type of the (partial) index associated to some k-mer
-     * prefix.
+     * suffix.
      */
-    typedef std::unordered_multimap<VariantID_type, VariantKmerAssociation> PartialIndex_type;
+    typedef std::unordered_multimap<std::string, VariantKmerAssociation> PartialIndex_type;
 
   private:
 

@@ -10,6 +10,9 @@ doc/doxygen.cfg
 
 src/.deps
 src/kim
+src/*link
+
+resources/kim-*.stats
 
 Makefile
 *~
