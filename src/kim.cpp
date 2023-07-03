@@ -209,6 +209,7 @@ int main(int argc, char **argv) {
       FileReader reader(parse.nonOption(i), k);
       // Process each k-mer from the current input file
       for (std::string kmer = reader.getNextKmer(); !kmer.empty(); kmer = reader.getNextKmer()) {
+        //cout << "K-mer : " << kmer << endl;
         list<VariantKmerIndex::VariantKmerAssociation> variant_ids = kim_index.search(kmer);
         for (list<VariantKmerIndex::VariantKmerAssociation>::const_iterator it = variant_ids.cbegin(); it != variant_ids.cend(); ++it) {
           VariantIdentification &v_ident = variants_map[it->rs_id];
