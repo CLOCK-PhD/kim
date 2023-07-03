@@ -191,8 +191,14 @@ void VariantKmerIndex::parseFile(const string &filename, size_t prefix, bool is_
   while (ifs) {
     string suffix;
     VariantKmerAssociation assoc;
+    string chrom, variation, snp_pos, kmer_pos, kmercount;
     // Lecture de la ligne
-    ifs >> suffix >> assoc.rs_id >> assoc.kmer_rank >> assoc.in_genome;
+    // Fichier actuel (à modifier) : 
+    // Suffixe, rsid, chrom, variation, snp_pos, kmer_pos, nbr de kmers générés, ingenome 
+    ifs >> suffix >> assoc.rs_id >> chrom >> variation >> snp_pos >> assoc.kmer_rank >> kmercount >>assoc.in_genome;
+    // test de vérification - on croise les doigts - ça s'affiche !
+    //cout << suffix << " " << assoc.rs_id << " " << chrom << " " << variation << " " << snp_pos<< assoc.kmer_rank << " " << kmercount << assoc.in_genome << endl;
+    //cout << suffix << " " << assoc.rs_id << " " << assoc.kmer_rank << " " << assoc.in_genome << endl;
     if (ifs) {
       ++line;
       if (is_first) {
