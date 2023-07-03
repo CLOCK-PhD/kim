@@ -197,7 +197,9 @@ int main(int argc, char **argv) {
 
   try {
     cout << "Index directory: '" << index_directory << "'" << endl;
+    cout << "Loading index..." << endl;
     VariantKmerIndex kim_index(index_directory);
+    cout << "Index loaded" << endl;
     size_t k = kim_index.getKmerLength()+10;
     unordered_map<VariantKmerIndex::VariantID_type, VariantIdentification> variants_map;
 
