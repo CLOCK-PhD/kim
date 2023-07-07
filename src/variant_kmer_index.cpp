@@ -190,17 +190,17 @@ void VariantKmerIndex::parseFile(const string &filename, size_t prefix, bool is_
     ERROR_MSG("Unable to open index file '" << filename << "'");
   }
 
-  // ICI CA MARCHE MAIS CA PREND TOUTE LA MEMOIRE
-  while (ifs) {
+  // Fonctionne mais usage de RAM élevé
+  /*while (ifs) {
     string suffix;
     VariantKmerAssociation assoc;
     string trash; // tests pour ifs >> machin;
     // PREMIER VERSION :
-    //ifs >> suffix >> assoc.rs_id >> assoc.kmer_rank >> assoc.in_genome;
+    ifs >> suffix >> assoc.rs_id >> assoc.kmer_rank >> assoc.in_genome;
     // Fichier actuel (à modifier) :
     // Suffixe, rsid, chrom, variation, snp_pos, kmer_pos, nbr de kmers générés, ingenome
-    ifs >> suffix >> assoc.rs_id >> trash >> trash >> trash >> trash >> assoc.kmer_rank  >> assoc.in_genome;
-    trash.clear();
+    //ifs >> suffix >> assoc.rs_id >> trash >> trash >> trash >> trash >> assoc.kmer_rank  >> assoc.in_genome;
+    //trash.clear();
 
     if (ifs) {
       ++line;
@@ -216,41 +216,40 @@ void VariantKmerIndex::parseFile(const string &filename, size_t prefix, bool is_
       //cout << prefix << suffix << endl;
       index[prefix].emplace(suffix, assoc);
     }
-  }
+  }*/
 
+  // TEST GETLINE - MÊME PROBLÈME
+  string current_line = ""; // on crée la première ligne vide pour faire un truc comme isfirst 
 
-  // ON TESTE LA MEME CHOSE MAIS AVEC GETLINE - EN COURS
-  /*while (ifs){
+  while(getline(ifs, current_line)){
     string suffix;
     VariantKmerAssociation assoc;
-    string current_line = ""; // on crée la première ligne vide pour faire un truc comme isfirst
+    string element;
     vector<string> elements;
 
-    while(getline(ifs, current_line, '\t')){
-      elements.push_back(current_line);
+    stringstream ss(current_line);
+    while(getline(ss, element, '\t')){
+      elements.push_back(element);
     }
-    //cout << elements[0] << "\t" << elements[1] << endl;
-    // Suffixe : 0; rs_id : 1; kmer_rank : avant dernier (en vrai non); in_genome : dernier;
     suffix = elements[0];
     assoc.rs_id = elements[1];
     assoc.kmer_rank = 0; // fixe pour l'instant
     assoc.in_genome = false; // fixé pour l'instant
-    cout << suffix << " " << assoc.rs_id << " " << assoc.kmer_rank << " " << assoc.in_genome << " " << endl;
-    cout << current_line << endl;
-    if(current_line != ""){
-      if(is_first){
-        k2 = suffix.length();
-        cout << "Taille du suffixe : " << k2 << endl;
-        is_first = false;
-      } else {
-        if (suffix.length() != k2) {
-          ERROR_MSG("Badly formatted index file '" << filename << "' (line " << line << ": suffix '" << suffix << "' should have length " << k2 << ").");
-        }
+    //cout << suffix << " " << assoc.rs_id << " " << assoc.kmer_rank << " " << assoc.in_genome << " " << endl;
+    //cout << current_line << endl;
+    if(is_first){
+      k2 = suffix.length();
+      cout << "Taille du suffixe : " << k2 << endl;
+      is_first = false;
+    } else {
+      if (suffix.length() != k2) {
+      ERROR_MSG("Badly formatted index file '" << filename << "' (line " << line << ": suffix '" << suffix << "' should have length " << k2 << ").");
       }
-      // Ajoute les éléments dans l'index
-      index[prefix].emplace(suffix, assoc);
     }
-  }*/
+    // Ajoute les éléments dans l'index
+    index[prefix].emplace(suffix, assoc);
+  }
+  
 
   ifs.close();
 }

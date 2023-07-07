@@ -1,11 +1,15 @@
 2023-07-07  DoccY <alban.mancheron@lirmm.fr>
 
-	* src/variant_identification.cpp, src/variant_identification.h,
-	src/variant_kmer_index.cpp, src/variant_kmer_index.h:
-	Current implementation consumes a lot of memory.
-	Changing unordered_multimap to map+list in VariantIdentification class and
-	changing unordered_multimap to multimap in VariantKmerIndex class should reduce memory usage.
-	These changes may consumes some additional time.
+	* :
+	commit 517ce9a12c1d7d92dd9bacc9c940e4cded2d00ff
+	Author: DoccY <alban.mancheron@lirmm.fr>
+	Date:   Fri Jul 7 17:21:47 2023 +0200
+	
+	
+2023-07-07  Ositofeliz <remy.costa@live.fr>
+
+	* src/variant_kmer_index.cpp:
+	implémentation de getline pour les tests
 	
 	
 2023-07-03  Ositofeliz <remy.costa@live.fr>
