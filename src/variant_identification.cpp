@@ -101,7 +101,8 @@ VariantIdentification::VariantIdentification(): informations() {
 }
 
 VariantIdentification &VariantIdentification::add(VariantIdentification::ReadID_type read_id, size_t pos) {
-  informations.emplace(read_id, pos);
+  list<size_t> &l = informations[read_id];
+  l.push_back(pos);
   return *this;
 }
 

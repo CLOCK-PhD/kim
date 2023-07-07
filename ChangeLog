@@ -1,5 +1,11 @@
 2023-07-07  DoccY <alban.mancheron@lirmm.fr>
 
+	* src/variant_identification.cpp:
+	Fix the code due to the last modification of the internal data structure.
+	
+	
+2023-07-07  DoccY <alban.mancheron@lirmm.fr>
+
 	* :
 	commit 517ce9a12c1d7d92dd9bacc9c940e4cded2d00ff
 	Author: DoccY <alban.mancheron@lirmm.fr>
