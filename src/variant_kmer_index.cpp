@@ -197,7 +197,7 @@ void VariantKmerIndex::parseFile(const string &filename, size_t prefix, bool is_
     string trash; // tests pour ifs >> machin;
     // PREMIER VERSION :
     //ifs >> suffix >> assoc.rs_id >> assoc.kmer_rank >> assoc.in_genome;
-    // Fichier actuel (à modifier) : 
+    // Fichier actuel (à modifier) :
     // Suffixe, rsid, chrom, variation, snp_pos, kmer_pos, nbr de kmers générés, ingenome
     ifs >> suffix >> assoc.rs_id >> trash >> trash >> trash >> trash >> assoc.kmer_rank  >> assoc.in_genome;
     trash.clear();
@@ -217,7 +217,7 @@ void VariantKmerIndex::parseFile(const string &filename, size_t prefix, bool is_
       index[prefix].emplace(suffix, assoc);
     }
   }
-  
+
 
   // ON TESTE LA MEME CHOSE MAIS AVEC GETLINE - EN COURS
   /*while (ifs){
@@ -293,7 +293,7 @@ size_t VariantKmerIndex::getKmerLength() const {
   return k;
 }
 
-VariantKmerIndex::VariantKmerAssociation getSecond(const VariantKmerIndex::PartialIndex_type::value_type v) {
+static VariantKmerIndex::VariantKmerAssociation getSecond(const VariantKmerIndex::PartialIndex_type::value_type v) {
   return v.second;
 }
 

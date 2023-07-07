@@ -93,7 +93,7 @@
 #include <cstdlib>
 #include <list>
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include <string>
 
 #include <variant_identification.h>
@@ -139,7 +139,7 @@ namespace kim {
      * The type of the (partial) index associated to some k-mer
      * suffix.
      */
-    typedef std::unordered_multimap<std::string, VariantKmerAssociation> PartialIndex_type;
+    typedef std::multimap<std::string, VariantKmerAssociation> PartialIndex_type;
 
   private:
 

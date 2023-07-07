@@ -97,8 +97,6 @@ using namespace std;
 
 BEGIN_KIM_NAMESPACE
 
-typedef unordered_multimap<VariantIdentification::ReadID_type, size_t> _mymap;
-
 VariantIdentification::VariantIdentification(): informations() {
 }
 
@@ -107,27 +105,26 @@ VariantIdentification &VariantIdentification::add(VariantIdentification::ReadID_
   return *this;
 }
 
+static VariantIdentification::ReadID_type getFirst(const VariantIdentification::VariantKmerAssoc_type::value_type v) {
+  return v.first;
+}
+
 list<VariantIdentification::ReadID_type> VariantIdentification::getReads() const {
   list<VariantIdentification::ReadID_type> l;
-  _mymap::const_iterator it_prev = informations.cbegin();
-  if (it_prev != informations.cend()) {
-    l.push_back(it_prev->first);
-  }
-  for (_mymap::const_iterator it = informations.cbegin(); it != informations.cend(); ++it) {
-    if (it_prev->first != it->first) {
-      l.push_back(it->first);
-      it_prev = it;
-    }
-  }
+  transform(informations.cbegin(), informations.cend(), l.begin(), getFirst);
   return l;
 }
 
 double VariantIdentification::getReadScore(VariantIdentification::ReadID_type read_id) const {
   double v = 0;
-  pair<_mymap::const_iterator, _mymap::const_iterator> range = informations.equal_range(read_id);
-  for (_mymap::const_iterator it = range.first; it != range.second; ++it) {
-    // TODO with it->second (one of the position)
-    ++v;
+  VariantKmerAssoc_type::const_iterator it = informations.find(read_id);
+  if (it != informations.end()) {
+    for (list<size_t>::const_iterator pos_it = it->second.begin();
+         pos_it != it->second.end();
+         ++pos_it) {
+      // TODO with *pos_it (one of the position)
+      ++v;
+    }
   }
   cerr << "TODO:" << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << endl;
   return v;

@@ -92,7 +92,7 @@
 
 
 #include <string>
-#include <unordered_map>
+#include <map>
 #include <list>
 
 namespace kim {
@@ -109,9 +109,15 @@ namespace kim {
      */
     typedef std::string ReadID_type;
 
+    /**
+     * The type of the association between reads and k-mer (that
+     * identify some variation) positions.
+     */
+    typedef std::map<VariantIdentification::ReadID_type, std::list<size_t> > VariantKmerAssoc_type;
+
   private:
 
-    std::unordered_multimap<ReadID_type, size_t> informations;
+    VariantKmerAssoc_type informations;
 
   public:
 
