@@ -33,7 +33,7 @@ following commands:
 
 First, it is needed to clone the `libGkArray-MPI` repository
 ```sh
-git clone https://github.com/CLOCK-PhD/kim.git
+git code https://gite.lirmm.fr/doccy/libGkArrays-MPI.git
 ```
 
 Once cloned, go to the newly created directory and artificially
