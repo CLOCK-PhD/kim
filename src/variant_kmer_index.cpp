@@ -190,14 +190,13 @@ void VariantKmerIndex::parseFile(const string &filename, size_t prefix, bool is_
     ERROR_MSG("Unable to open index file '" << filename << "'");
   }
 
-  // Fonctionne mais usage de RAM élevé
-  /*while (ifs) {
+  while (ifs) {
     string suffix;
     VariantKmerAssociation assoc;
-    string trash; // tests pour ifs >> machin;
-    // PREMIER VERSION :
+    //string trash; // tests pour ifs >> machin;
+    // Index alégé :
     ifs >> suffix >> assoc.rs_id >> assoc.kmer_rank >> assoc.in_genome;
-    // Fichier actuel (à modifier) :
+    // Index v1 : (à modifier) :
     // Suffixe, rsid, chrom, variation, snp_pos, kmer_pos, nbr de kmers générés, ingenome
     //ifs >> suffix >> assoc.rs_id >> trash >> trash >> trash >> trash >> assoc.kmer_rank  >> assoc.in_genome;
     //trash.clear();
@@ -213,13 +212,13 @@ void VariantKmerIndex::parseFile(const string &filename, size_t prefix, bool is_
           ERROR_MSG("Badly formatted index file '" << filename << "' (line " << line << ": suffix '" << suffix << "' should have length " << k2 << ").");
         }
       }
-      //cout << prefix << suffix << endl;
+      // Remplissage de l'index
       index[prefix].emplace(suffix, assoc);
     }
-  }*/
+  }
 
-  // TEST GETLINE - MÊME PROBLÈME
-  string current_line = ""; // on crée la première ligne vide pour faire un truc comme isfirst 
+  // Test getline() : pas de différence.
+  /*string current_line = ""; // on crée la première ligne vide pour faire un truc comme isfirst 
 
   while(getline(ifs, current_line)){
     string suffix;
@@ -248,9 +247,8 @@ void VariantKmerIndex::parseFile(const string &filename, size_t prefix, bool is_
     }
     // Ajoute les éléments dans l'index
     index[prefix].emplace(suffix, assoc);
-  }
+  }*/
   
-
   ifs.close();
 }
 
