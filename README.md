@@ -31,9 +31,9 @@ KIM requires:
 To download and install `KIM` into some user local directory (e.g., `${HOME}/local_install`) , use the 
 following commands:
 
-First, it is needed to clone the `libGkArray-MPI` repository
+First, it is needed to clone the `kim` repository
 ```sh
-git code https://gite.lirmm.fr/doccy/libGkArrays-MPI.git
+git clone https://github.com/CLOCK-PhD/kim.git
 ```
 
 Once cloned, go to the newly created directory and artificially
