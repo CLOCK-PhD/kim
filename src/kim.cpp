@@ -88,7 +88,7 @@
 ******************************************************************************/
 
 #include <iostream>
-#include <unordered_map>
+#include <map>
 #include "optionparser.h"
 #include "file_reader.h"
 #include "variant_kmer_index.h"
@@ -201,7 +201,7 @@ int main(int argc, char **argv) {
     VariantKmerIndex kim_index(index_directory);
     cout << "Index loaded" << endl;
     size_t k = kim_index.getKmerLength()+10;
-    unordered_map<VariantKmerIndex::VariantID_type, VariantIdentification> variants_map;
+    map<VariantKmerIndex::VariantID_type, VariantIdentification> variants_map;
 
     // Process each input file
     for (int i = 0; i < parse.nonOptionsCount(); ++i) {
@@ -220,7 +220,7 @@ int main(int argc, char **argv) {
 
     cout << "---" << endl
          << "SNPs:" << endl;
-    for (unordered_map<VariantKmerIndex::VariantID_type, VariantIdentification>::const_iterator it = variants_map.cbegin();
+    for (map<VariantKmerIndex::VariantID_type, VariantIdentification>::const_iterator it = variants_map.cbegin();
          it != variants_map.cend();
          ++it) {
       cout << "  - id: " << it->first << endl

@@ -1,3 +1,21 @@
+2023-07-10  DoccY <alban.mancheron@lirmm.fr>
+
+	* configure, src/kim.cpp, src/variant_kmer_index.cpp:
+	Use map instead of unordered_map in the main program in order to reduce memory footprint.
+	
+	
+2023-07-10  Ositofeliz <remy.costa@live.fr>
+
+	* README.md:
+	Correction du lien pour libGkArray-MPI
+	
+	
+2023-07-10  Ositofeliz <remy.costa@live.fr>
+
+	* src/variant_kmer_index.cpp:
+	Abandon de getline
+	
+	
 2023-07-07  DoccY <alban.mancheron@lirmm.fr>
 
 	* src/variant_identification.cpp:

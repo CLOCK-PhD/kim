@@ -193,13 +193,7 @@ void VariantKmerIndex::parseFile(const string &filename, size_t prefix, bool is_
   while (ifs) {
     string suffix;
     VariantKmerAssociation assoc;
-    //string trash; // tests pour ifs >> machin;
-    // Index alégé :
     ifs >> suffix >> assoc.rs_id >> assoc.kmer_rank >> assoc.in_genome;
-    // Index v1 : (à modifier) :
-    // Suffixe, rsid, chrom, variation, snp_pos, kmer_pos, nbr de kmers générés, ingenome
-    //ifs >> suffix >> assoc.rs_id >> trash >> trash >> trash >> trash >> assoc.kmer_rank  >> assoc.in_genome;
-    //trash.clear();
 
     if (ifs) {
       ++line;
@@ -217,38 +211,6 @@ void VariantKmerIndex::parseFile(const string &filename, size_t prefix, bool is_
     }
   }
 
-  // Test getline() : pas de différence.
-  /*string current_line = ""; // on crée la première ligne vide pour faire un truc comme isfirst 
-
-  while(getline(ifs, current_line)){
-    string suffix;
-    VariantKmerAssociation assoc;
-    string element;
-    vector<string> elements;
-
-    stringstream ss(current_line);
-    while(getline(ss, element, '\t')){
-      elements.push_back(element);
-    }
-    suffix = elements[0];
-    assoc.rs_id = elements[1];
-    assoc.kmer_rank = 0; // fixe pour l'instant
-    assoc.in_genome = false; // fixé pour l'instant
-    //cout << suffix << " " << assoc.rs_id << " " << assoc.kmer_rank << " " << assoc.in_genome << " " << endl;
-    //cout << current_line << endl;
-    if(is_first){
-      k2 = suffix.length();
-      cout << "Taille du suffixe : " << k2 << endl;
-      is_first = false;
-    } else {
-      if (suffix.length() != k2) {
-      ERROR_MSG("Badly formatted index file '" << filename << "' (line " << line << ": suffix '" << suffix << "' should have length " << k2 << ").");
-      }
-    }
-    // Ajoute les éléments dans l'index
-    index[prefix].emplace(suffix, assoc);
-  }*/
-  
   ifs.close();
 }
 
