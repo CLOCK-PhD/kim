@@ -97,7 +97,7 @@ AC_INIT([kim],
         [kim],
         [https://github.com/CLOCK-PhD/kim])
 
-PACKAGE_DESCRIPTION="Kim is a k-mer identification metric"
+PACKAGE_DESCRIPTION="Kim is a k-mer identification metric program."
 AC_SUBST([PACKAGE_DESCRIPTION])
 AC_DEFINE_UNQUOTED([PACKAGE_DESCRIPTION], ["${PACKAGE_DESCRIPTION}"], [Description of this package.])
 AC_DEFINE_UNQUOTED([BEGIN_KIM_NAMESPACE], [namespace kim {], [Starts the kim namespace.])
