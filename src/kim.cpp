@@ -201,7 +201,8 @@ int main(int argc, char **argv) {
     VariantKmerIndex kim_index(index_directory);
     cout << "Index loaded" << endl;
     //size_t k = kim_index.getKmerLength()+10; // +10 ?
-    size_t k = kim_index.getKmerLength() +1; // test : core dumped sans +1
+    size_t k = kim_index.getKmerLength() + 1; // test : core dumped sans +1
+    cout << "k = " << k << endl;
     map<VariantKmerIndex::VariantID_type, VariantIdentification> variants_map;
 
     // Process each input file
