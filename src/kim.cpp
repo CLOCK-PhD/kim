@@ -90,7 +90,7 @@
 #include <iostream>
 #include <map>
 #include "optionparser.h"
-#include "file_reader.h"
+#include "fastq_file_reader.h"
 #include "variant_kmer_index.h"
 #include "variant_identification.h"
 #include "config.h"
@@ -206,7 +206,7 @@ int main(int argc, char **argv) {
     // Process each input file
     for (int i = 0; i < parse.nonOptionsCount(); ++i) {
       cout << "Processing file '" << parse.nonOption(i) << "'" << endl;
-      FileReader reader(parse.nonOption(i), k);
+      FastqFileReader reader(parse.nonOption(i), k);
       // Process each k-mer from the current input file
       for (std::string kmer = reader.getNextKmer(); !kmer.empty(); kmer = reader.getNextKmer()) {
         //cout << "K-mer : " << kmer << endl;

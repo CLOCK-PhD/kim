@@ -95,11 +95,11 @@ AM_CXXFLAGS = -I@top_srcdir@ \
 
 bin_PROGRAMS = kim
 
-kim_SOURCES = \
-  file_reader.h file_reader.cpp \
-  kim.h kim.cpp \
-  optionparser.h \
-  variant_identification.h variant_identification.cpp \
+kim_SOURCES =						\
+  fastq_file_reader.h fastq_file_reader.cpp		\
+  kim.h kim.cpp						\
+  optionparser.h					\
+  variant_identification.h variant_identification.cpp	\
   variant_kmer_index.h variant_kmer_index.cpp
 
 MOSTLYCLEANFILES=*~

@@ -87,8 +87,8 @@
 *                                                                             *
 ******************************************************************************/
 
-#ifndef __FILE_READER_H__
-#define __FILE_READER_H__
+#ifndef __FASTQ_FILE_READER_H__
+#define __FASTQ_FILE_READER_H__
 
 #include <cstdlib>
 #include <string>
@@ -99,7 +99,7 @@ namespace kim {
   /**
    * Fastq file reader which allows to extract k-mers from reads.
    */
-  class FileReader: public std::ifstream {
+  class FastqFileReader: public std::ifstream {
 
   private:
 
@@ -132,7 +132,7 @@ namespace kim {
   public:
 
     /**
-     * Creates a (fastq) file reader.
+     * Creates a Fastq file reader.
      *
      * This internally calls the open method.
      *
@@ -143,12 +143,12 @@ namespace kim {
      * \param warn Activate (default) or deactivate warnings during
      * file processing.
      */
-    FileReader(const char *filename, size_t k, bool warn = true);
+    FastqFileReader(const char *filename, size_t k, bool warn = true);
 
     /**
      * Closes the file stream before destruction.
      */
-    ~FileReader();
+    ~FastqFileReader();
 
     /**
      * Get the filename associated to this reader.

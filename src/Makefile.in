@@ -192,8 +192,8 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_kim_OBJECTS = file_reader.$(OBJEXT) kim.$(OBJEXT) \
 	variant_identification.$(OBJEXT) variant_kmer_index.$(OBJEXT)
+am_kim_OBJECTS = fastq_file_reader.$(OBJEXT) kim.$(OBJEXT) \
 kim_OBJECTS = $(am_kim_OBJECTS)
 kim_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -211,7 +211,7 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/file_reader.Po ./$(DEPDIR)/kim.Po \
+am__depfiles_remade = ./$(DEPDIR)/fastq_file_reader.Po ./$(DEPDIR)/kim.Po \
 	./$(DEPDIR)/variant_identification.Po \
 	./$(DEPDIR)/variant_kmer_index.Po
 am__mv = mv -f
@@ -406,10 +406,10 @@ AM_CXXFLAGS = -I@top_srcdir@ \
               -DPACKAGE_DATADIR="\"$(pkgdatadir)\""
 
 kim_SOURCES = \
-  file_reader.h file_reader.cpp \
-  kim.h kim.cpp \
-  optionparser.h \
-  variant_identification.h variant_identification.cpp \
+  fastq_file_reader.h fastq_file_reader.cpp		\
+  kim.h kim.cpp						\
+  optionparser.h					\
+  variant_identification.h variant_identification.cpp	\
   variant_kmer_index.h variant_kmer_index.cpp
 
 MOSTLYCLEANFILES = *~
@@ -502,7 +502,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/file_reader.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fastq_file_reader.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/variant_identification.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/variant_kmer_index.Po@am__quote@ # am--include-marker
@@ -658,7 +658,7 @@ clean: clean-am
 clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
 
 distclean: distclean-am
-		-rm -f ./$(DEPDIR)/file_reader.Po
+	-rm -f ./$(DEPDIR)/fastq_file_reader.Po
 	-rm -f ./$(DEPDIR)/kim.Po
 	-rm -f ./$(DEPDIR)/variant_identification.Po
 	-rm -f ./$(DEPDIR)/variant_kmer_index.Po
@@ -707,7 +707,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-		-rm -f ./$(DEPDIR)/file_reader.Po
+	-rm -f ./$(DEPDIR)/fastq_file_reader.Po
 	-rm -f ./$(DEPDIR)/kim.Po
 	-rm -f ./$(DEPDIR)/variant_identification.Po
 	-rm -f ./$(DEPDIR)/variant_kmer_index.Po

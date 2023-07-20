@@ -87,7 +87,7 @@
 *                                                                             *
 ******************************************************************************/
 
-#include "file_reader.h"
+#include "fastq_file_reader.h"
 #include "config.h"
 
 #include <sstream>
@@ -101,14 +101,14 @@ BEGIN_KIM_NAMESPACE
 
 /////////////// Some stuff to handling parse error ///////////////
 
-class FileReaderParseError: public exception {
+class FastqFileReaderParseError: public exception {
 
 private:
   string s;
 
 public:
 
-  FileReaderParseError(FileReader &reader) {
+  FastqFileReaderParseError(FastqFileReader &reader) {
     if (reader.getFilename().empty()) return;
     stringstream ss;
     ss << "File '" << reader.getFilename() << "'"
@@ -123,7 +123,7 @@ public:
   }
 
   template <typename T>
-  inline FileReaderParseError &operator<<(const T &t) {
+  inline FastqFileReaderParseError &operator<<(const T &t) {
     stringstream ss;
     ss << t;
     s += ss.str();
@@ -142,23 +142,23 @@ public:
   }                             \
   (void) 0
 
-#define ERROR_MSG(msg)           \
-  FileReaderParseError e(*this); \
-  e << msg;                      \
+#define ERROR_MSG(msg)                          \
+  FastqFileReaderParseError e(*this);           \
+  e << msg;                                     \
   throw e
 
 //////////////////////////////////////////////////////////////////
 
 
-FileReader::FileReader(const char *filename, size_t k, bool warn) {
+FastqFileReader::FastqFileReader(const char *filename, size_t k, bool warn) {
   open(filename, k, warn);
 }
 
-FileReader::~FileReader() {
+FastqFileReader::~FastqFileReader() {
   ifs.close();
 }
 
-void FileReader::open(const char *filename, size_t k, bool warn) {
+void FastqFileReader::open(const char *filename, size_t k, bool warn) {
   if (ifs.is_open()) {
     ifs.close();
   }
@@ -179,15 +179,15 @@ void FileReader::open(const char *filename, size_t k, bool warn) {
   }
 }
 
-const string &FileReader::getFilename() const {
+const string &FastqFileReader::getFilename() const {
   return filename;
 }
 
-size_t FileReader::getFileLineNumber() const {
+size_t FastqFileReader::getFileLineNumber() const {
   return line + 1;
 }
 
-size_t FileReader::getFileColumnNumber() const {
+size_t FastqFileReader::getFileColumnNumber() const {
   return col + 1;
 }
 
@@ -226,7 +226,7 @@ uint8_t getIUPACNucleotide(char c) {
   }
 }
 
-char FileReader::nextVisibleCharacter() {
+char FastqFileReader::nextVisibleCharacter() {
   int c = -1;
   while (ifs && ((c = ifs.get()) <= 32)) {
     switch (c) {
@@ -248,7 +248,7 @@ char FileReader::nextVisibleCharacter() {
   return ((c != -1) ? c : 0);
 }
 
-const string &FileReader::getNextKmer() {
+const string &FastqFileReader::getNextKmer() {
   do {
     int c = nextVisibleCharacter();
     if (c) {
@@ -323,16 +323,16 @@ const string &FileReader::getNextKmer() {
   return getCurrentKmer();
 }
 
-const string &FileReader::getCurrentKmer() const {
+const string &FastqFileReader::getCurrentKmer() const {
   static const string empty_string;
   return (kmer_pos ? kmer : empty_string);
 }
 
-const string &FileReader::getCurrentRead() const {
+const string &FastqFileReader::getCurrentRead() const {
   return read_id;
 }
 
-size_t FileReader::getCurrentKmerRelativePosition() const {
+size_t FastqFileReader::getCurrentKmerRelativePosition() const {
   return kmer_pos;
 }
 
