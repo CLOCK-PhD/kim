@@ -100,6 +100,7 @@ kim_SOURCES =						\
   fastq_file_reader.h fastq_file_reader.cpp		\
   kim.h kim.cpp						\
   kim_exception.h					\
+  kim_settings.h kim_settings.cpp			\
   optionparser.h					\
   variant_identification.h variant_identification.cpp	\
   variant_kmer_index.h variant_kmer_index.cpp

@@ -87,191 +87,211 @@
 *                                                                             *
 ******************************************************************************/
 
-#ifndef __SORT_HELPER_H__
-#define __SORT_HELPER_H__
+#ifndef __SETTINGS_H__
+#define __SETTINGS_H__
 
-#include <vector>     // for std::vector
-#include <algorithm>  // for std::sort
-#include <numeric>    // for std::iota
-#include <utility>    // for std::swap
-#include <functional> // for std::less
-#include <cassert>    // for assert
-
+#include <kim_exception.h>
 
 namespace kim {
 
   /**
-   * A swap template wrapper around the standard swap template
-   * function.
-   *
-   * The standard swap template function used an explicit reference
-   * for its parameters but is incompatible with symbolic reference
-   * type (like in vector<bool>::reference for example).
-   *
-   * As an example, look the swap wrapper for
-   * std::vector<bool>::reference below.
-   *
-   * \param t1 The first parameter to swap.
-   *
-   * \param t2 The second parameter to swap.
+   * Bad k-mer identification metric program settings exception.
    */
-  template <typename reference>
-  void swap(reference t1, reference t2) {
-    std::swap(t1, t2);
-  }
-
-
-  /**
-   * Specialization of the swap wrapper template fucntion for
-   * std::vector<bool>::reference parameters.
-   *
-   * \param t1 The first bit to swap.
-   *
-   * \param t2 The second bit to swap.
-   */
-  template <>
-  void swap(std::vector<bool>::reference t1, std::vector<bool>::reference t2) {
-    std::vector<bool>::swap(t1, t2);
-  }
-
-  /**
-   * Helper class to sort a container using another container order.
-   * The core code comes from:
-   * https://stackoverflow.com/questions/17074324/how-can-i-sort-two-vectors-in-the-same-way-with-criteria-that-uses-only-one-of
-   *
-   * Elements of type T must be comparable using the Compare functor
-   * template parameter.
-   *
-   * The Container must be having operator[](size_t) and size() methods.
-   */
-  template <typename T,
-            typename Container = std::vector<T>,
-            typename Compare = std::less<T> >
-  class SortHelper {
-
-  private:
-
-    // The container of reference elements used to sort
-    const Container &_ref;
-
-    // The permutation used to sort any container
-    std::vector<size_t> _permutation;
-
-    // The comparison functor
-    const Compare _compare;
+  class BadSettingsException: public Exception {
 
   public:
 
     /**
-     * Constructs an helper using the given container as reference.
+     * Create an exception dedicated to bad settings.
      *
-     * \param container The container used as a reference.
+     * \param msg The initial message of this exception.
      */
-    SortHelper(const Container &container):
-      _ref(container), _permutation(), _compare() {
-      reset();
+    inline BadSettingsException(const std::string &msg = ""): Exception(msg) {}
+
+  };
+
+
+  /**
+   * The k-mer identification metric index settings.
+   */
+  class Settings {
+
+  private:
+
+    // resp. length, prefix length and suffix length of the k-mers.
+    size_t _k, _p, _s;
+
+    // Emit warning messages or not.
+    bool _warn;
+
+    // The settings can't be modified if _frozen is set to true.
+    bool _frozen;
+
+  public:
+
+    /**
+     * Create a new Settings instance.
+     *
+     * If k and p have their default value, no verification of
+     * settings validity is performed. Thus it is a good practice to
+     * ensure validity once settings are corrects (see valid()
+     * method).
+     *
+     * \param k The length of the k-mers.
+     *
+     * \param p The length of the k-mers prefixes.
+     *
+     * \param warn Activate or deactivate warnings.
+     *
+     * \param freeze Do freeze or not the settings.
+     */
+    Settings(size_t k = 0, size_t p = 0, bool warn = true, bool freeze = false);
+
+    /**
+     * Check whether settings are valid or not.
+     *
+     * \return Returns true if and only if settings are valid.
+     */
+    inline bool valid() const {
+      return ((_p > 0) && (_k > _p) && (_p + _s == _k));
     }
 
     /**
-     * Reinitialize the permutation used to sort any container.
+     * Get the frozen state of current settings.
      *
-     * This must be called if the reference container changes after the
-     * helper has been created.
+     * \see See freeze() and unfreeze() methods.
+     *
+     * \return Returns true if the settings are frozen and false
+     * otherwise.
      */
-    void reset() {
-      _permutation.resize(_ref.size());
-      std::iota(_permutation.begin(), _permutation.end(), 0);
-      std::sort(_permutation.begin(), _permutation.end(), *this);
+    inline bool frozen() const {
+      return _frozen;
     }
 
     /**
-     * Get the permutation used ot sort any container with this helper.
+     * Freeze the current settings in order to prevent any further
+     * modification.
      *
-     * \return Returns the permutation used ot sort any container with
-     * this helper.
+     * If settings are not valid, then a BadSettingsException exception is thrown.
+     *
+     * \see See unfreeze(), frozen() and valid() methods.
      */
-    const std::vector<size_t> &permutation() const {
-      return _permutation;
+    void freeze();
+
+    /**
+     * Unfreeze the current settings in order to allow modifications.
+     *
+     * \see See freeze() and frozen() methods.
+     */
+    inline void unfreeze() {
+      _frozen = false;
     }
 
     /**
-     * Get the reference container used ot sort any container with this
-     * helper.
+     * Get the length of the k-mers (thus the value of k).
      *
-     * \return Returns the reference container used ot sort any
-     * container with this helper.
+     * \remark No verification about settings validity is performed.
+     *
+     * \see See the k() method.
+     *
+     * \return Returns the length of the k-mers.
      */
-    const Container &reference() const {
-      return _ref;
+    inline size_t getKmerLength() const {
+      return _k;
     }
 
     /**
-     * This helper can be used as a comparison functor between two
-     * positions (based on the reference container).
+     * Get the length of the k-mers (thus the value of k).
      *
-     * \param i The position of the first element to compare in the
-     * reference container.
+     * \remark This is a shortcut for the getKmerLength() method.
      *
-     * \param j The position of the second element to compare in the
-     * reference container.
-     *
-     * \return Returns the (indirect) comparison of reference element
-     * at rank i against reference element at rank j.
+     * \return Returns the length of the k-mers.
      */
-    bool operator()(size_t i, size_t j) {
-      return _compare(_ref[i], _ref[j]);
+    inline size_t k() const {
+      return getKmerLength();
     }
 
     /**
-     * Sort the given container using the reference container order.
+     * Set the length of the k-mers (thus the value of k).
      *
-     * The elements of type reference must be swappable.
+     * \remark The given value can't be less than 2 otherwise a
+     * BadSettingsException is thrown with an explicit message. If the
+     * given value is less or equal to the actual prefix size plus
+     * one, then the prefix size is set to k minus one (and a warning
+     * is possibly emitted).
      *
-     * The OtherContainer must be a container having operator[](size_t)
-     * and size() methods and must be of the same size than the
-     * reference container.
+     * If the settings are frozen, any attempt to change the length of
+     * the k-mers throws a BadSettingsException with an explicit
+     * message.
      *
-     * \param container The container to sort.
+     * \param k The length of the k-mers.
+     *
+     * \see See warn() methods.
      */
-    template <typename U, typename OtherContainer = std::vector<U>, typename reference = U&>
-    void sort(OtherContainer &container) const {
-      sort<U, OtherContainer, reference>(container, _permutation);
+    void setKmerLength(size_t k);
+
+    /**
+     * Get the prefix length of the k-mers.
+     *
+     * \remark No verification about settings validity is performed.
+     *
+     * \return Returns the length of the prefixes of the k-mers.
+     */
+    inline size_t getKmerPrefixLength() const {
+      return _p;
     }
 
     /**
-     * Sort the given container using the given permutation.
+     * Set the length of the prefixes of the k-mers.
      *
-     * The elements of type reference must be swappable.
+     * \remark The given value can't be zero otherwise a
+     * BadSettingsException is thrown with an explicit message. If the
+     * given value plus one is greater than k, then the prefix size is
+     * set to k minus one (and a warning is possibly emitted).
      *
-     * The OtherContainer must be a container having
-     * operator[](size_t) and size() methods and must be of the same
-     * size than the permutation vector.
+     * If the settings are frozen, any attempt to change the length of
+     * the prefixes of the k-mers throws a BadSettingsException with
+     * an explicit message.
      *
-     * \param container The container to sort.
+     * \param p The length of the prefixes of the k-mers.
+     *
+     * \see See warn() methods.
      */
-    template <typename U, typename OtherContainer = std::vector<U>, typename reference = U&>
-    static void sort(OtherContainer &container, const std::vector<size_t> &permutation) {
-      assert(container.size() == permutation.size());
-      std::vector<bool> placed(permutation.size(), false);
-      for (size_t i = 0; i < container.size(); ++i) {
-        if (!placed[i]) {
-          size_t actual_pos = i;
-          size_t final_pos = permutation[i];
-          while (i != final_pos) {
-            // Placing the element at the actual position to its final
-            // position.
-            kim::swap<reference>(container[actual_pos], container[final_pos]);
-            // This element at this position must not move anymore.
-            placed[final_pos] = true;
-            // Thus the element at the actual position (which was at the final
-            // position) needs to be processed too.
-            actual_pos = final_pos;
-            final_pos = permutation[final_pos];
-          }
-          placed[i] = true;
-        }
-      }
+    void setKmerPrefixLength(size_t p);
+
+    /**
+     * Get the length of the suffixes of the k-mers.
+     *
+     * This value is simply the difference between the length of the
+     * k-mers and the length of the prefixes of the k-mers (the
+     * difference is computed when the length or the prefix length of
+     * the k-mers is updated to avoid further computations).
+     *
+     * \remark No verification about settings validity is performed.
+     *
+     * \return Returns the length of the suffixes of the k-mers.
+     */
+    inline size_t getKmerSuffixLength() const {
+      return _s;
     }
+
+    /**
+     * Get the warn state of current settings.
+     *
+     * \return Returns true if current settings allows warning to be
+     * emitted.
+     */
+    inline bool warn() const {
+      return _warn;
+    }
+
+    /**
+     * Set the warning status for this settings.
+     *
+     * \param status Waring are enabled only if this parameter is set
+     * to true.
+     */
+    void warn(bool status);
 
   };
 
@@ -281,4 +301,3 @@ namespace kim {
 // Local Variables:
 // mode:c++
 // End:
-

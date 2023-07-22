@@ -87,198 +87,83 @@
 *                                                                             *
 ******************************************************************************/
 
-#ifndef __SORT_HELPER_H__
-#define __SORT_HELPER_H__
+#include "kim_settings.h"
 
-#include <vector>     // for std::vector
-#include <algorithm>  // for std::sort
-#include <numeric>    // for std::iota
-#include <utility>    // for std::swap
-#include <functional> // for std::less
-#include <cassert>    // for assert
+#include "config.h"
 
+#include <iostream>
 
-namespace kim {
+using namespace std;
 
-  /**
-   * A swap template wrapper around the standard swap template
-   * function.
-   *
-   * The standard swap template function used an explicit reference
-   * for its parameters but is incompatible with symbolic reference
-   * type (like in vector<bool>::reference for example).
-   *
-   * As an example, look the swap wrapper for
-   * std::vector<bool>::reference below.
-   *
-   * \param t1 The first parameter to swap.
-   *
-   * \param t2 The second parameter to swap.
-   */
-  template <typename reference>
-  void swap(reference t1, reference t2) {
-    std::swap(t1, t2);
+BEGIN_KIM_NAMESPACE
+
+Settings::Settings(size_t k, size_t p, bool warn, bool freeze):
+  _k(0), _p(0), _s(0),
+  _warn(false), _frozen(false) {
+  if (k || p) {
+    setKmerLength(k);
+    _warn = warn;
+    setKmerLength(p);
   }
-
-
-  /**
-   * Specialization of the swap wrapper template fucntion for
-   * std::vector<bool>::reference parameters.
-   *
-   * \param t1 The first bit to swap.
-   *
-   * \param t2 The second bit to swap.
-   */
-  template <>
-  void swap(std::vector<bool>::reference t1, std::vector<bool>::reference t2) {
-    std::vector<bool>::swap(t1, t2);
-  }
-
-  /**
-   * Helper class to sort a container using another container order.
-   * The core code comes from:
-   * https://stackoverflow.com/questions/17074324/how-can-i-sort-two-vectors-in-the-same-way-with-criteria-that-uses-only-one-of
-   *
-   * Elements of type T must be comparable using the Compare functor
-   * template parameter.
-   *
-   * The Container must be having operator[](size_t) and size() methods.
-   */
-  template <typename T,
-            typename Container = std::vector<T>,
-            typename Compare = std::less<T> >
-  class SortHelper {
-
-  private:
-
-    // The container of reference elements used to sort
-    const Container &_ref;
-
-    // The permutation used to sort any container
-    std::vector<size_t> _permutation;
-
-    // The comparison functor
-    const Compare _compare;
-
-  public:
-
-    /**
-     * Constructs an helper using the given container as reference.
-     *
-     * \param container The container used as a reference.
-     */
-    SortHelper(const Container &container):
-      _ref(container), _permutation(), _compare() {
-      reset();
-    }
-
-    /**
-     * Reinitialize the permutation used to sort any container.
-     *
-     * This must be called if the reference container changes after the
-     * helper has been created.
-     */
-    void reset() {
-      _permutation.resize(_ref.size());
-      std::iota(_permutation.begin(), _permutation.end(), 0);
-      std::sort(_permutation.begin(), _permutation.end(), *this);
-    }
-
-    /**
-     * Get the permutation used ot sort any container with this helper.
-     *
-     * \return Returns the permutation used ot sort any container with
-     * this helper.
-     */
-    const std::vector<size_t> &permutation() const {
-      return _permutation;
-    }
-
-    /**
-     * Get the reference container used ot sort any container with this
-     * helper.
-     *
-     * \return Returns the reference container used ot sort any
-     * container with this helper.
-     */
-    const Container &reference() const {
-      return _ref;
-    }
-
-    /**
-     * This helper can be used as a comparison functor between two
-     * positions (based on the reference container).
-     *
-     * \param i The position of the first element to compare in the
-     * reference container.
-     *
-     * \param j The position of the second element to compare in the
-     * reference container.
-     *
-     * \return Returns the (indirect) comparison of reference element
-     * at rank i against reference element at rank j.
-     */
-    bool operator()(size_t i, size_t j) {
-      return _compare(_ref[i], _ref[j]);
-    }
-
-    /**
-     * Sort the given container using the reference container order.
-     *
-     * The elements of type reference must be swappable.
-     *
-     * The OtherContainer must be a container having operator[](size_t)
-     * and size() methods and must be of the same size than the
-     * reference container.
-     *
-     * \param container The container to sort.
-     */
-    template <typename U, typename OtherContainer = std::vector<U>, typename reference = U&>
-    void sort(OtherContainer &container) const {
-      sort<U, OtherContainer, reference>(container, _permutation);
-    }
-
-    /**
-     * Sort the given container using the given permutation.
-     *
-     * The elements of type reference must be swappable.
-     *
-     * The OtherContainer must be a container having
-     * operator[](size_t) and size() methods and must be of the same
-     * size than the permutation vector.
-     *
-     * \param container The container to sort.
-     */
-    template <typename U, typename OtherContainer = std::vector<U>, typename reference = U&>
-    static void sort(OtherContainer &container, const std::vector<size_t> &permutation) {
-      assert(container.size() == permutation.size());
-      std::vector<bool> placed(permutation.size(), false);
-      for (size_t i = 0; i < container.size(); ++i) {
-        if (!placed[i]) {
-          size_t actual_pos = i;
-          size_t final_pos = permutation[i];
-          while (i != final_pos) {
-            // Placing the element at the actual position to its final
-            // position.
-            kim::swap<reference>(container[actual_pos], container[final_pos]);
-            // This element at this position must not move anymore.
-            placed[final_pos] = true;
-            // Thus the element at the actual position (which was at the final
-            // position) needs to be processed too.
-            actual_pos = final_pos;
-            final_pos = permutation[final_pos];
-          }
-          placed[i] = true;
-        }
-      }
-    }
-
-  };
-
+  _warn = warn;
+  _frozen = freeze;
 }
 
-#endif
-// Local Variables:
-// mode:c++
-// End:
+void Settings::freeze() {
+  if (!valid()) {
+    throw BadSettingsException("Settings aren't valid, thus calling the Settings::freeze() method is not allowed.");
+  }
+  _frozen = true;
+}
 
+void Settings::setKmerLength(size_t k) {
+  if (frozen()) {
+    throw BadSettingsException("Settings are frozen and calling the Settings::setKmerLength() method is not allowed.");
+  }
+  if (k < 2) {
+    BadSettingsException e;
+    e << "Can't set the length of the k-mers to " << k
+      << " (length must be greater or equal to 2).";
+    throw e;
+  }
+  _k = k;
+  if (_p + 1 >= _k) {
+    if (_warn) {
+      cerr << "The length of k-mers is set to " << _k
+           << " but current length of the prefixes was " << _p << "."
+           << " Setting the length of the prefixes to " << (_k - 1)
+           << "." << endl;
+    }
+    _p = _k - 1;
+  }
+  _s = _k - _p;
+}
+
+void Settings::setKmerPrefixLength(size_t p) {
+  if (frozen()) {
+    throw BadSettingsException("Settings are frozen and calling the Settings::setKmerPrefixLength() method is not allowed.");
+  }
+  if (p == 0) {
+    throw BadSettingsException("Can't set the prefix length of the k-mers to 0 (it must be a strictly positive value).");
+  }
+  _p = p;
+  if (_p + 1 >= _k) {
+    if (_warn) {
+      cerr << "The length of k-mers is set to " << _k
+           << " but wanted length of the prefixes is " << _p << "."
+           << " Setting the length of the prefixes to " << (_k - 1)
+           << "." << endl;
+    }
+    _p = _k - 1;
+  }
+  _s = _k - _p;
+}
+
+void Settings::warn(bool status) {
+  if (frozen()) {
+    throw BadSettingsException("Settings are frozen and calling the Settings::warn() method is not allowed.");
+  }
+  _warn = status;
+}
+
+END_KIM_NAMESPACE
