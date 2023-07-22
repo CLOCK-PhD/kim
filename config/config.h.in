@@ -117,6 +117,12 @@
 /* Define to 1 if you have the <alloca.h> header file. */
 #undef HAVE_ALLOCA_H
 
+/* Define to 1 in order to Use BitMagic library */
+#undef HAVE_BITMAGIC
+
+/* define if the compiler supports basic C++17 syntax */
+#undef HAVE_CXX17
+
 /* Define to 1 if you have the <dirent.h> header file. */
 #undef HAVE_DIRENT_H
 

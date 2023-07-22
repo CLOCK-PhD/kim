@@ -310,6 +310,8 @@ dnl Checks for programs.
 AC_PROG_INSTALL
 AC_PROG_CC
 AC_PROG_CXX
+AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
+
 AC_PROG_SED
 
 AC_REVISION([m4_esyscmd_s([./config/git-version-gen --timestamp --force-update configure.ac])])
@@ -369,6 +371,55 @@ AS_IF([test -z "${enable_debug}" -o "x${enable_debug}" = "xno"],
       [CXXFLAGS="${CXXFLAGS} -g -O0 -fno-inline"])
 
 dnl Checks for libraries.
+
+dnl ================================ BitMagic =================================
+
+dnl Add option --without-included-BitMagic (default --with-included-BitMagic=check)
+AC_ARG_WITH([included-BitMagic],
+            [AS_HELP_STRING([--without-included-BitMagic],
+                            [don't use the BitMagic library included here])],
+            [],
+            [with_included_BitMagic="check"])
+
+dnl Add option --with-BitMagic-path=PATH (default --without-BitMagic-path)
+AC_ARG_WITH([BitMagic-path],
+            [AS_HELP_STRING([--with-BitMagic-path=DIR],
+                            [search for BitMagic headers in DIR])],
+            [BitMagic_CFLAGS="-I\"${with_BitMagic_path}\""],
+            [with_BitMagic_path=""])
+
+dnl Check if we need included BitMagic library.
+BM_OK=0
+AS_IF([test "x${with_included_BitMagic}" == "xcheck"],
+      [AS_IF([test "x${with_BitMagic_path}" != "x"],
+             [with_included_BitMagic="no"],
+             [with_included_BitMagic="yes"])])
+
+AS_IF([test "x${with_included_BitMagic}" == "xyes"],
+      [AS_IF([test "x${with_BitMagic_path}" != "x"],
+             [AC_MSG_FAILURE([You can't use both --with-included-BitMagic and --with-BitMagic-path options])],
+             [BM_OK=1
+              BitMagic_CXXFLAGS="${BitMagic_CXXFLAGS} -I\"\$(abs_top_srcdir)/BitMagic/src/\""])],
+      [AS_IF([test "x${with_BitMagic_path}" != "x"],
+             [BM_OK=1
+              BitMagic_CXXFLAGS="${BitMagic_CXXFLAGS} -I\"${with_BitMagic_path}\""],
+             [AC_CHECK_HEADER([bm.h],
+                              [BM_OK=1],
+                              [AC_MSG_FAILURE([The kim program requires the BitMagic library. You should use the included library using --with-included-BitMagic configure option])],
+                              )])])
+
+AS_IF([test "${BM_OK}" == "1"],
+      [AC_DEFINE([HAVE_BITMAGIC], [1], [Define to 1 in order to Use BitMagic library])],
+      [AC_MSG_FAILURE([
+Unable to find a preinstalled BitMagic library.
+You should run the configure script again with
+'--with-included-BitMagic' option.
+])])
+
+CXXFLAGS="${CXXFLAGS} ${BitMagic_CXXFLAGS}"
+
+dnl ============================ End of BitMagic ==============================
+
 
 dnl Checks for header files.
 AC_HEADER_STDC
