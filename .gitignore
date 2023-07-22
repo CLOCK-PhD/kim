@@ -12,6 +12,12 @@ src/.deps
 src/kim
 src/*link
 
+test/test_sort_helper
+tests/.deps/
+tests/test_sort_helper
+tests/*.log
+tests/*.trs
+
 resources/kim-*.stats
 
 kim_index/
