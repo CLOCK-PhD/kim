@@ -883,6 +883,7 @@ enable_doxygen_chi
 enable_doxygen_html
 enable_doxygen_ps
 enable_doxygen_pdf
+enable_debug
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1544,6 +1545,9 @@ Optional Features:
   --disable-doxygen-html  don't generate doxygen plain HTML documentation
   --enable-doxygen-ps     generate doxygen PostScript documentation
   --disable-doxygen-pdf   don't generate doxygen PDF documentation
+  --enable-debug[=ARG]    Compiles without code optimization and with debug
+                          flag (and enables assertion too).
+
 
 Some influential environment variables:
   CC          C compiler command
@@ -7000,6 +7004,24 @@ fi
 
 
 ISODATE=`date +%Y-%m-%d`
+
+
+CXXFLAGS=
+
+# Check whether --enable-debug was given.
+if test "${enable_debug+set}" = set; then :
+  enableval=$enable_debug;
+fi
+
+
+if test -z "${enable_debug}" -o "x${enable_debug}" = "xno"; then :
+
+$as_echo "#define NDEBUG /**/" >>confdefs.h
+
+       CXXFLAGS="${CXXFLAGS} -O3"
+else
+  CXXFLAGS="${CXXFLAGS} -g -O0 -fno-inline"
+fi
 
 
 

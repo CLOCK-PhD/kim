@@ -356,6 +356,18 @@ dnl ============================= End of Doxygen ==============================
 ISODATE=`date +%Y-%m-%d`
 AC_SUBST([ISODATE])
 
+CXXFLAGS=
+
+dnl Add option --enable-debug (default to --disable-debug)
+AC_ARG_ENABLE([debug],
+              [AS_HELP_STRING([--enable-debug@<:@=ARG@:>@],
+                              [Compiles without code optimization and with debug flag (and enables assertion too).])])
+
+AS_IF([test -z "${enable_debug}" -o "x${enable_debug}" = "xno"],
+      [AC_DEFINE([NDEBUG],[],[Remove assertion checking])
+       CXXFLAGS="${CXXFLAGS} -O3"],
+      [CXXFLAGS="${CXXFLAGS} -g -O0 -fno-inline"])
+
 dnl Checks for libraries.
 
 dnl Checks for header files.
