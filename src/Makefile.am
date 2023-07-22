@@ -87,17 +87,19 @@
 #                                                                             #
 ###############################################################################
 
-AM_CXXFLAGS = -I@top_srcdir@ \
-              -DCXX="\"$(CXX)\"" \
-              -DARCH="\"$(build_cpu)\"" \
-              -DOS="\"$(build_os)\"" \
-              -DPACKAGE_DATADIR="\"$(pkgdatadir)\""
+AM_CXXFLAGS =				\
+  -I@top_srcdir@			\
+  -DCXX="\"$(CXX)\""			\
+  -DARCH="\"$(build_cpu)\""		\
+  -DOS="\"$(build_os)\""		\
+  -DPACKAGE_DATADIR="\"$(pkgdatadir)\""
 
 bin_PROGRAMS = kim
 
 kim_SOURCES =						\
   fastq_file_reader.h fastq_file_reader.cpp		\
   kim.h kim.cpp						\
+  kim_exception.h					\
   optionparser.h					\
   variant_identification.h variant_identification.cpp	\
   variant_kmer_index.h variant_kmer_index.cpp

@@ -399,15 +399,18 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CXXFLAGS = -I@top_srcdir@ \
-              -DCXX="\"$(CXX)\"" \
-              -DARCH="\"$(build_cpu)\"" \
-              -DOS="\"$(build_os)\"" \
-              -DPACKAGE_DATADIR="\"$(pkgdatadir)\""
+AM_CXXFLAGS = \
+  -I@top_srcdir@			\
+  -DCXX="\"$(CXX)\""			\
+  -DARCH="\"$(build_cpu)\""		\
+  -DOS="\"$(build_os)\""		\
+  -DPACKAGE_DATADIR="\"$(pkgdatadir)\""
 
 kim_SOURCES = \
+  bounded_size_string.h bounded_size_string.cpp		\
   fastq_file_reader.h fastq_file_reader.cpp		\
   kim.h kim.cpp						\
+  kim_exception.h					\
   optionparser.h					\
   variant_identification.h variant_identification.cpp	\
   variant_kmer_index.h variant_kmer_index.cpp
