@@ -197,6 +197,24 @@ AC_COPYRIGHT([
 
 AC_CONFIG_SRCDIR([src/kim.cpp])
 
+m4_define([lib_version], [m4_esyscmd_s([cat ./config/version | grep "^[ ]*LIB_VERSION[ ]*:" | sed 's,^[^:]*:[ ]*\(.*\)$,\1,'])])
+
+LIB_VERSION=lib_version
+
+m4_define([lib_version_ext], [m4_esyscmd_s([cat ./config/version | grep "^[ ]*LIB_VERSION[ ]*:" | sed 's,^[^:]*:[ ]*\(.*\)$,\1,' | tr ':' '.'])])
+
+LIB_VERSION_EXT=lib_version_ext
+
+dnl LIB_VERSION is not the release number.
+dnl Please read libtool documentation about versionning
+
+LIBNAME=lib${PACKAGE_NAME}
+AC_SUBST([LIBNAME])
+AC_SUBST([VERSION])
+AC_SUBST([LIB_VERSION])
+AC_SUBST([LIB_VERSION_EXT])
+AC_DEFINE_UNQUOTED([LIB_VERSION],["${LIB_VERSION_EXT}"],[Libtool version string])
+
 AC_CONFIG_AUX_DIR([config])
 dnl create a config.h file (Automake will add -DHAVE_CONFIG_H)
 AC_CONFIG_HEADERS([config/config.h])
@@ -301,6 +319,7 @@ AH_BOTTOM([
 dnl Every other copy of the package version number gets its value from here
 AM_INIT_AUTOMAKE([foreign no-texinfo.tex])
 AM_SILENT_RULES([yes])
+AC_PROG_LIBTOOL
 
 AC_CONFIG_MACRO_DIR([config/m4])
 
@@ -355,10 +374,15 @@ AM_CONDITIONAL([BUILD_DOC_MAN], [test ${DX_FLAG_man} = 1])
 
 dnl ============================= End of Doxygen ==============================
 
+LT_INIT
+LT_LANG([C++])
+LT_PATH_LD
+
 ISODATE=`date +%Y-%m-%d`
 AC_SUBST([ISODATE])
 
 CXXFLAGS=
+AC_LANG([C++])
 
 dnl Add option --enable-debug (default to --disable-debug)
 AC_ARG_ENABLE([debug],

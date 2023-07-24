@@ -22,6 +22,7 @@ resources/kim-*.stats
 
 kim_index/
 
+libtool
 Makefile
 *~
 *.o

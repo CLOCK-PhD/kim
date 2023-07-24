@@ -2121,3 +2121,8 @@ AC_SUBST([am__untar])
 
 m4_include([config/m4/ax_compare_version.m4])
 m4_include([config/m4/ax_prog_doxygen.m4])
+m4_include([config/m4/libtool.m4])
+m4_include([config/m4/ltoptions.m4])
+m4_include([config/m4/ltsugar.m4])
+m4_include([config/m4/ltversion.m4])
+m4_include([config/m4/lt~obsolete.m4])
