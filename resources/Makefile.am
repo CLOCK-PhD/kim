@@ -89,17 +89,17 @@
 
 STATS_FILE = @PACKAGE@-@PACKAGE_VERSION@.stats
 
-dist_pkgdata_DATA =         \
-  kim.bash_completion    \
+dist_pkgdata_DATA =	\
+  kim.bash_completion	\
   $(STATS_FILE)
 
 
 force-renew:
 
 $(STATS_FILE): force-renew
-	@echo "# $@ #" | sed 'h;s/./#/g;p;x;p;x' > "$@"
-	@echo >> "$@"
-	@TMPFILE=$$(mktemp -u);							\
+	$(AM_V_at)echo "# $@ #" | sed 'h;s/./#/g;p;x;p;x' > "$@"
+	$(AM_V_at)echo >> "$@"
+	$(AM_V_at)TMPFILE=$$(mktemp -u);					\
 	git ls-tree --name-only -r  HEAD "$(abs_top_srcdir)" > $${TMPFILE};	\
 	echo "CLoC summary" | sed 'h;s/./=/g;p;x;p;x' >> "$@" ;			\
 	echo >> "$@";								\
@@ -122,11 +122,11 @@ $(STATS_FILE): force-renew
 	echo >> "$@";								\
 	printf "%.78d\n" | tr 0 - >> "$@";					\
 	echo >> "$@";								\
-	cat "$@";								\
-	rm $${TMPFILE}
+	$(RM) $${TMPFILE}
+	$(AM_V_at)cat "$@"
 
 update-stats:
-	@rm -f $(STATS_FILE)
+	$(AM_V_at)rm -f $(STATS_FILE)
 	$(MAKE) $(AM_MAKEFLAGS) $(STATS_FILE)
 
 

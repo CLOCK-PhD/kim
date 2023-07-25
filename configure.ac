@@ -319,6 +319,8 @@ AH_BOTTOM([
 dnl Every other copy of the package version number gets its value from here
 AM_INIT_AUTOMAKE([foreign no-texinfo.tex])
 AM_SILENT_RULES([yes])
+
+dnl Using libtool
 AC_PROG_LIBTOOL
 
 AC_CONFIG_MACRO_DIR([config/m4])
@@ -340,6 +342,16 @@ AC_SUBST(ARCH)
 
 AC_PATH_PROG([CLOC], [cloc])
 AC_PATH_PROG([OHCOUNT], [ohcount])
+AC_PATH_PROG([DEB_BUILDER], [dpkg])
+MAKE_RELEASE=true
+AS_IF([test -z "${DEB_BUILDER}"],
+      [MAKE_RELEASE=false
+       AC_MSG_WARN([The 'dpkg' program could not be found. This isn't critical, but it means that you won't be able to build releases.])])
+AM_CONDITIONAL([MAKE_RELEASE], [${MAKE_RELEASE}])
+hacked_prefix="${HACKED_PREFIX:-${prefix}}"
+AS_IF([test "x${hacked_prefix}" == "xNONE"],
+      [hacked_prefix=\"${ac_default_prefix}\"])
+AC_SUBST([hacked_prefix])
 
 dnl ================================= Doxygen =================================
 
@@ -362,11 +374,11 @@ DX_INIT_DOXYGEN([${PACKAGE_NAME}], [doxygen.cfg], [docs])
 
 AS_IF([test -z "${DX_DOXYGEN}"],
       [BUILD_DOC=false
-       AC_MSG_WARN([The 'doxygen' program cound not be found. This isn't critical, but it means that you won't be able to create the documentation.])],
+       AC_MSG_WARN([The 'doxygen' program cound not be found. This isn't critical, but it means that you won't be able to create the documentation and thus to make releases.])],
       [BUILD_DOC=true
       DX_DOXYGEN_VERSION=`${DX_DOXYGEN} --version | cut -d' ' -f1`
       AX_COMPARE_VERSION([${DX_DOXYGEN_VERSION}],[lt],[${DX_MIN_VERSION}],
-                         [AC_MSG_WARN([Your version of the 'doxygen' program is quite old (v. ${DX_DOXYGEN_VERSION}) and the generation of the documentation may fail or the result mays look bad. This isn't critical, but it means that you won't be able to create a proper API documentation.])])])
+                         [AC_MSG_WARN([Your version of the 'doxygen' program is quite old (v. ${DX_DOXYGEN_VERSION}) and the generation of the documentation may fail or the result mays look bad. This isn't critical, but it means that you won't be able to create a proper API documentation and thus to make correct releases.])])])
 
 AM_CONDITIONAL([BUILD_DOC], [${BUILD_DOC}])
 AM_COND_IF([BUILD_DOC], [AC_CONFIG_FILES([doc/doxygen.cfg doc/Makefile])])
@@ -471,5 +483,8 @@ AC_CONFIG_FILES([
   Makefile src/Makefile
   tests/Makefile
   resources/Makefile
+  packaging/Makefile
+  packaging/postinst packaging/prerm
+  packaging/control packaging/libkim.pc
 ])
 AC_OUTPUT

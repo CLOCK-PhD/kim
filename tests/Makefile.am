@@ -96,7 +96,8 @@ AM_CXXFLAGS =				\
   -DPACKAGE_DATADIR="\"$(pkgdatadir)\""
 
 check_PROGRAMS = test_sort_helper
-test_sort_helper_SOURCES = test_sort_helper.cpp ../sort_helper.h
+test_sort_helper_SOURCES = test_sort_helper.cpp
+test_sort_helper_LDADD = ../src/libkim.la
 
 TESTS = $(check_PROGRAMS)
 

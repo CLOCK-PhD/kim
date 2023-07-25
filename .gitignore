@@ -8,6 +8,11 @@ config/stamp-h1
 doc/docs
 doc/doxygen.cfg
 
+packaging/control
+packaging/postinst
+packaging/prerm
+packaging/libkim*.pc
+
 src/.deps
 src/kim
 src/*link
@@ -22,8 +27,16 @@ resources/kim-*.stats
 
 kim_index/
 
+kim_*.deb
+kim-*.tar.gz
 libtool
 Makefile
 *~
 *.o
+*.lo
+*.la
+.libs/
+*.gcda
+*.gcno
+
 

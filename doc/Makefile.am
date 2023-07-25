@@ -131,7 +131,7 @@ install-data-hook: $(EXTRA_DATA)
 	  fi; \
 	done | \
 	while read file; do \
-	  dest=$(DESTDIR)$(docdir)/$$(dirname "$${file#$(DX_DOCDIR)/}"); \
+	  dest="$(DESTDIR)$(docdir)/$$(dirname "$${file#$(DX_DOCDIR)/}")"; \
 	  echo " $(INSTALL_DATA) '$$file' '$$dest'"; \
 	  $(INSTALL_DATA) "$$file" "$$dest" || exit $$?; \
 	done
@@ -139,7 +139,7 @@ install-data-hook: $(EXTRA_DATA)
 uninstall-hook:
 	@$(NORMAL_UNINSTALL)
 	$(AM_V_at)list='$(EXTRA_DATA)'; test -n "$(docdir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	files=`for p in $$list; do echo "$$p"; done | sed -e 's|^.*/||'`; \
 	dir='$(DESTDIR)$(docdir)'; \
 	test -z "$$files" \
 	|| { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \

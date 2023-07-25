@@ -94,16 +94,51 @@ AM_CXXFLAGS =				\
   -DOS="\"$(build_os)\""		\
   -DPACKAGE_DATADIR="\"$(pkgdatadir)\""
 
-bin_PROGRAMS = kim
+library_includedir = @includedir@/@PACKAGE@-@VERSION@
+library_include_HEADERS =	\
+  fastq_file_reader.h		\
+  kim.h				\
+  kim_exception.h		\
+  kim_settings.h		\
+  sort_helper.h                 \
+  variant_identification.h	\
+  variant_kmer_index.h
 
-kim_SOURCES =						\
-  fastq_file_reader.h fastq_file_reader.cpp		\
-  kim.h kim.cpp						\
-  kim_exception.h					\
-  kim_settings.h kim_settings.cpp			\
-  optionparser.h					\
-  variant_identification.h variant_identification.cpp	\
+# Bug fix for path with spaces
+bindir="@bindir@"
+libdir="@libdir@"
+# End of bug fix
+
+lib_LTLIBRARIES = libkim.la
+
+libkim_ladir = @abs_srcdir@
+libkim_la_SOURCES =						\
+  fastq_file_reader.h fastq_file_reader.cpp			\
+  kim_exception.h						\
+  kim_settings.h kim_settings.cpp				\
+  sort_helper.h sort_helper.cpp					\
+  variant_identification.h variant_identification.cpp		\
   variant_kmer_index.h variant_kmer_index.cpp
+
+libkim_la_configdir   = @libdir@/@PACKAGE@-@VERSION@/include
+libkim_la_config_DATA = $(CONFIG_HEADER)
+libkim_la_LDFLAGS     = -version-info "@LIB_VERSION@" $(AM_LDFLAGS)
+
+bin_PROGRAMS = kim
+kim_SOURCES  = kim.h kim.cpp optionparser.h
+kim_LDADD    = libkim.la
+
+install-data-hook:
+	$(AM_V_at)test "`readlink "$(DESTDIR)@includedir@/@PACKAGE@"`" == "@PACKAGE@-@VERSION@" \
+	|| ( cd "$(DESTDIR)@includedir@" && $(LN_S) -f -n "@PACKAGE@-@VERSION@" "@PACKAGE@" )
+	$(AM_V_at)test "`readlink "$(DESTDIR)@libdir@/@PACKAGE@"`" == "@PACKAGE@-@VERSION@" \
+	|| ( cd "$(DESTDIR)@libdir@" && $(LN_S) -f -n "@PACKAGE@-@VERSION@" "@PACKAGE@" )
+
+uninstall-hook:
+	$(AM_V_at)test "`readlink "$(DESTDIR)@includedir@/@PACKAGE@"`" != "@PACKAGE@-@VERSION@" \
+        || rm -rf "$(DESTDIR)@includedir@"/@PACKAGE@{,-@VERSION@}
+	$(AM_V_at)test "`readlink "$(DESTDIR)@libdir@/@PACKAGE@"`" != "@PACKAGE@-@VERSION@" \
+        || rm -rf "$(DESTDIR)@libdir@"/@PACKAGE@{,-@VERSION@}
 
 MOSTLYCLEANFILES=*~
 CLEANFILES=*~

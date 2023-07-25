@@ -87,124 +87,22 @@
 #                                                                             #
 ###############################################################################
 
-SUBDIRS = resources src tests
+#EXTRA_DIST= control.in @LIBNAME@-@PACKAGE_VERSION@.pc.in
 
-if BUILD_DOC
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = @LIBNAME@-@PACKAGE_VERSION@.pc
 
-  SUBDIRS += doc
+@LIBNAME@-@PACKAGE_VERSION@.pc: @LIBNAME@.pc
+	$(AM_V_at)cp "$^" "$@"
 
-if MAKE_RELEASE
+install-data-hook:
+	$(LN_S) -f @LIBNAME@-@VERSION@.pc "$(DESTDIR)$(pkgconfigdir)/@LIBNAME@.pc"
 
-  SUBDIRS += packaging
+uninstall-hook:
+	$(AM_V_at)test "`readlink "$(DESTDIR)$(pkgconfigdir)/@LIBNAME@.pc"`" != @LIBNAME@-@VERSION@.pc \
+        || $(RM) "$(DESTDIR)$(pkgconfigdir)/@LIBNAME@.pc"
 
-# Fake target to force packages construction
-always-build:
-
-else
-
-# Fake target to abort packages construction
-always-build:
-	@echo
-	@echo "====================================================================="
-	@echo
-	@echo "Release construction is disabled. Your local system seems to miss"
-	@echo "the 'dpkg' command."
-	@echo
-	@echo "====================================================================="
-	@echo
-	@false
-
-endif
-
-else
-
-# Fake target to abort packages construction
-always-build:
-	@echo
-	@echo "====================================================================="
-	@echo
-	@echo "Release construction is disabled. Your local system probably misses"
-	@echo "one of the 'doxygen' or 'pdftex' command."
-	@echo
-	@echo "====================================================================="
-	@echo
-	@false
-
-endif
-
-dist_pkgdata_DATA = \
-  AUTHORS ChangeLog README.md \
-  LICENSE.md LICENSE-fr.md LICENSE-en.md
-
-nobase_include_HEADERS = @top_srcdir@/BitMagic/src/*.h
-
-EXTRA_DIST = \
-  COPYING INSTALL NEWS \
-  config/git-version-gen config/version config/version.configure.ac
-
-ACLOCAL_AMFLAGS = -I config/m4
-
-deb: @PACKAGE@_@PACKAGE_VERSION@_@ARCH@.deb
-
-@PACKAGE@_@PACKAGE_VERSION@_@ARCH@.deb: always-build
-	@if [ "@DEB_BUILDER@" == "" ]; then \
-	  echo "You need to install a debian package builder and to reconfigure this package.";\
-	  exit 1;\
-	fi
-	make dist
-	$(am__remove_distdir)
-	GZIP=$(GZIP_ENV) gunzip -c $(distdir).tar.gz | $(AMTAR) xf -
-	mkdir $(distdir)/_build
-	mkdir -p $(distdir)/_inst/_deb/$(prefix)
-	chmod a-w $(distdir)
-	dc_install_base=`$(am__cd) $(distdir)/_inst/_deb/$(prefix) && pwd | sed -e 's,^[^:\\/]:[\\/],/,'` \
-	  && dc_destdir="$${TMPDIR-/tmp}/am-dc-$$$$/" \
-	  && cd $(distdir)/_build \
-	  && HACKED_PREFIX=$(prefix) ../configure --srcdir=.. --prefix="$$dc_install_base" CC="$(CC)" CXX="$(CXX)" \
-	    $(DISTCHECK_CONFIGURE_FLAGS) \
-	  && $(MAKE) $(AM_MAKEFLAGS) localedir=$$localedir \
-	  && $(MAKE) $(AM_MAKEFLAGS) check \
-	  && $(MAKE) $(AM_MAKEFLAGS) install \
-	  && $(MAKE) $(AM_MAKEFLAGS) installcheck \
-	  && cd ../_inst/_deb \
-	  && cp "$(abs_top_srcdir)/resources/@PACKAGE@-@PACKAGE_VERSION@.stats" "./$(pkgdatadir)/" \
-	  && find . -type f -exec md5sum {} \; | sed "s,\.\/,,g" > ../md5sums \
-          && mkdir DEBIAN \
-	  && mv ../md5sums DEBIAN/ \
-	  && cp ../../_build/packaging/postinst DEBIAN/ \
-	  && chmod 755 DEBIAN/postinst \
-	  && cp ../../_build/packaging/prerm DEBIAN/ \
-	  && chmod 755 DEBIAN/prerm \
-	  && sed "s/@INSTALLED_SIZE@/`du -ck . | tail -1 | cut -f1`/" \
-	       ../../_build/packaging/control > DEBIAN/control \
-	  && cd ../ \
-	  && dpkg -b _deb $@ \
-	  && mv $@ ../../ \
-	  && rm -f "$$dc_install_base/DEBIAN/control" \
-	  && rm -f "$$dc_install_base/DEBIAN/prerm" \
-	  && rm -f "$$dc_install_base/DEBIAN/postinst" \
-	  && cd ../_build \
-	  && $(MAKE) $(AM_MAKEFLAGS) uninstall \
-	  && $(MAKE) $(AM_MAKEFLAGS) distuninstallcheck_dir="$$dc_install_base" \
-	        distuninstallcheck \
-	  && chmod -R a-w "$$dc_install_base" \
-	  && ({ \
-	       (cd ../.. && $(mkinstalldirs) "$$dc_destdir") \
-	       && $(MAKE) $(AM_MAKEFLAGS) DESTDIR="$$dc_destdir" install \
-	       && $(MAKE) $(AM_MAKEFLAGS) DESTDIR="$$dc_destdir" uninstall \
-	       && $(MAKE) $(AM_MAKEFLAGS) DESTDIR="$$dc_destdir" \
-	            distuninstallcheck_dir="$$dc_destdir" distuninstallcheck; \
-	      } \
-	      || { rm -rf "$$dc_destdir"; exit 1; }) \
-	  && rm -rf "$$dc_destdir" \
-	  && $(MAKE) $(AM_MAKEFLAGS) distcleancheck
-	$(am__remove_distdir)
-	@echo "$@ is ready for distribution" | \
-	  sed 'h;s/./=/g;p;x;p;x'
-
-
-MOSTLYCLEANFILES=*~ config/*~
-CLEANFILES=*~ config/*~
-DISTCLEANFILES=*~ $(distdir).tar.gz
-DISTCLEANFILES+=@PACKAGE@_@PACKAGE_VERSION@_@ARCH@.deb
-MAINTAINERCLEANFILES=*~ config/*~
+MOSTLYCLEANFILES=*~
+CLEANFILES=*~
+DISTCLEANFILES=*~ control @LIBNAME@-@PACKAGE_VERSION@.pc
+MAINTAINERCLEANFILES=*~

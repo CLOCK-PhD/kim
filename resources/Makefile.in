@@ -181,6 +181,11 @@ subdir = resources
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_compare_version.m4 \
 	$(top_srcdir)/config/m4/ax_prog_doxygen.m4 \
+	$(top_srcdir)/config/m4/libtool.m4 \
+	$(top_srcdir)/config/m4/ltoptions.m4 \
+	$(top_srcdir)/config/m4/ltsugar.m4 \
+	$(top_srcdir)/config/m4/ltversion.m4 \
+	$(top_srcdir)/config/m4/lt~obsolete.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
@@ -245,6 +250,7 @@ ACLOCAL = @ACLOCAL@
 ALLOCA = @ALLOCA@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+AR = @AR@
 ARCH = @ARCH@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
@@ -257,12 +263,17 @@ CLOC = @CLOC@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CXX = @CXX@
+CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
+DEB_BUILDER = @DEB_BUILDER@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DLLTOOL = @DLLTOOL@
 DOXYGEN_PAPER_SIZE = @DOXYGEN_PAPER_SIZE@
+DSYMUTIL = @DSYMUTIL@
+DUMPBIN = @DUMPBIN@
 DX_CONFIG = @DX_CONFIG@
 DX_DOCDIR = @DX_DOCDIR@
 DX_DOT = @DX_DOT@
@@ -291,6 +302,7 @@ ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
+FGREP = @FGREP@
 GREP = @GREP@
 HAVE_CXX17 = @HAVE_CXX17@
 INSTALL = @INSTALL@
@@ -299,14 +311,28 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 ISODATE = @ISODATE@
+LD = @LD@
 LDFLAGS = @LDFLAGS@
+LIBNAME = @LIBNAME@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LIBTOOL = @LIBTOOL@
+LIB_VERSION = @LIB_VERSION@
+LIB_VERSION_EXT = @LIB_VERSION_EXT@
+LIPO = @LIPO@
+LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
+LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAKEINFO = @MAKEINFO@
+MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
+NM = @NM@
+NMEDIT = @NMEDIT@
+OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OHCOUNT = @OHCOUNT@
+OTOOL = @OTOOL@
+OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_DESCRIPTION = @PACKAGE_DESCRIPTION@
@@ -316,6 +342,7 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
@@ -325,8 +352,10 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
+ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
@@ -344,6 +373,7 @@ datarootdir = @datarootdir@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
+hacked_prefix = @hacked_prefix@
 host = @host@
 host_alias = @host_alias@
 host_cpu = @host_cpu@
@@ -375,7 +405,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 STATS_FILE = @PACKAGE@-@PACKAGE_VERSION@.stats
 dist_pkgdata_DATA = \
-  kim.bash_completion    \
+  kim.bash_completion	\
   $(STATS_FILE)
 
 MOSTLYCLEANFILES = *~
@@ -414,6 +444,12 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
+
+mostlyclean-libtool:
+	-rm -f *.lo
+
+clean-libtool:
+	-rm -rf .libs _libs
 install-dist_pkgdataDATA: $(dist_pkgdata_DATA)
 	@$(NORMAL_INSTALL)
 	@list='$(dist_pkgdata_DATA)'; test -n "$(pkgdatadir)" || list=; \
@@ -518,7 +554,7 @@ maintainer-clean-generic:
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-am
 
-clean-am: clean-generic mostlyclean-am
+clean-am: clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
 	-rm -f Makefile
@@ -570,7 +606,7 @@ maintainer-clean-am: distclean-am maintainer-clean-generic
 
 mostlyclean: mostlyclean-am
 
-mostlyclean-am: mostlyclean-generic
+mostlyclean-am: mostlyclean-generic mostlyclean-libtool
 
 pdf: pdf-am
 
@@ -584,16 +620,17 @@ uninstall-am: uninstall-dist_pkgdataDATA
 
 .MAKE: install-am install-strip
 
-.PHONY: all all-am check check-am clean clean-generic cscopelist-am \
-	ctags-am distclean distclean-generic distdir dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-dist_pkgdataDATA install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-generic pdf pdf-am ps ps-am tags-am uninstall \
+.PHONY: all all-am check check-am clean clean-generic clean-libtool \
+	cscopelist-am ctags-am distclean distclean-generic \
+	distclean-libtool distdir dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am \
+	install-dist_pkgdataDATA install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags-am uninstall \
 	uninstall-am uninstall-dist_pkgdataDATA
 
 .PRECIOUS: Makefile
@@ -602,9 +639,9 @@ uninstall-am: uninstall-dist_pkgdataDATA
 force-renew:
 
 $(STATS_FILE): force-renew
-	@echo "# $@ #" | sed 'h;s/./#/g;p;x;p;x' > "$@"
-	@echo >> "$@"
-	@TMPFILE=$$(mktemp -u);							\
+	$(AM_V_at)echo "# $@ #" | sed 'h;s/./#/g;p;x;p;x' > "$@"
+	$(AM_V_at)echo >> "$@"
+	$(AM_V_at)TMPFILE=$$(mktemp -u);					\
 	git ls-tree --name-only -r  HEAD "$(abs_top_srcdir)" > $${TMPFILE};	\
 	echo "CLoC summary" | sed 'h;s/./=/g;p;x;p;x' >> "$@" ;			\
 	echo >> "$@";								\
@@ -627,11 +664,11 @@ $(STATS_FILE): force-renew
 	echo >> "$@";								\
 	printf "%.78d\n" | tr 0 - >> "$@";					\
 	echo >> "$@";								\
-	cat "$@";								\
-	rm $${TMPFILE}
+	$(RM) $${TMPFILE}
+	$(AM_V_at)cat "$@"
 
 update-stats:
-	@rm -f $(STATS_FILE)
+	$(AM_V_at)rm -f $(STATS_FILE)
 	$(MAKE) $(AM_MAKEFLAGS) $(STATS_FILE)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

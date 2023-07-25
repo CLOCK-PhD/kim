@@ -264,7 +264,7 @@ DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/fastq_file_reader.Plo ./$(DEPDIR)/kim.Po \
-	./$(DEPDIR)/kim_settings.Plo ./$(DEPDIR)/kmer_nodes_subindex.Plo \
+	./$(DEPDIR)/kim_settings.Plo ./$(DEPDIR)/sort_helper.Plo \
 	./$(DEPDIR)/variant_identification.Plo \
 	./$(DEPDIR)/variant_kmer_index.Plo
 am__mv = mv -f
@@ -355,6 +355,7 @@ CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
+DEB_BUILDER = @DEB_BUILDER@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
@@ -448,7 +449,9 @@ am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
-bindir = @bindir@
+
+# Bug fix for path with spaces
+bindir = "@bindir@"
 build = @build@
 build_alias = @build_alias@
 build_cpu = @build_cpu@
@@ -460,6 +463,7 @@ datarootdir = @datarootdir@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
+hacked_prefix = @hacked_prefix@
 host = @host@
 host_alias = @host_alias@
 host_cpu = @host_cpu@
@@ -469,7 +473,7 @@ htmldir = @htmldir@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
-libdir = @libdir@
+libdir = "@libdir@"
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
@@ -503,15 +507,16 @@ library_include_HEADERS = \
   kim.h				\
   kim_exception.h		\
   kim_settings.h		\
-  sort_helper.h \
+  sort_helper.h                 \
   variant_identification.h	\
   variant_kmer_index.h
 
+# End of bug fix
 lib_LTLIBRARIES = libkim.la
 
+#check_LTLIBRARIES = libkim-gcov.la
 libkim_ladir = @abs_srcdir@
 libkim_la_SOURCES = \
-  bounded_size_string.h bounded_size_string.cpp			\
   fastq_file_reader.h fastq_file_reader.cpp			\
   kim_exception.h						\
   kim_settings.h kim_settings.cpp				\
@@ -987,9 +992,9 @@ uninstall-am: uninstall-binPROGRAMS uninstall-libLTLIBRARIES \
 
 install-data-hook:
 	$(AM_V_at)test "`readlink "$(DESTDIR)@includedir@/@PACKAGE@"`" == "@PACKAGE@-@VERSION@" \
-	|| ( cd $(DESTDIR)@includedir@ && $(LN_S) -f -n "@PACKAGE@-@VERSION@" "@PACKAGE@" )
+	|| ( cd "$(DESTDIR)@includedir@" && $(LN_S) -f -n "@PACKAGE@-@VERSION@" "@PACKAGE@" )
 	$(AM_V_at)test "`readlink "$(DESTDIR)@libdir@/@PACKAGE@"`" == "@PACKAGE@-@VERSION@" \
-	|| ( cd $(DESTDIR)@libdir@ && $(LN_S) -f -n "@PACKAGE@-@VERSION@" "@PACKAGE@" )
+	|| ( cd "$(DESTDIR)@libdir@" && $(LN_S) -f -n "@PACKAGE@-@VERSION@" "@PACKAGE@" )
 
 uninstall-hook:
 	$(AM_V_at)test "`readlink "$(DESTDIR)@includedir@/@PACKAGE@"`" != "@PACKAGE@-@VERSION@" \
