@@ -87,133 +87,167 @@
 *                                                                             *
 ******************************************************************************/
 
-#include <sort_helper.h>
+#include <kim_settings.h>
 
 #include <string>
 #include <iostream>
-#include <iterator>
-#include <libgen.h>
+#ifdef NDEBUG
+#  unef NDEBUG
+#endif
+#include <cassert>
 
 using namespace std;
+using namespace kim;
 
 int main(int argc, char **argv) {
 
-  vector<char> ref;
-  vector<string> to_sort;
-  vector<bool> pair_length;
+  cout << "Testing KimSettings" << endl;
 
-  if (argc < 2) {
-    const string example = " This is a Demo for the SortHelper template";
-    cerr << endl
-         << "usage: " << basename(argv[0]) << " <string_1> <string_2> ... <string_n>" << endl
-         << endl
-         << "This test/demonstration program of the sort_helper template uses the"
-         << " first character of each string as a reference to sort the whole set of"
-         << " strings given on the command line." << endl
-         << endl
-         << "Let run the command with the following arguments:" << endl
-         << endl
-         << argv[0] << example << endl
-         << endl;
-    size_t start;
-    size_t end = 0;
-    while ((start = example.find_first_not_of(" ", end)) != string::npos) {
-      end = example.find(" ", start);
-      string w = example.substr(start, end - start);
-      to_sort.push_back(w);
-    }
+  Settings s;
+  assert(s.warn());
+  assert(!s.frozen());
+  assert(!s.valid());
+
+  s.setKmerLength(3);
+  assert(s.warn());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 3);
+
+  s.setKmerPrefixLength(1);
+  assert(s.warn());
+  assert(!s.frozen());
+  assert(s.getKmerPrefixLength() == 1);
+  assert(s.getKmerSuffixLength() == 2);
+  assert(s.valid());
+
+  s.setKmerPrefixLength(4);
+  assert(s.warn());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 3);
+  assert(s.getKmerPrefixLength() == 2);
+  assert(s.getKmerSuffixLength() == 1);
+  assert(s.valid());
+
+  s.setKmerLength(10);
+  assert(s.warn());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 2);
+  assert(s.getKmerSuffixLength() == 8);
+  assert(s.valid());
+
+  s.setKmerPrefixLength(4);
+  assert(s.warn());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  s.warn(true);
+  assert(s.warn());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  s.warn(false);
+  assert(!s.warn());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  s.warn(true);
+  assert(s.warn());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  s.freeze();
+  assert(s.warn());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  s.unfreeze();
+  assert(s.warn());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  s.freeze();
+  assert(s.warn());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  bool exception_thrown = false;
+  try {
+    s.setKmerLength(12);
+  } catch (const BadSettingsException &e) {
+    exception_thrown = true;
   }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
 
-  for (int i = 1; i < argc; ++i) {
-    to_sort.push_back(argv[i]);
+  exception_thrown = false;
+  try {
+    s.setKmerPrefixLength(6);
+  } catch (const BadSettingsException &e) {
+    exception_thrown = true;
   }
-  for (size_t i = 0; i < to_sort.size(); ++i) {
-    ref.push_back(to_sort[i][0]);
-    pair_length.push_back(!(to_sort[i].size() & 1));
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  exception_thrown = false;
+  try {
+    s.warn(false);
+  } catch (const BadSettingsException &e) {
+    exception_thrown = true;
   }
-
-  cout << "Entering the demo program with the following parameters:" << endl;
-  cout << "- ref is:\t\t";
-  copy(ref.begin(), ref.end(), ostream_iterator<char>(cout, "\t"));
-  cout << endl;
-  cout << "- to_sort is:\t\t";
-  copy(to_sort.begin(), to_sort.end(), ostream_iterator<string>(cout, "\t"));
-  cout << endl;
-  cout << "- pair_length is:\t";
-  copy(pair_length.begin(), pair_length.end(), ostream_iterator<bool>(cout, "\t"));
-  cout << endl;
-  cout << "==========================================" << endl;
-
-  cout << "SortHelper initialization:" << endl;
-  kim::SortHelper<char> helper(ref);
-  cout << "- ref is:\t\t";
-  copy(helper.reference().begin(), helper.reference().end(), ostream_iterator<char>(cout, "\t"));
-  cout << endl;
-  cout << "- permutation is:\t";
-  copy(helper.permutation().begin(), helper.permutation().end(), ostream_iterator<size_t>(cout, "\t"));
-  cout << endl;
-  cout << "==========================================" << endl;
-
-
-  cout << "Sorting the to_sort and pair_length arrays with SortHelper:" << endl;
-  helper.sort<string>(to_sort);
-  helper.sort<bool, vector<bool>, vector<bool>::reference>(pair_length);
-  cout << "- to_sort is now:\t";
-  copy(to_sort.begin(), to_sort.end(), ostream_iterator<string>(cout, "\t"));
-  cout << endl;
-  cout << "- pair_length is now:\t";
-  copy(pair_length.begin(), pair_length.end(), ostream_iterator<bool>(cout, "\t"));
-  cout << endl;
-  cout << "==========================================" << endl;
-  struct first_letter_cmp {
-    static bool cmp(const string &s1, const string &s2) {
-      return s1[0] < s2[0];
-    }
-  };
-  if (!is_sorted(to_sort.begin(), to_sort.end(), first_letter_cmp::cmp)) {
-    cerr << "The to_sort array is not sorted while it should be!" << endl;
-    return 1;
-  }
-
-  cout << "Sorting ref with SortHelper:" << endl;
-  helper.sort<char>(ref);
-  cout << "- ref is now :\t\t";
-  copy(ref.begin(), ref.end(), ostream_iterator<char>(cout, "\t"));
-  cout << endl;
-  cout << "==========================================" << endl;
-  if (!is_sorted(ref.begin(), ref.end())) {
-    cerr << "The ref array is not sorted while it should be!" << endl;
-    return 1;
-  }
-
-  cout << "Sorting the ref implies to reset the SortHelper:" << endl;
-  helper.reset();
-  cout << "- ref is:\t\t";
-  copy(helper.reference().begin(), helper.reference().end(), ostream_iterator<char>(cout, "\t"));
-  cout << endl;
-  cout << "- permutation is:\t";
-  copy(helper.permutation().begin(), helper.permutation().end(), ostream_iterator<size_t>(cout, "\t"));
-  cout << endl;
-  cout << "==========================================" << endl;
-  if (!is_sorted(helper.permutation().begin(), helper.permutation().end())) {
-    cerr << "The permutation array is not sorted while it should be!" << endl;
-    return 1;
-  }
-
-  cout << "Sorting to_sort and pair_length with the SortHelper having the identity permutation works:" << endl;
-  helper.sort<string>(to_sort);
-  cout << "- to_sort is now:\t";
-  copy(to_sort.begin(), to_sort.end(), ostream_iterator<string>(cout, "\t"));
-  cout << endl;
-  cout << "- pair_length is now:\t";
-  copy(pair_length.begin(), pair_length.end(), ostream_iterator<bool>(cout, "\t"));
-  cout << endl;
-  cout << "==========================================" << endl;
-  if (!is_sorted(to_sort.begin(), to_sort.end(), first_letter_cmp::cmp)) {
-    cerr << "The to_sort array is not sorted while it still should be!" << endl;
-    return 1;
-  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
 
   cout << "That's All, Folk!!!" << endl;
   return 0;
+
 }
