@@ -177,7 +177,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 check_PROGRAMS = test_bounded_size_string$(EXEEXT) \
-	test_kim_settings$(EXEEXT) test_sort_helper$(EXEEXT)
+	test_kim_settings$(EXEEXT) test_kmer_nodes_subindex$(EXEEXT) \
+	test_sort_helper$(EXEEXT)
 subdir = tests
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_compare_version.m4 \
@@ -209,6 +210,12 @@ am_test_kim_settings_OBJECTS = test_kim_settings.$(OBJEXT)
 test_kim_settings_OBJECTS = $(am_test_kim_settings_OBJECTS)
 test_kim_settings_LDADD = $(LDADD)
 test_kim_settings_DEPENDENCIES = ../src/libkim.la
+am_test_kmer_nodes_subindex_OBJECTS =  \
+	test_kmer_nodes_subindex.$(OBJEXT)
+test_kmer_nodes_subindex_OBJECTS =  \
+	$(am_test_kmer_nodes_subindex_OBJECTS)
+test_kmer_nodes_subindex_LDADD = $(LDADD)
+test_kmer_nodes_subindex_DEPENDENCIES = ../src/libkim.la
 am_test_sort_helper_OBJECTS = test_sort_helper.$(OBJEXT)
 test_sort_helper_OBJECTS = $(am_test_sort_helper_OBJECTS)
 test_sort_helper_LDADD = $(LDADD)
@@ -230,6 +237,7 @@ depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/test_bounded_size_string.Po \
 	./$(DEPDIR)/test_kim_settings.Po \
+	./$(DEPDIR)/test_kmer_nodes_subindex.Po \
 	./$(DEPDIR)/test_sort_helper.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
@@ -251,9 +259,13 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(test_bounded_size_string_SOURCES) \
-	$(test_kim_settings_SOURCES) $(test_sort_helper_SOURCES)
+	$(test_kim_settings_SOURCES) \
+	$(test_kmer_nodes_subindex_SOURCES) \
+	$(test_sort_helper_SOURCES)
 DIST_SOURCES = $(test_bounded_size_string_SOURCES) \
-	$(test_kim_settings_SOURCES) $(test_sort_helper_SOURCES)
+	$(test_kim_settings_SOURCES) \
+	$(test_kmer_nodes_subindex_SOURCES) \
+	$(test_sort_helper_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -654,6 +666,7 @@ AM_CXXFLAGS = \
 LDADD = ../src/libkim.la
 test_bounded_size_string_SOURCES = test_bounded_size_string.cpp
 test_kim_settings_SOURCES = test_kim_settings.cpp
+test_kmer_nodes_subindex_SOURCES = test_kmer_nodes_subindex.cpp
 test_sort_helper_SOURCES = test_sort_helper.cpp
 TESTS = $(check_PROGRAMS)
 
@@ -712,6 +725,10 @@ test_kim_settings$(EXEEXT): $(test_kim_settings_OBJECTS) $(test_kim_settings_DEP
 	@rm -f test_kim_settings$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_kim_settings_OBJECTS) $(test_kim_settings_LDADD) $(LIBS)
 
+test_kmer_nodes_subindex$(EXEEXT): $(test_kmer_nodes_subindex_OBJECTS) $(test_kmer_nodes_subindex_DEPENDENCIES) $(EXTRA_test_kmer_nodes_subindex_DEPENDENCIES) 
+	@rm -f test_kmer_nodes_subindex$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_kmer_nodes_subindex_OBJECTS) $(test_kmer_nodes_subindex_LDADD) $(LIBS)
+
 test_sort_helper$(EXEEXT): $(test_sort_helper_OBJECTS) $(test_sort_helper_DEPENDENCIES) $(EXTRA_test_sort_helper_DEPENDENCIES) 
 	@rm -f test_sort_helper$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_sort_helper_OBJECTS) $(test_sort_helper_LDADD) $(LIBS)
@@ -724,6 +741,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_bounded_size_string.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_kim_settings.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_kmer_nodes_subindex.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_sort_helper.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
@@ -966,6 +984,13 @@ test_kim_settings.log: test_kim_settings$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+test_kmer_nodes_subindex.log: test_kmer_nodes_subindex$(EXEEXT)
+	@p='test_kmer_nodes_subindex$(EXEEXT)'; \
+	b='test_kmer_nodes_subindex'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 test_sort_helper.log: test_sort_helper$(EXEEXT)
 	@p='test_sort_helper$(EXEEXT)'; \
 	b='test_sort_helper'; \
@@ -1072,6 +1097,7 @@ clean-am: clean-checkPROGRAMS clean-generic clean-libtool \
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/test_bounded_size_string.Po
 	-rm -f ./$(DEPDIR)/test_kim_settings.Po
+	-rm -f ./$(DEPDIR)/test_kmer_nodes_subindex.Po
 	-rm -f ./$(DEPDIR)/test_sort_helper.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
@@ -1120,6 +1146,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/test_bounded_size_string.Po
 	-rm -f ./$(DEPDIR)/test_kim_settings.Po
+	-rm -f ./$(DEPDIR)/test_kmer_nodes_subindex.Po
 	-rm -f ./$(DEPDIR)/test_sort_helper.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic

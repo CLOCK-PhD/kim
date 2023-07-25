@@ -95,17 +95,19 @@ AM_CXXFLAGS =				\
   -DOS="\"$(build_os)\""		\
   -DPACKAGE_DATADIR="\"$(pkgdatadir)\""
 
-
 LDADD = ../src/libkim.la
 
 check_PROGRAMS =		\
   test_bounded_size_string	\
   test_kim_settings		\
+  test_kmer_nodes_subindex	\
   test_sort_helper
 
 test_bounded_size_string_SOURCES = test_bounded_size_string.cpp
 
 test_kim_settings_SOURCES = test_kim_settings.cpp
+
+test_kmer_nodes_subindex_SOURCES = test_kmer_nodes_subindex.cpp
 
 test_sort_helper_SOURCES = test_sort_helper.cpp
 

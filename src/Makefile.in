@@ -266,6 +266,7 @@ am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/bounded_size_string.Plo \
 	./$(DEPDIR)/fastq_file_reader.Plo ./$(DEPDIR)/kim.Po \
 	./$(DEPDIR)/kim_settings.Plo \
+	./$(DEPDIR)/kmer_nodes_subindex.Plo \
 	./$(DEPDIR)/sort_helper.Plo \
 	./$(DEPDIR)/variant_identification.Plo \
 	./$(DEPDIR)/variant_kmer_index.Plo
@@ -509,6 +510,7 @@ library_include_HEADERS = \
   kim.h				\
   kim_exception.h		\
   kim_settings.h		\
+  kmer_nodes_subindex.h		\
   sort_helper.h                 \
   variant_identification.h	\
   variant_kmer_index.h
@@ -523,6 +525,7 @@ libkim_la_SOURCES = \
   fastq_file_reader.h fastq_file_reader.cpp			\
   kim_exception.h						\
   kim_settings.h kim_settings.cpp				\
+  kmer_nodes_subindex.h kmer_nodes_subindex.cpp			\
   sort_helper.h sort_helper.cpp					\
   variant_identification.h variant_identification.cpp		\
   variant_kmer_index.h variant_kmer_index.cpp
@@ -671,6 +674,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fastq_file_reader.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kim_settings.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kmer_nodes_subindex.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sort_helper.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/variant_identification.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/variant_kmer_index.Plo@am__quote@ # am--include-marker
@@ -888,6 +892,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/fastq_file_reader.Plo
 	-rm -f ./$(DEPDIR)/kim.Po
 	-rm -f ./$(DEPDIR)/kim_settings.Plo
+	-rm -f ./$(DEPDIR)/kmer_nodes_subindex.Plo
 	-rm -f ./$(DEPDIR)/sort_helper.Plo
 	-rm -f ./$(DEPDIR)/variant_identification.Plo
 	-rm -f ./$(DEPDIR)/variant_kmer_index.Plo
