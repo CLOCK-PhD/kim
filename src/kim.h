@@ -87,66 +87,20 @@
 *                                                                             *
 ******************************************************************************/
 
-#ifndef __KIM_EXCEPTION_H__
-#define __KIM_EXCEPTION_H__
+#ifndef __KIM_H__
+#define __KIM_H__
 
-#include <exception>
-#include <string>
-#include <sstream>
-
-namespace kim {
-
-  /**
-   * Generic k-mer identification metric program exception with an
-   * associated message that can be given extra informations as a
-   * string stream.
-   */
-  class Exception: public std::exception {
-
-  private:
-
-    /**
-     * The exception message.
-     */
-    std::string msg;
-
-  public:
-
-    /**
-     * Create an exception with some initial message.
-     *
-     * \param msg The initial message string.
-     */
-    inline Exception(const std::string &msg = ""): std::exception(), msg(msg) {}
-
-    /**
-     * Get the message associated with this exception.
-     *
-     * \return Returns the C string message associated to this exception.
-     */
-    inline virtual const char *what() const noexcept {
-      return msg.c_str();
-    }
-
-    /**
-     * Template operator << to inject any type having the capacity to
-     * be injected into an output stream.
-     *
-     * \param t The value to append to this exception message.
-     *
-     * \return Returns this exception.
-     */
-    template <typename T>
-    Exception &operator<<(const T &t) {
-      std::ostringstream s;
-      s << t;
-      msg += s.str();
-      return *this;
-    }
-
-  };
-
-}
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+#include <bounded_size_string.h>
+#include <fastq_file_reader.h>
+#include <kim_exception.h>
+#include <kim_settings.h>
+#include <optionparser.h>
+#include <sort_helper.h>
+#include <variant_identification.h>
+#include <variant_kmer_index.h>
 
 #endif
 // Local Variables:

@@ -118,13 +118,29 @@ namespace kim {
 
   private:
 
-    // resp. length, prefix length and suffix length of the k-mers.
-    size_t _k, _p, _s;
+    /**
+     * The length of the k-mers.
+     */
+    size_t _k;
 
-    // Emit warning messages or not.
+    /**
+     * The prefix length of the k-mers.
+     */
+    size_t _p;
+
+    /**
+     * The suffix length of the k-mers.
+     */
+    size_t _s;
+
+    /**
+     * Emit warning messages or not.
+     */
     bool _warn;
 
-    // The settings can't be modified if _frozen is set to true.
+    /**
+     * The settings can't be modified if _frozen is set to true.
+     */
     bool _frozen;
 
   public:

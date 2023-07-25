@@ -130,9 +130,7 @@ namespace kim {
    * \param t2 The second bit to swap.
    */
   template <>
-  void swap(std::vector<bool>::reference t1, std::vector<bool>::reference t2) {
-    std::vector<bool>::swap(t1, t2);
-  }
+  void swap(std::vector<bool>::reference t1, std::vector<bool>::reference t2);
 
   /**
    * Helper class to sort a container using another container order.
@@ -151,13 +149,19 @@ namespace kim {
 
   private:
 
-    // The container of reference elements used to sort
+    /**
+     * The container of reference elements used to sort.
+     */
     const Container &_ref;
 
-    // The permutation used to sort any container
+    /**
+     * The permutation used to sort any container.
+     */
     std::vector<size_t> _permutation;
 
-    // The comparison functor
+    /**
+     * The comparison functor.
+     */
     const Compare _compare;
 
   public:
@@ -248,6 +252,8 @@ namespace kim {
      * size than the permutation vector.
      *
      * \param container The container to sort.
+     *
+     * \param permutation The sort order permutation to use.
      */
     template <typename U, typename OtherContainer = std::vector<U>, typename reference = U&>
     static void sort(OtherContainer &container, const std::vector<size_t> &permutation) {

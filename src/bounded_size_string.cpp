@@ -87,68 +87,149 @@
 *                                                                             *
 ******************************************************************************/
 
-#ifndef __KIM_EXCEPTION_H__
-#define __KIM_EXCEPTION_H__
+#include "bounded_size_string.h"
 
-#include <exception>
-#include <string>
-#include <sstream>
+#include "config.h"
 
-namespace kim {
+#include <cstring>
 
-  /**
-   * Generic k-mer identification metric program exception with an
-   * associated message that can be given extra informations as a
-   * string stream.
-   */
-  class Exception: public std::exception {
+using namespace std;
 
-  private:
+BEGIN_KIM_NAMESPACE
 
-    /**
-     * The exception message.
-     */
-    std::string msg;
+size_t BoundedSizeString::_maximal_size = 0;
 
-  public:
+size_t BoundedSizeString::_nb_instances = 0;
 
-    /**
-     * Create an exception with some initial message.
-     *
-     * \param msg The initial message string.
-     */
-    inline Exception(const std::string &msg = ""): std::exception(), msg(msg) {}
-
-    /**
-     * Get the message associated with this exception.
-     *
-     * \return Returns the C string message associated to this exception.
-     */
-    inline virtual const char *what() const noexcept {
-      return msg.c_str();
-    }
-
-    /**
-     * Template operator << to inject any type having the capacity to
-     * be injected into an output stream.
-     *
-     * \param t The value to append to this exception message.
-     *
-     * \return Returns this exception.
-     */
-    template <typename T>
-    Exception &operator<<(const T &t) {
-      std::ostringstream s;
-      s << t;
-      msg += s.str();
-      return *this;
-    }
-
-  };
-
+bool BoundedSizeString::setMaximalSize(size_t maximal_size) {
+  bool res = (_nb_instances == 0);
+  if (res) {
+    _maximal_size = maximal_size;
+  }
+  return res;
 }
 
-#endif
-// Local Variables:
-// mode:c++
-// End:
+void BoundedSizeString::_copy(const char *s) {
+  if (!_str) {
+    _str = new char[_maximal_size + 1];
+    ++_nb_instances;
+  }
+  size_t n = s ? strlen(s) : 0;
+  if (n > _maximal_size) {
+    n = _maximal_size;
+  }
+  memcpy(_str, s, n);
+  memset(_str + n, 0, _maximal_size + 1 - n);
+}
+
+BoundedSizeString::BoundedSizeString(const char *c_str):
+  _str(NULL) {
+  _copy(c_str);
+}
+
+BoundedSizeString::BoundedSizeString(const string &s):
+  _str(NULL) {
+  _copy(s.c_str());
+}
+
+BoundedSizeString::BoundedSizeString(const BoundedSizeString &s):
+  _str(NULL) {
+  _copy(s._str);
+}
+
+BoundedSizeString::~BoundedSizeString() {
+  --_nb_instances;
+  delete [] _str;
+}
+
+BoundedSizeString &BoundedSizeString::operator=(const BoundedSizeString &s) {
+  if (this != &s) {
+    _copy(s._str);
+  }
+  return *this;
+}
+
+BoundedSizeString &BoundedSizeString::operator=(const string &s) {
+  if (_str != s.c_str()) {
+    _copy(s.c_str());
+  }
+  return *this;
+}
+
+BoundedSizeString &BoundedSizeString::operator=(const char *s) {
+  if (_str != s) {
+    _copy(s);
+  }
+  return *this;
+}
+
+int BoundedSizeString::compare(const BoundedSizeString &s) const {
+  if (!_maximal_size) return 0;
+  int r = 0;
+  size_t i = 0;
+  while ((_str[i] != '\0') && (s._str[i] != '\0') && (_str[i] == s._str[i])) {
+    ++i;
+  }
+  return ((_str[i] > s._str[i])
+          ? 1
+          : ((_str[i] == s._str[i])
+             ? 0
+             : -1));
+}
+
+int BoundedSizeString::reverse_compare(const BoundedSizeString &s) const {
+  if (!_maximal_size) return 0;
+  int r = 0;
+  size_t n1 = length();
+  size_t n2 = s.length();
+  if (n1 < n2) return -1;
+  if (n1 > n2) return 1;
+  size_t i = n1;
+  while (i-- && (_str[i] == s._str[i]));
+  return ((_str[i] > s._str[i])
+          ? 1
+          : ((_str[i] == s._str[i])
+             ? 0
+             : -1));
+}
+
+size_t BoundedSizeString::length() const {
+  return strlen(_str);
+}
+
+void BoundedSizeString::clear() {
+  // Long and proper version:
+  memset(_str, 0, _maximal_size + 1);
+  // Faster and dirty version:
+  // if (_str) {
+  //   _str[0] = '\0';
+  // }
+}
+
+bool BoundedSizeString::empty() const {
+  return (!_str || _str[0] == '\0');
+}
+
+istream &getline(istream &is, BoundedSizeString& s, char delim) {
+  size_t i = 0;
+  int c;
+  while (is && (i < BoundedSizeString::getMaximalSize()) && ((c = is.get()) != delim)) {
+    s[i++] = c;
+  }
+  memset(&s[i], 0, BoundedSizeString::getMaximalSize() + 1 - i);
+  return is;
+}
+
+istream &operator>>(istream &is, BoundedSizeString &s) {
+  size_t i = 0;
+  while (is && (is.peek() <= ' ')) {
+    is.get();
+  }
+  while (is && (i < BoundedSizeString::getMaximalSize()) && (is.peek() > ' ')) {
+    s[i++] = is.get();
+  }
+  memset(&s[i], 0, BoundedSizeString::getMaximalSize() + 1 - i);
+  return is;
+}
+
+END_KIM_NAMESPACE

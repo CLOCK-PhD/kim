@@ -263,8 +263,10 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/fastq_file_reader.Plo ./$(DEPDIR)/kim.Po \
-	./$(DEPDIR)/kim_settings.Plo ./$(DEPDIR)/sort_helper.Plo \
+am__depfiles_remade = ./$(DEPDIR)/bounded_size_string.Plo \
+	./$(DEPDIR)/fastq_file_reader.Plo ./$(DEPDIR)/kim.Po \
+	./$(DEPDIR)/kim_settings.Plo \
+	./$(DEPDIR)/sort_helper.Plo \
 	./$(DEPDIR)/variant_identification.Plo \
 	./$(DEPDIR)/variant_kmer_index.Plo
 am__mv = mv -f
@@ -517,6 +519,7 @@ lib_LTLIBRARIES = libkim.la
 #check_LTLIBRARIES = libkim-gcov.la
 libkim_ladir = @abs_srcdir@
 libkim_la_SOURCES = \
+  bounded_size_string.h bounded_size_string.cpp			\
   fastq_file_reader.h fastq_file_reader.cpp			\
   kim_exception.h						\
   kim_settings.h kim_settings.cpp				\

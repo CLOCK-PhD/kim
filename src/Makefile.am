@@ -96,6 +96,7 @@ AM_CXXFLAGS =				\
 
 library_includedir = @includedir@/@PACKAGE@-@VERSION@
 library_include_HEADERS =	\
+  bounded_size_string.h		\
   fastq_file_reader.h		\
   kim.h				\
   kim_exception.h		\
@@ -113,6 +114,7 @@ lib_LTLIBRARIES = libkim.la
 
 libkim_ladir = @abs_srcdir@
 libkim_la_SOURCES =						\
+  bounded_size_string.h bounded_size_string.cpp			\
   fastq_file_reader.h fastq_file_reader.cpp			\
   kim_exception.h						\
   kim_settings.h kim_settings.cpp				\

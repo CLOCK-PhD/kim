@@ -17,11 +17,12 @@ src/.deps
 src/kim
 src/*link
 
-test/test_sort_helper
 tests/.deps/
-tests/test_sort_helper
 tests/*.log
 tests/*.trs
+tests/test_bounded_size_string
+tests/test_kim_settings
+tests/test_sort_helper
 
 resources/kim-*.stats
 

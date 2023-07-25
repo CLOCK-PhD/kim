@@ -95,17 +95,23 @@ AM_CXXFLAGS =				\
   -DOS="\"$(build_os)\""		\
   -DPACKAGE_DATADIR="\"$(pkgdatadir)\""
 
-check_PROGRAMS =	\
-  test_sort_helper	\
-  test_kim_settings
 
-test_sort_helper_SOURCES = test_sort_helper.cpp
-test_sort_helper_LDADD = ../src/libkim.la
+LDADD = ../src/libkim.la
+
+check_PROGRAMS =		\
+  test_bounded_size_string	\
+  test_kim_settings		\
+  test_sort_helper
+
+test_bounded_size_string_SOURCES = test_bounded_size_string.cpp
 
 test_kim_settings_SOURCES = test_kim_settings.cpp
-test_kim_settings_LDADD = ../src/libkim.la
 
-../src/libkim.la:
+test_sort_helper_SOURCES = test_sort_helper.cpp
+
+force_check_libkim.la:
+
+../src/libkim.la: force_check_libkim.la
 	$(MAKE) $(AM_MAKEFLAGS) libkim.la -C ../src/
 
 TESTS = $(check_PROGRAMS)
