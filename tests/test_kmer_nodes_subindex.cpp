@@ -128,7 +128,7 @@ void infos(const KmerNodesSubindex &idx, bool frozen, bool sorted, bool empty, s
   exception_thrown = false;                                             \
   try code catch (const KmerNodesSubindexException &e) {                \
       cout << "A KmerNodesSubindexException with message '" << e.what() \
-           << " has been thrown" << endl;                               \
+           << "' has been thrown" << endl;                              \
       exception_thrown = true;                                          \
     }                                                                   \
   assert(exception_thrown)
