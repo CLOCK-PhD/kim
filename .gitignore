@@ -27,6 +27,9 @@ tests/test_kmer_nodes_subindex
 tests/test_sort_helper
 
 resources/kim-*.stats
+resources/kim-*.cloc
+resources/kim-*.filelist
+resources/kim-*.ohcount
 
 kim_index/
 

@@ -339,9 +339,10 @@ AC_REVISION([m4_esyscmd_s([./config/git-version-gen --timestamp --force-update c
 
 ARCH=`uname -m | sed s/i.86/i386/ | sed s/x86_64/amd64/`
 AC_SUBST(ARCH)
-
 AC_PATH_PROG([CLOC], [cloc])
+AM_CONDITIONAL([CLOC], [test -n "${CLOC}"])
 AC_PATH_PROG([OHCOUNT], [ohcount])
+AM_CONDITIONAL([OHCOUNT], [test -n "${OHCOUNT}"])
 AC_PATH_PROG([DEB_BUILDER], [dpkg])
 MAKE_RELEASE=true
 AS_IF([test -z "${DEB_BUILDER}"],

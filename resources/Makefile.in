@@ -403,13 +403,18 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-STATS_FILE = @PACKAGE@-@PACKAGE_VERSION@.stats
+STATS_FILE_BASENAME = @PACKAGE@-@PACKAGE_VERSION@
+CLOC_FILE = $(STATS_FILE_BASENAME).cloc
+OHCOUNT_FILE = $(STATS_FILE_BASENAME).ohcount
+LIST_FILE = $(STATS_FILE_BASENAME).filelist
+STATS_FILE = $(STATS_FILE_BASENAME).stats
 dist_pkgdata_DATA = \
   kim.bash_completion	\
+  test-reads.fastq	\
   $(STATS_FILE)
 
 MOSTLYCLEANFILES = *~
-CLEANFILES = *~ $(STATS_FILE)
+CLEANFILES = *~ $(LIST_FILE) $(CLOC_FILE) $(OHCOUNT_FILE) $(STATS_FILE)
 DISTCLEANFILES = *~
 MAINTAINERCLEANFILES = *~
 all: all-am
@@ -636,40 +641,58 @@ uninstall-am: uninstall-dist_pkgdataDATA
 .PRECIOUS: Makefile
 
 
+$(LIST_FILE):
+	@echo "Generate package file list"
+	$(AM_V_at)git ls-tree --name-only -r  HEAD "$(abs_top_srcdir)" > "$@" || true
+
+@CLOC_TRUE@$(CLOC_FILE): $(LIST_FILE)
+@CLOC_TRUE@	@echo "Generate cloc summary"
+@CLOC_TRUE@	$(AM_V_at)echo "CLoC summary" | sed 'h;s/./=/g;p;x;p;x' > "$@"
+@CLOC_TRUE@	$(AM_V_at)echo >> "$@"
+@CLOC_TRUE@	$(AM_V_at)@CLOC@ --list-file="$<" --quiet | tail -n +2 >> "$@"
+
+@CLOC_FALSE@$(CLOC_FILE):
+@CLOC_FALSE@	@echo "You should install cloc (source code line counter) and reconfigure this package."
+@CLOC_FALSE@	$(AM_V_at)echo "CLoC isn't installed. No report created" > "$@"
+
+@OHCOUNT_TRUE@$(OHCOUNT_FILE): $(LIST_FILE)
+@OHCOUNT_TRUE@	@echo "Generate OhCount summary"
+@OHCOUNT_TRUE@	$(AM_V_at)echo "OhCount summary" | sed 'h;s/./=/g;p;x;p;x' > "$@"
+@OHCOUNT_TRUE@	$(AM_V_at)@OHCOUNT@ $$(cat "$<") | tail -n +2 >> "$@"
+
+@OHCOUNT_FALSE@$(OHCOUNT_FILE): $(LIST_FILE)
+@OHCOUNT_FALSE@	@echo "You should install ohcount (source code line counter) and reconfigure this package."
+@OHCOUNT_FALSE@	$(AM_V_at)echo "OhCount isn't installed. No report created" > "$@"
+
 force-renew:
 
-$(STATS_FILE): force-renew
+$(STATS_FILE): $(CLOC_FILE) $(OHCOUNT_FILE) $(LIST_FILE) force-renew
+	@echo "Backup existing code statistics (if any)"
+	$(AM_V_at)test ! -f "$(abs_srcdir)/$(STATS_FILE)" || cat "$(abs_srcdir)/$(STATS_FILE)" > "$(STATS_FILE).tmp"
+	@echo "Generate code statistics"
 	$(AM_V_at)echo "# $@ #" | sed 'h;s/./#/g;p;x;p;x' > "$@"
 	$(AM_V_at)echo >> "$@"
-	$(AM_V_at)TMPFILE=$$(mktemp -u);					\
-	git ls-tree --name-only -r  HEAD "$(abs_top_srcdir)" > $${TMPFILE};	\
-	echo "CLoC summary" | sed 'h;s/./=/g;p;x;p;x' >> "$@" ;			\
-	echo >> "$@";								\
-	if [ "@CLOC@" == "" ]; then						\
-	  echo "You should install cloc (source code line counter) and reconfigure this package.";\
-	  echo "CLoC isn't installed. No report created" >> "$@";		\
-	else									\
-	  echo >> "$@";								\
-	  @CLOC@ --list-file=$${TMPFILE} --quiet | tail -n +2 >> "$@";		\
-	fi;									\
-	echo >> "$@";								\
-	echo "OhCount summary" | sed 'h;s/./=/g;p;x;p;x' >> "$@";		\
-	if [ "@OHCOUNT@" == "" ]; then						\
-	  echo "You should install ohcount (source code line counter) and reconfigure this package.";\
-	  echo >> "$@";								\
-	  echo "OhCount isn't installed. No report created" >> "$@";		\
-	else									\
-	  @OHCOUNT@ $$(cat $${TMPFILE}) | tail -n +2 >> "$@";			\
-	fi;									\
-	echo >> "$@";								\
-	printf "%.78d\n" | tr 0 - >> "$@";					\
-	echo >> "$@";								\
-	$(RM) $${TMPFILE}
-	$(AM_V_at)cat "$@"
+	$(AM_V_at)cat $(CLOC_FILE) >> "$@"
+	$(AM_V_at)echo >> "$@"
+	$(AM_V_at)cat $(OHCOUNT_FILE) >> "$@"
+	$(AM_V_at)echo >> "$@"
+	$(AM_V_at)printf "%.78d\n" | tr 0 - >> "$@"
+	$(AM_V_at)echo >> "$@"
+	$(AM_V_at)if test ! -s "$(LIST_FILE)" -a -f "$(STATS_FILE).tmp"; then		\
+	  echo "Using existing code statistics backup file since generation failed";	\
+	  mv "$(STATS_FILE).tmp" "$(STATS_FILE)";					\
+	fi
+	@echo "Removing temporary files and backup (if any)"
+	$(AM_V_at)$(RM) "$(STATS_FILE).tmp" "$(CLOC_FILE)" "$(OHCOUNT_FILE)" "$(LIST_FILE)"
+	$(AM_V_at)cat "$(STATS_FILE)"
 
-update-stats:
-	$(AM_V_at)rm -f $(STATS_FILE)
-	$(MAKE) $(AM_MAKEFLAGS) $(STATS_FILE)
+cloc: $(CLOC_FILE)
+
+ohcount: $(OHCOUNT_FILE)
+
+filelist: $(LIST_FILE)
+
+stats: $(STATS_FILE)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
