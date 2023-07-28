@@ -88,6 +88,7 @@
 ******************************************************************************/
 
 #include "variant_identification.h"
+
 #include "config.h"
 
 #include <algorithm>
@@ -97,38 +98,77 @@ using namespace std;
 
 BEGIN_KIM_NAMESPACE
 
-VariantIdentification::VariantIdentification(): informations() {
+VariantIdentification::VariantIdentification(): _informations() {
 }
 
 VariantIdentification &VariantIdentification::add(VariantIdentification::ReadID_type read_id, size_t pos) {
-  list<size_t> &l = informations[read_id];
-  l.push_back(pos);
+  list<size_t> &l = _informations[read_id];
+  if (!l.empty()) {
+    bool _sorted = true;
+    if (l.back() > pos) {
+      _sorted = false;
+    }
+    l.push_back(pos);
+    if (!_sorted) {
+      l.sort();
+    }
+    l.unique();
+  } else {
+    l.push_back(pos);
+  }
   return *this;
-}
-
-static VariantIdentification::ReadID_type getFirst(const VariantIdentification::VariantKmerAssoc_type::value_type v) {
-  return v.first;
 }
 
 list<VariantIdentification::ReadID_type> VariantIdentification::getReads() const {
   list<VariantIdentification::ReadID_type> l;
-  transform(informations.cbegin(), informations.cend(), l.begin(), getFirst);
+  for (VariantReadKmersAssoc::const_iterator it = _informations.cbegin();
+       it != _informations.cend();
+       ++it) {
+    l.push_back(it->first);
+  }
   return l;
 }
 
-double VariantIdentification::getReadScore(VariantIdentification::ReadID_type read_id) const {
-  double v = 0;
-  VariantKmerAssoc_type::const_iterator it = informations.find(read_id);
-  if (it != informations.end()) {
-    for (list<size_t>::const_iterator pos_it = it->second.begin();
-         pos_it != it->second.end();
-         ++pos_it) {
-      // TODO with *pos_it (one of the position)
-      ++v;
+const list<size_t> empty_list;
+const list<size_t> &VariantIdentification::getKmersPosInRead(ReadID_type read_id) const {
+  VariantReadKmersAssoc::const_iterator it = _informations.find(read_id);
+  return ((it == _informations.end()) ? empty_list : it->second);
+}
+
+double VariantIdentification::getReadScore(ReadID_type read_id) const {
+  const list<size_t> &l = getKmersPosInRead(read_id);
+  pair<size_t, size_t> b = getLonguestSequenceBounds(l);
+  return (l.empty() ? -1 : (b.second - b.first + 1.0) / l.size());
+}
+
+pair<size_t, size_t> VariantIdentification::getLonguestSequenceBounds(const list<size_t> sequence) {
+  pair<size_t, size_t> bounds(0, 0);
+  size_t
+    max_length = 0,
+    cur_length = 0,
+    last_value = 0;
+  for (list<size_t>::const_iterator pos_it = sequence.cbegin();
+       pos_it != sequence.end();
+       ++pos_it) {
+    if (pos_it != sequence.cbegin()) {
+      if (last_value + 1 != *pos_it) {
+        if (!max_length || (cur_length > max_length)) {
+          max_length = cur_length;
+          bounds.first = *pos_it + 1 - max_length;
+          bounds.second = *pos_it;
+        }
+        cur_length = 0;
+      }
     }
+    ++cur_length;
+    last_value = *pos_it;
   }
-  cerr << "TODO:" << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << endl;
-  return v;
+  if (!max_length || (cur_length > max_length)) {
+    max_length = cur_length;
+    bounds.first = last_value + 1 - max_length;
+    bounds.second = last_value;
+  }
+  return bounds;
 }
 
 END_KIM_NAMESPACE

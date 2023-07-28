@@ -113,11 +113,14 @@ namespace kim {
      * The type of the association between reads and k-mer (that
      * identify some variation) positions.
      */
-    typedef std::map<VariantIdentification::ReadID_type, std::list<size_t> > VariantKmerAssoc_type;
+    typedef std::map<VariantIdentification::ReadID_type, std::list<size_t> > VariantReadKmersAssoc;
 
   private:
 
-    VariantKmerAssoc_type informations;
+    /**
+     * The positions of k-mers associated to variants in reads.
+     */
+    VariantReadKmersAssoc _informations;
 
   public:
 
@@ -150,16 +153,38 @@ namespace kim {
     std::list<ReadID_type> getReads() const;
 
     /**
-     * Get the score associated to the given read for the variant
-     * detection.
-     *
-     * TODO: explain how the score is computed and what it means.
+     * Get the list of k-mers positions associated to the variant for
+     * the given read.
      *
      * \param read_id The read ID.
      *
-     * \return Returns the computed score value.
+     * \return Returns the list of positions of the k-mers associated
+     * to the variant.
+     */
+    const std::list<size_t> &getKmersPosInRead(ReadID_type read_id) const;
+
+    /**
+     * Get the score of the read associated to the variant.
+     *
+     * \param read_id The read ID.
+     *
+     * \return Returns the ratio between the longuest consecutive
+     * sequence of k-mer positions in the read and the total number of
+     * k-mer positions. If the read id is not found (there is no
+     * associated k-mer positions, then returns -1).
      */
     double getReadScore(ReadID_type read_id) const;
+
+    /**
+     * Get the bounds of the longuest consecutive sequence from the
+     * given list.
+     *
+     * \param sequence A list of (unique) positions.
+     *
+     * \return Returns the bounds of the longest consecutive sequence
+     * from the given list.
+     */
+    static std::pair<size_t, size_t> getLonguestSequenceBounds(const std::list<size_t> sequence);
 
   };
 
