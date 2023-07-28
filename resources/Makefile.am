@@ -20,7 +20,7 @@
 #                                                                             #
 #                                                                             #
 #  Contact:                                                                   #
-#    - KIM list      <kim@lirmm.fr>                                           #
+#    - KIM list         <kim@lirmm.fr>                                        #
 #                                                                             #
 #  -------------------------------------------------------------------------  #
 #                                                                             #
@@ -91,8 +91,8 @@ STATS_FILE = @PACKAGE@-@PACKAGE_VERSION@.stats
 
 dist_pkgdata_DATA =	\
   kim.bash_completion	\
+  test-reads.fastq
   $(STATS_FILE)
-
 
 force-renew:
 

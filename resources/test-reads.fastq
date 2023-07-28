@@ -1,0 +1,113 @@
+@Sequence 1 of length 94 (from line 1 to line 4), all quality symbols represented, one line for nucleotide sequence and 1 line for quality sequence
+CACTAAAAAAAAAAAAAAAAAAAAAAAATGCCACTAGGCTGCTGCTGCTTATAAAGACACCAACTAGGTCGCTTAAAAGATCTAGAGGTCGAAT
++
+!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
+@Sequence 2 of length 20 (from line 5 to line 8), RNA sequence contains 'U' instead of 'T', one line for both nucleotide and quality sequence.
+ACCAGUUAACAAAUUAUAAT
++
+BB@BAA>ABBBB&B@@BB90
+@Sequence 3 of length 20 (from line 9 to line 12), sequence is starting with 5 uppercase letters, followed by 10 lowercase letters and ending with 5 uppercase letters
+CCAGTcagcatcagcAGCAT
++
+BB@BAA>ABBBB&B@@BB90
+@Sequence 4 of length 118 (from line 13 to line 16), nucleotide sequence contains some 'N' symbols (at position 10 and from position 41 to 50, one line for nucleotide sequence and 1 line for quality sequence
+ACCAGTTAANAAATTATAAGACTTTAGCGGCATCGATTACANNNNNNNNNNAGGCCGAAGCACTGTTACGCGTTCTCGATCGGGCCTTACCTTTACGGCTGAACTGGGCGGATTACGT
++
+BB@BAA>ABBBB&B@@BB9==AAA2@BBB@B<<7777766*0000%0...444444444<;888888882226444002///%-&,&,0000'0----------***))))*******
+@Sequence 5 of length 80 (from line 17 to line 20), nucleotide sequence contains all degeneracy symbols: puRines (A or G), pYrimidines (C or T/U), Ketones (G or T/U), Amino groups (A or C), Strong interactions (C or G), Weak interactions (A or T/U), all but A (B comes after A), all but C (D comes after C), all but G (H comes after G), all but T/U (V comes after T and U), aNy (A or C or G or T/U). They are located at positions 20-25, 40-43 and 60.
+ATTTGTCTTCACAAAGGAGRYKMSWGCAACCAGCGGATTBDHVGGCGTGGGGAATCTCTNCGGCTGATGCGCGGCTATGC
++
+...$.777/7:::8*9/456//)//3444633/719999==(55513242...,011331118885558666666333,/
+@Sequence 6 of length 40 (from line 21 to line 24). String has length 46, nucleotide sequence contains a gap of length 1 at position 10 then a gap of length 5 at position 30 (of the string, thus at position 29 of the sequence).
+CATGGTGGA-TAGATACCTGCGACGGTGG-----ATGGCATTCCCT
++
+AAAA:>=7? 7????::2:?=====7882     8====7==78,0
+@Sequence 7 of length 60 (from line 25 to line 28) valid nucleotides and 10 invalid characters (EFIJLOPQXZ which must be ignored) at positions 20 and from 40 to 48). Quality sequence is of length 60.
+GCTGCAAGCACTGTGAGCAETCATATTCCTGCGGGAGAGFIJLOPQXZTTCTTCCCTAGTCTTAAAGTCT
++
+0=111=0=====8888888 3)))2')')////(/3322         +3/-())%+))))+&++++&++
+@Sequence 8 of length 60 (from line 29 to line 32) valid nucleotides and 10 invalid characters (:;!*$=0123 which must be ignored) at positions 20 and from 40 to 48). Quality sequence is of length 68.
+GCTGCAAGCACTGTGAGCA:TCATATTCCTGCGGGAGAG;!*$=0123TTCTTCCCTAGTCTTAAAGTCT
++
+0=111=0=====8888888 3)))2')')////(/3322         +3/-())%+))))+&++++&++
+@Sequence 9 of length 30 (from line 33 to line 36) with the quality separator repeating the sequence header
+CATCAGCTACGACTACGACTCGATCAGCAA
++Sequence 9 of length 30 (from line 33 to line 36) with the quality separator repeating the sequence header
+01023448939938383838==$====$**
+@Sequence 10 of length 30 (from line 37 to line 40) with an error while repeating the header in the quality separator
+CATCAGCTACGACTACGACTCGATCAGCAA
++Sequence 10 of length 30 with the quality separator repeating a wrong sequence header
+01023448939938383838==$====$**
+@Sequence 11 of length 30 (from line 41 to line 45) which follows a badly formatted sequence. Notice that there is a blank line after the 4 lines block.
+CGATCAGCGACAGCACTAGCACACTACGTG
++
+,;:;.?/.::;,;%*$$$=+}}]}]@@]}]
+
+@Sequence 12 of length 30 (from line 46 to line 51). There is a blank line after the sequence of nucleotides and after the quality sequence.
+CGATCAGCGACAGCACTAGCACACTACGTG
+
++
+,;:;.?/.::;,;%*$$$=+}}]}]@@]}]
+
+@Sequence 13 of length 30 (from line 52 to line 59). There is a blank line between each four parts of the block and at the end.
+
+CTACGTACACTACGACTACGACCATGACAC
+
++
+
+-_1231223279889002839291898239
+
+@Sequence 14 of length 108 (from line 60 to line 97), both nucleotide and quality sequences are splitted on multiple lines and contains some spaces, some of the quality lines begins with an '@' or a '+'
+
+CGATCCAGATACCGTTACTGTT
+CG CATCCCA CTGCAC  
+   AATGATACAGTCAT 
+
+CCT
+
+
+GTCCGACAATTTCCAGCCTCGCCGGTACAGCTGCCA
+
+TGACAATAACCCGCCTCT
+
+   
+
++
+
+
+:::00*0:::::::::B@@
+
+@@9@   @@
+
+
+@=;;  ,;@   
+
+
+    @;;;;;6;922    
++555444..'.3..&.
+
+@This is not a sequence
+ACCA
++
+1234
+
+..,./00/--,,),,'**&))
+
+  
+
+@Sequence 15 of length 30 (from line 98 to line 101) with a too long quality sequence [this is a recoverable error] 
+CAGTCGCATACGACTACGACATCAGCCGAT
++
+$$$$$====}}}===$$$}}}}$$**********
+@Sequence 16 of length 30 (from line 102 to line 105) which follows a badly formatted sequence.
+CAGCTAGCATCAGCTACGACTACGGCATTC
++
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+@Sequence 17 of length 30 (from line 106 to line 109) whih contains only N.
+NNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
++
+NNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+@Sequence 18 of length 30 (from line 110 to line 113). The last sequence of this file (with no new line at the end).
+TGCTGTTGCAGGCTTTCCGGCCAGCGACTG
++
+79=999:====:777+79=9=:====@@B@

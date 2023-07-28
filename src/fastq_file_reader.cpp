@@ -88,109 +88,90 @@
 ******************************************************************************/
 
 #include "fastq_file_reader.h"
-#include "config.h"
 
-#include <sstream>
+#include "config.h"
+#include "kim_exception.h"
+
+#include <cassert>
 #include <iostream>
-#include <exception>
 
 using namespace std;
 
 BEGIN_KIM_NAMESPACE
 
+FastqFileReaderParseError::FastqFileReaderParseError(FastqFileReader &reader):
+  Exception()
+{
+  if (reader.getFilename().empty()) return;
+  (*this) << "File '" << reader.getFilename() << "': "
+          << "line " << reader.getFileLineNumber() << ", "
+          << "column " << reader.getFileColumnNumber()
+          << ": ";
+}
 
-/////////////// Some stuff to handling parse error ///////////////
-
-class FastqFileReaderParseError: public exception {
-
-private:
-  string s;
-
-public:
-
-  FastqFileReaderParseError(FastqFileReader &reader) {
-    if (reader.getFilename().empty()) return;
-    stringstream ss;
-    ss << "File '" << reader.getFilename() << "'"
-       << ": line " << reader.getFileLineNumber()
-       << ": column " << reader.getFileColumnNumber()
-       << ": ";
-    s = ss.str();
-  }
-
-  inline virtual const char *what() const noexcept {
-    return s.c_str();
-  }
-
-  template <typename T>
-  inline FastqFileReaderParseError &operator<<(const T &t) {
-    stringstream ss;
-    ss << t;
-    s += ss.str();
-    return *this ;
-  }
-
-};
-
-#define WARNING_MSG(msg)        \
-  if (warn) {                   \
-    cerr << "Warning:"          \
-         << filename << ":"     \
-         << (line + 1) << ":"   \
-         << col << ": "         \
-         << msg << endl;        \
-  }                             \
+#define WARNING_MSG(msg)          \
+  if (_settings.warn()) {         \
+    cerr << "Warning:"            \
+         << _filename << ":"      \
+         << (_line + 1) << ":"    \
+         << _col << ": "          \
+         << msg << endl;          \
+  }                               \
   (void) 0
 
 #define ERROR_MSG(msg)                          \
-  FastqFileReaderParseError e(*this);           \
-  e << msg;                                     \
-  throw e
-
-//////////////////////////////////////////////////////////////////
+  throw FastqFileReaderParseError(*this) << msg
 
 
-FastqFileReader::FastqFileReader(const char *filename, size_t k, bool warn) {
-  open(filename, k, warn);
+FastqFileReader::FastqFileReader(const Settings &settings): _settings(settings) {
+  assert(settings.valid());
+}
+
+FastqFileReader::FastqFileReader(const char *filename, const Settings &settings): _settings(settings) {
+  assert(settings.valid());
+  open(filename);
+}
+
+FastqFileReader::FastqFileReader(const string &filename, const Settings &settings): _settings(settings) {
+  assert(settings.valid());
+  open(filename);
 }
 
 FastqFileReader::~FastqFileReader() {
-  ifs.close();
+  close();
 }
 
-void FastqFileReader::open(const char *filename, size_t k, bool warn) {
-  if (ifs.is_open()) {
-    ifs.close();
-  }
-  if (!k) {
-    ERROR_MSG("The length of k-mer must be strictly positive!");
-  }
-  this->filename = filename;
-  ifs.open(filename);
-  if (ifs) {
-    line = col = 0;
-    start_sequence_state = true;
-    nb_nucl = nb_valid_nucl = 0;
-    this->k = k;
-    read_id = "";
-    kmer = string(k, '?');
-    kmer_pos = 0;
-    this->warn = warn;
+void FastqFileReader::open(const string &filename) {
+  close();
+  _filename = filename;
+  _ifs.open(_filename.c_str());
+  if (!*this) {
+    _filename = "";
+    if (_settings.warn()) {
+      cerr << "Unable to open file '" << filename << "'." << endl;
+    }
   }
 }
 
-const string &FastqFileReader::getFilename() const {
-  return filename;
+void FastqFileReader::close() {
+  if (_ifs.is_open()) {
+    _ifs.close();
+  }
+  _filename = "";
+  reset();
 }
 
-size_t FastqFileReader::getFileLineNumber() const {
-  return line + 1;
+void FastqFileReader::reset() {
+  _ifs.clear();
+  if (_ifs) {
+    _ifs.seekg(0);
+  }
+  _line = _col = 0;
+  _start_sequence_state = true;
+  _nb_nucl = _nb_valid_nucl = 0;
+  _read_id = "";
+  _kmer = string(_settings.k(), '?');
 }
-
-size_t FastqFileReader::getFileColumnNumber() const {
-  return col + 1;
-}
-
 
 #define IUPAC_A 1
 #define IUPAC_C 2
@@ -211,6 +192,8 @@ uint8_t getIUPACNucleotide(char c) {
   case 'U': return IUPAC_T;
   case 'R': return IUPAC_A | IUPAC_G; // Purine
   case 'Y': return IUPAC_C | IUPAC_T; // Pyrimidine
+  case 'K': return IUPAC_G | IUPAC_T; // Ketones
+  case 'M': return IUPAC_A | IUPAC_C; // Amino groups
   case 'S': return IUPAC_C | IUPAC_G; // Strong
   case 'W': return IUPAC_A | IUPAC_T; // Weak
   case 'B': return IUPAC_C | IUPAC_G | IUPAC_T; // Not A
@@ -226,114 +209,221 @@ uint8_t getIUPACNucleotide(char c) {
   }
 }
 
-char FastqFileReader::nextVisibleCharacter() {
+char FastqFileReader::_nextVisibleCharacter() {
   int c = -1;
-  while (ifs && ((c = ifs.get()) <= 32)) {
+  while (*this && ((c = _ifs.get()) <= 32)) {
     switch (c) {
     case '\t':
     case ' ':
-      ++col;
+      ++_col;
       break;
     case '\n':
-      ++line;
-      col = 0;
+      ++_line;
+      _col = 0;
       break;
     default:
-      if (ifs) {
+      if (*this) {
         WARNING_MSG("Unexpected non printable character (code " << c << ")");
       }
     }
   }
-  ++col;
+  ++_col;
   return ((c != -1) ? c : 0);
 }
 
-const string &FastqFileReader::getNextKmer() {
+void FastqFileReader::_processSequenceHeader() {
+  _start_sequence_state = false;
+  std::getline(_ifs, _read_id);
+  ++_line;
+  _col = 0;
+  _nb_nucl = _nb_valid_nucl = 0;
+}
+
+bool FastqFileReader::_parseSequenceHeader() {
+  int c = _nextVisibleCharacter();
+  if (c) {
+    if (_col == 1) {
+      switch (c) {
+      case '@':
+        _processSequenceHeader();
+        break;
+      case 0:
+        ERROR_MSG("Badly formatted file. End of file found while expecting '@'.");
+      default:
+        ERROR_MSG("Badly formatted file. Character '" << (char) c << "' found while expecting '@'.");
+      }
+    } else {
+      ERROR_MSG("Badly formatted file. Unexpected character '" << (char) c << "'.");
+    }
+  }
+  return c;
+}
+
+void FastqFileReader::_parseQualitySeparator() {
+  // End of the sequence, let's skip the quality
+  string header;
+  std::getline(_ifs, header);
+  ++_line;
+  _col = 0;
+  if (!header.empty() && (header != _read_id)) {
+    WARNING_MSG("Badly formatted file. The header following the '+' sign (" << header << ") is not the expected one (" << _read_id << ").");
+  }
+}
+
+void FastqFileReader::_parseQualitySequence() {
+  int c = -1;
+  while (c && _nb_nucl--) {
+    c = _nextVisibleCharacter();
+  }
+  if (!c) {
+    ERROR_MSG("Badly formatted file. End of file found while " << _nb_nucl << " quality symbols were still expected.");
+  }
+  _start_sequence_state = true;
+}
+
+void FastqFileReader::_parse() {
+  bool ok;
   do {
-    int c = nextVisibleCharacter();
-    if (c) {
-      if (start_sequence_state) {
-        if (col == 1) {
-          switch (c) {
-          case '@':
-            start_sequence_state = false;
-            std::getline(ifs, read_id);
-            ++line;
-            col = 0;
-            nb_nucl = 0;
-            nb_valid_nucl = 0;
-            kmer_pos = 0;
-            break;
-          default:
-            ERROR_MSG("Badly formatted file. Character '" << (char) c << "' found while expecting '@'.");
-          }
-        } else {
-          ERROR_MSG("Badly formatted file. Unexpected character '" << (char) c << "'.");
-        }
-      } else {
+    ok = true;
+    if (_start_sequence_state) {
+      ok = !_parseSequenceHeader();
+    } else {
+      int c = _nextVisibleCharacter();
+      if (c) {
         uint8_t nucl = getIUPACNucleotide(c);
         switch (nucl) {
         case IUPAC_A:
         case IUPAC_C:
         case IUPAC_G:
         case IUPAC_T:
-          if (nb_valid_nucl >= k) {
-            for (size_t i = 1; i < k; ++i) {
-              kmer[i - 1] = kmer[i];
+          if (_nb_valid_nucl >= _settings.k()) {
+            for (size_t i = 1; i < _settings.k(); ++i) {
+              _kmer[i - 1] = _kmer[i];
             }
-            kmer[k - 1] = c;
+            _kmer[_settings.k() - 1] = c;
           } else {
-            kmer[nb_valid_nucl] = c;
+            _kmer[_nb_valid_nucl] = c;
           }
-          if (++nb_valid_nucl >= k) {
-            ++kmer_pos;
-          }
-          ++nb_nucl;
+          ++_nb_nucl;
+          ++_nb_valid_nucl;
           break;
         case IUPAC_GAP:
           // ignore gaps
+          ok = false;
           break;
         case IUPAC_UNDEFINED:
-          if ((col == 1) && (c == '+')) {
-            // End of the sequence, let's skip the quality
-            string header;
-            std::getline(ifs, header);
-            ++line;
-            col = 0;
-            if (!header.empty() && (header != read_id)) {
-              WARNING_MSG("Badly formatted file. The header following the '+' sign (" << header << ") is not the expected one (" << read_id << ").");
-            }
-            while (nb_nucl--) {
-              c = nextVisibleCharacter();
-            }
-            start_sequence_state = true;
+          if ((_col == 1) && (c == '+')) {
+            _parseQualitySeparator();
+            _parseQualitySequence();
           } else {
             WARNING_MSG("Badly formatted file. Unexpected character '" << (char) c << "'.");
           }
+          ok = false;
+          break;
         default:
           // This is a degeneracy symbol
-          ++nb_nucl;
-          nb_valid_nucl = 0;
+          ++_nb_nucl;
+          _nb_valid_nucl = 0;
         }
+      } else {
+        _nb_nucl = _nb_valid_nucl = 0;
       }
-    } else {
-      kmer_pos = 0;
     }
-  } while (ifs && !kmer_pos);
+  } while (*this && !ok);
+}
+
+const string &FastqFileReader::getNextKmer() {
+  do {
+    _parse();
+  } while (*this && (_nb_valid_nucl < _settings.k()));
   return getCurrentKmer();
 }
 
 const string &FastqFileReader::getCurrentKmer() const {
   static const string empty_string;
-  return (kmer_pos ? kmer : empty_string);
+  return (*this && (_nb_valid_nucl >= _settings.k()) ? _kmer : empty_string);
 }
 
-const string &FastqFileReader::getCurrentRead() const {
-  return read_id;
-}
 
-size_t FastqFileReader::getCurrentKmerRelativePosition() const {
-  return kmer_pos;
+
+
+const char *FastqFileReader::_search_directories[] = {
+                                                      "./",
+                                                      PACKAGE_DATADIR "/",
+                                                      /* The following directories are mostly for development purpose */
+                                                      "resources/",
+                                                      "../resources/",
+                                                      "../",
+                                                      /* The last array entry must be NULL */
+                                                      NULL
+};
+
+bool FastqFileReader::gotoNextSequence(bool check_consistency) {
+  bool found = false;
+  if (check_consistency) {
+    while (*this && !_start_sequence_state) {
+      int c = _nextVisibleCharacter();
+      if (c) {
+        uint8_t nucl = getIUPACNucleotide(c);
+        switch (nucl) {
+        case IUPAC_GAP:
+          // cout << "=> A gap" << endl;
+          // ignore gaps
+          break;
+        case IUPAC_UNDEFINED:
+          if ((_col == 1) && (c == '+')) {
+            _parseQualitySeparator();
+            _parseQualitySequence();
+          } else {
+            WARNING_MSG("Badly formatted file. Unexpected character '" << (char) c << "'.");
+          }
+          break;
+        default:
+          // This is a nucleotide symbol (degeneracy or not)
+          ++_nb_nucl;
+        }
+      }
+    }
+    if (*this) {
+      found = _parseSequenceHeader();
+    }
+  } else {
+    while (*this && !found) {
+      int c = _nextVisibleCharacter();
+      if ((_col == 1) and (c == '@')) {
+        _processSequenceHeader();
+        found = true;
+      } else {
+        ++_col;
+      }
+    }
+  }
+  return found;
+}
+string FastqFileReader::findFile(const string &filename, const char **directories) {
+  if (filename.empty()) return filename;
+  string res = filename;
+  const char *dir = NULL;
+  do {
+    ifstream ifs(res);
+    if (ifs) {
+      ifs.close();
+      dir = NULL;
+    } else {
+      if (directories && (filename[0] != '/')) {
+        dir = *directories++;
+        res = dir;
+        if (res.back() != '/') {
+          res += '/';
+        }
+        res += filename;
+      } else {
+        dir = NULL;
+        res = "";
+      }
+    }
+  } while (dir);
+  return res;
 }
 
 END_KIM_NAMESPACE

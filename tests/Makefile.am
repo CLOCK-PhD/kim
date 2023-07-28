@@ -93,17 +93,21 @@ AM_CXXFLAGS =				\
   -DCXX="\"$(CXX)\""			\
   -DARCH="\"$(build_cpu)\""		\
   -DOS="\"$(build_os)\""		\
-  -DPACKAGE_DATADIR="\"$(pkgdatadir)\""
+  -DPACKAGE_DATADIR="\"$(pkgdatadir)\""	\
+  -DSRCDIR="\"$(abs_srcdir)\""
 
 LDADD = ../src/libkim.la
 
 check_PROGRAMS =		\
   test_bounded_size_string	\
+  test_fastq_file_reader	\
   test_kim_settings		\
   test_kmer_nodes_subindex	\
   test_sort_helper
 
 test_bounded_size_string_SOURCES = test_bounded_size_string.cpp
+
+test_fastq_file_reader_SOURCES = test_fastq_file_reader.cpp
 
 test_kim_settings_SOURCES = test_kim_settings.cpp
 
