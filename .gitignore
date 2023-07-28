@@ -1,9 +1,12 @@
+aminclude_static.am
 autom4te.cache/
 
 config.log
 config.status
 config/config.h
 config/stamp-h1
+
+coverage/
 
 doc/docs
 doc/doxygen.cfg
@@ -37,6 +40,7 @@ kim_*.deb
 kim-*.tar.gz
 libtool
 Makefile
+
 *~
 *.o
 *.lo

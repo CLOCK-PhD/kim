@@ -97,6 +97,7 @@
 #include <fastq_file_reader.h>
 #include <kim_exception.h>
 #include <kim_settings.h>
+#include <kmer_nodes_subindex.h>
 #include <optionparser.h>
 #include <sort_helper.h>
 #include <variant_identification.h>

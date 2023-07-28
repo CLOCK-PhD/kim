@@ -103,12 +103,12 @@ namespace kim {
    */
   class Exception: public std::exception {
 
-  private:
+  protected:
 
     /**
      * The exception message.
      */
-    std::string msg;
+    std::string _msg;
 
   public:
 
@@ -117,7 +117,7 @@ namespace kim {
      *
      * \param msg The initial message string.
      */
-    inline Exception(const std::string &msg = ""): std::exception(), msg(msg) {}
+    inline Exception(const std::string &msg = ""): std::exception(), _msg(msg) {}
 
     /**
      * Get the message associated with this exception.
@@ -125,7 +125,7 @@ namespace kim {
      * \return Returns the C string message associated to this exception.
      */
     inline virtual const char *what() const noexcept {
-      return msg.c_str();
+      return _msg.c_str();
     }
 
     /**
@@ -140,7 +140,7 @@ namespace kim {
     Exception &operator<<(const T &t) {
       std::ostringstream s;
       s << t;
-      msg += s.str();
+      _msg += s.str();
       return *this;
     }
 

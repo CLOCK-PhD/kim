@@ -92,14 +92,14 @@
 #include <string>
 #include <iostream>
 #ifdef NDEBUG
-#  unef NDEBUG
+#  undef NDEBUG
 #endif
 #include <cassert>
 
 using namespace std;
 using namespace kim;
 
-int main(int argc, char **argv) {
+int main() {
 
   cout << "Testing BoundedSizeString" << endl;
   cout << "The maximal size of BoundedSizeStrings is " << BoundedSizeString::getMaximalSize() << endl;
@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
   assert(s2.length() == 5);
   assert(!s2.empty());
   for (size_t i = 0; i < s2.length(); ++i) {
-    assert(s2[i] == '0' + i);
+    assert(s2[i] == char('0' + i));
   }
   cout << "s2 = '" << s2 << "'" << endl;
 

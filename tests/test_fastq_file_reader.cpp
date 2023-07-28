@@ -95,14 +95,14 @@
 #include <string>
 #include <regex>
 #ifdef NDEBUG
-#  unef NDEBUG
+#  undef NDEBUG
 #endif
 #include <cassert>
 
 using namespace std;
 using namespace kim;
 
-int main(int argc, char **argv) {
+int main() {
 
   Settings settings(5, 2);
   assert(settings.valid());
@@ -190,7 +190,7 @@ int main(int argc, char **argv) {
         sequence_length.push_back(v);
         v = stoi(matches[3]);
         cout << "- Starting line is " << v << " (expecting " << (reader.getFileLineNumber() - 1) << ")" << endl;
-        assert(v == (reader.getFileLineNumber() - 1));
+        assert(size_t(v) == (reader.getFileLineNumber() - 1));
       } else {
         cout << "No new sequence found." << endl;
         --cpt;

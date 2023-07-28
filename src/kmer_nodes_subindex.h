@@ -172,8 +172,6 @@ namespace kim {
        * https://yaml.org/ for more informations.
        *
        * \param os The output stream.
-       *
-       * \param indent The preceeding number of spaces.
        */
       inline void toYaml(std::ostream &os) const {
         os << suffix << ": " << in_reference;

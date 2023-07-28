@@ -124,6 +124,10 @@ libkim_la_SOURCES =						\
   variant_identification.h variant_identification.cpp		\
   variant_kmer_index.h variant_kmer_index.cpp
 
+GCDA_FILES = $(patsubst %.cpp,%.gcda,$(filter %.cpp,$(SOURCES)))
+GCNO_FILES = $(GCDA_FILES:.gcda=.gcno)
+GCOV_FILES = $(GCDA_FILES:.gcda=.gcov)
+
 libkim_la_configdir   = @libdir@/@PACKAGE@-@VERSION@/include
 libkim_la_config_DATA = $(CONFIG_HEADER)
 libkim_la_LDFLAGS     = -version-info "@LIB_VERSION@" $(AM_LDFLAGS)
@@ -145,6 +149,7 @@ uninstall-hook:
         || rm -rf "$(DESTDIR)@libdir@"/@PACKAGE@{,-@VERSION@}
 
 MOSTLYCLEANFILES=*~
-CLEANFILES=*~
+CLEANFILES=*~ $(GCDA_FILES) $(GCNO_FILES) $(GCOV_FILES)
 DISTCLEANFILES=*~
 MAINTAINERCLEANFILES=*~
+

@@ -165,7 +165,6 @@ BoundedSizeString &BoundedSizeString::operator=(const char *s) {
 
 int BoundedSizeString::compare(const BoundedSizeString &s) const {
   if (!_maximal_size) return 0;
-  int r = 0;
   size_t i = 0;
   while ((_str[i] != '\0') && (s._str[i] != '\0') && (_str[i] == s._str[i])) {
     ++i;
@@ -179,7 +178,6 @@ int BoundedSizeString::compare(const BoundedSizeString &s) const {
 
 int BoundedSizeString::reverse_compare(const BoundedSizeString &s) const {
   if (!_maximal_size) return 0;
-  int r = 0;
   size_t n1 = length();
   size_t n2 = s.length();
   if (n1 < n2) return -1;

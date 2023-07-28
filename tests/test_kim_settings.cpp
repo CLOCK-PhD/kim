@@ -92,14 +92,14 @@
 #include <string>
 #include <iostream>
 #ifdef NDEBUG
-#  unef NDEBUG
+#  undef NDEBUG
 #endif
 #include <cassert>
 
 using namespace std;
 using namespace kim;
 
-int main(int argc, char **argv) {
+int main() {
 
   cout << "Testing KimSettings" << endl;
 

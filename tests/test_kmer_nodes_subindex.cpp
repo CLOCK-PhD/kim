@@ -94,7 +94,7 @@
 #include <vector>
 #include <iostream>
 #ifdef NDEBUG
-#  unef NDEBUG
+#  undef NDEBUG
 #endif
 #include <cassert>
 
@@ -134,7 +134,7 @@ void infos(const KmerNodesSubindex &idx, bool frozen, bool sorted, bool empty, s
   assert(exception_thrown)
 
 
-int main(int argc, char **argv) {
+int main() {
 
   cout << "Testing KmerNodesSubindex for 3-mers" << endl;
 

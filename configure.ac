@@ -348,9 +348,12 @@ MAKE_RELEASE=true
 AS_IF([test -z "${DEB_BUILDER}"],
       [MAKE_RELEASE=false
        AC_MSG_WARN([The 'dpkg' program could not be found. This isn't critical, but it means that you won't be able to build releases.])])
+AS_IF([test ${MAKE_RELEASE} = "true" -a "x${enable_code_coverage}=xyes"],
+      [MAKE_RELEASE=false
+       AC_MSG_WARN([The --enable-code-coverage option has been provided. If you want to produce some release, re-run the configure script without this option."])])
 AM_CONDITIONAL([MAKE_RELEASE], [${MAKE_RELEASE}])
 hacked_prefix="${HACKED_PREFIX:-${prefix}}"
-AS_IF([test "x${hacked_prefix}" == "xNONE"],
+AS_IF([test "x${hacked_prefix}" = "xNONE"],
       [hacked_prefix=\"${ac_default_prefix}\"])
 AC_SUBST([hacked_prefix])
 
@@ -394,18 +397,35 @@ LT_PATH_LD
 ISODATE=`date +%Y-%m-%d`
 AC_SUBST([ISODATE])
 
-CXXFLAGS=
 AC_LANG([C++])
+
+CXXFLAGS=regexp([CXXFLAGS],[-g],[])
+CXXFLAGS=regexp([${CXXFLAGS}],[-O.],[])
+CXXFLAGS="${CXXFLAGS} -Wall -Wextra -pedantic"
+
+
+dnl Add option --enable-code-coverage (default to --disable-code-coverage)
+AX_CODE_COVERAGE()
+CFLAGS="${CFLAGS} ${CODE_COVERAGE_CFLAGS}"
+CPPFLAGS="${CPPFLAGS} ${CODE_COVERAGE_CPPFLAGS}"
+CXXFLAGS="${CXXFLAGS} ${CODE_COVERAGE_CXXFLAGS}"
+LIBS="${LIBS} ${CODE_COVERAGE_LIBS}"
+
+AC_ARG_VAR([GCOVR], [Wrapper around gcov program to generate simple reports (default: gcovr).])
+AC_PATH_PROG([GCOVR], [${GCOVR:-gcovr}])
+
 
 dnl Add option --enable-debug (default to --disable-debug)
 AC_ARG_ENABLE([debug],
               [AS_HELP_STRING([--enable-debug@<:@=ARG@:>@],
-                              [Compiles without code optimization and with debug flag (and enables assertion too).])])
+                              [Compiles without code optimization and with debug flag (and enables assertion too). This option is implied by --enable-code-coverage])])
 
-AS_IF([test -z "${enable_debug}" -o "x${enable_debug}" = "xno"],
-      [AC_DEFINE([NDEBUG],[],[Remove assertion checking])
-       CXXFLAGS="${CXXFLAGS} -O3"],
-      [CXXFLAGS="${CXXFLAGS} -g -O0 -fno-inline"])
+AS_IF([test "x${enable_code_coverage}" = "xyes"],
+      [CXXFLAGS="${CXXFLAGS} -fno-inline"],
+      [AS_IF([test "x${enable_debug}" = "xyes"],
+             [CXXFLAGS="${CXXFLAGS} -g -O0 -fno-inline"],
+             [CPPFLAGS="${CPPFLAGS} -DNDEBUG"
+              CXXFLAGS="${CXXFLAGS} -O3"])])
 
 dnl Checks for libraries.
 
@@ -427,12 +447,12 @@ AC_ARG_WITH([BitMagic-path],
 
 dnl Check if we need included BitMagic library.
 BM_OK=0
-AS_IF([test "x${with_included_BitMagic}" == "xcheck"],
+AS_IF([test "x${with_included_BitMagic}" = "xcheck"],
       [AS_IF([test "x${with_BitMagic_path}" != "x"],
              [with_included_BitMagic="no"],
              [with_included_BitMagic="yes"])])
 
-AS_IF([test "x${with_included_BitMagic}" == "xyes"],
+AS_IF([test "x${with_included_BitMagic}" = "xyes"],
       [AS_IF([test "x${with_BitMagic_path}" != "x"],
              [AC_MSG_FAILURE([You can't use both --with-included-BitMagic and --with-BitMagic-path options])],
              [BM_OK=1
@@ -445,7 +465,7 @@ AS_IF([test "x${with_included_BitMagic}" == "xyes"],
                               [AC_MSG_FAILURE([The kim program requires the BitMagic library. You should use the included library using --with-included-BitMagic configure option])],
                               )])])
 
-AS_IF([test "${BM_OK}" == "1"],
+AS_IF([test "${BM_OK}" = "1"],
       [AC_DEFINE([HAVE_BITMAGIC], [1], [Define to 1 in order to Use BitMagic library])],
       [AC_MSG_FAILURE([
 Unable to find a preinstalled BitMagic library.

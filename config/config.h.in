@@ -211,9 +211,6 @@
    <sysmacros.h>. */
 #undef MAJOR_IN_SYSMACROS
 
-/* Remove assertion checking */
-#undef NDEBUG
-
 /* Name of package */
 #undef PACKAGE
 

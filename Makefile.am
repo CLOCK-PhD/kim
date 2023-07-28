@@ -202,6 +202,32 @@ deb: @PACKAGE@_@PACKAGE_VERSION@_@ARCH@.deb
 	@echo "$@ is ready for distribution" | \
 	  sed 'h;s/./=/g;p;x;p;x'
 
+if CODE_COVERAGE_ENABLED
+
+coverage: coverage-clean check
+	@echo "Computing code coverage"
+	$(AM_V_at)$(MKDIR_P) "$@"
+	$(AM_V_at)$(GCOVR)		\
+	  --html "$@/report.html"	\
+	  --html-details		\
+	  --print-summary		\
+	  --gcov-executable "$(GCOV)"	\
+	  --root "$(top_srcdir)/src"	\
+	  "$(top_builddir)/src"		\
+	  | tee "$@/summary.txt"
+	$(AM_V_at)echo "Code coverage is available at '$@/report.html'."
+
+coverage-clean:
+	@echo "Removing any existing coverage directory"
+	$(AM_V_at)rm -rf "coverage"
+
+else
+
+coverage-clean:
+
+endif
+
+clean-local: coverage-clean
 
 MOSTLYCLEANFILES=*~ config/*~
 CLEANFILES=*~ config/*~
