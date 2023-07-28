@@ -93,7 +93,7 @@ m4_define([VERSION_MICRO], [m4_esyscmd_s([./config/git-version-gen | sed 's,^[^0
 
 AC_INIT([kim],
         [VERSION_MAJOR.VERSION_MINOR.VERSION_MICRO],
-        [remy.costa@igh.cnrs.fr],
+        [kim@lirmm.fr],
         [kim],
         [https://github.com/CLOCK-PhD/kim])
 
