@@ -242,8 +242,8 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 libkim_la_LIBADD =
 am_libkim_la_OBJECTS = bounded_size_string.lo fastq_file_reader.lo \
 	kim_settings.lo kmer_nodes_subindex.lo \
-	kmer_variant_edges_subindex.lo sort_helper.lo \
-	variant_identification.lo variant_kmer_index.lo \
+	kmer_variant_edges_subindex.lo kmer_variant_graph.lo \
+	sort_helper.lo variant_identification.lo \
 	variant_nodes_index.lo
 libkim_la_OBJECTS = $(am_libkim_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -276,9 +276,8 @@ am__depfiles_remade = ./$(DEPDIR)/bounded_size_string.Plo \
 	./$(DEPDIR)/kim_settings.Plo \
 	./$(DEPDIR)/kmer_nodes_subindex.Plo \
 	./$(DEPDIR)/kmer_variant_edges_subindex.Plo \
-	./$(DEPDIR)/sort_helper.Plo \
+	./$(DEPDIR)/kmer_variant_graph.Plo ./$(DEPDIR)/sort_helper.Plo \
 	./$(DEPDIR)/variant_identification.Plo \
-	./$(DEPDIR)/variant_kmer_index.Plo \
 	./$(DEPDIR)/variant_nodes_index.Plo
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
@@ -533,9 +532,9 @@ library_include_HEADERS = \
   kim_settings.h		\
   kmer_nodes_subindex.h		\
   kmer_variant_edges_subindex.h	\
+  kmer_variant_graph.h		\
   sort_helper.h                 \
   variant_identification.h	\
-  variant_kmer_index.h		\
   variant_nodes_index.h
 
 # End of bug fix
@@ -548,9 +547,9 @@ libkim_la_SOURCES = \
   kim_settings.h kim_settings.cpp				\
   kmer_nodes_subindex.h kmer_nodes_subindex.cpp			\
   kmer_variant_edges_subindex.h kmer_variant_edges_subindex.cpp	\
+  kmer_variant_graph.h kmer_variant_graph.cpp			\
   sort_helper.h sort_helper.cpp					\
   variant_identification.h variant_identification.cpp		\
-  variant_kmer_index.h variant_kmer_index.cpp			\
   variant_nodes_index.h variant_nodes_index.cpp
 
 GCDA_FILES = $(patsubst %.cpp,%.gcda,$(filter %.cpp,$(SOURCES)))
@@ -702,9 +701,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kim_settings.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kmer_nodes_subindex.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kmer_variant_edges_subindex.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kmer_variant_graph.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sort_helper.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/variant_identification.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/variant_kmer_index.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/variant_nodes_index.Plo@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
@@ -922,9 +921,9 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/kim_settings.Plo
 	-rm -f ./$(DEPDIR)/kmer_nodes_subindex.Plo
 	-rm -f ./$(DEPDIR)/kmer_variant_edges_subindex.Plo
+	-rm -f ./$(DEPDIR)/kmer_variant_graph.Plo
 	-rm -f ./$(DEPDIR)/sort_helper.Plo
 	-rm -f ./$(DEPDIR)/variant_identification.Plo
-	-rm -f ./$(DEPDIR)/variant_kmer_index.Plo
 	-rm -f ./$(DEPDIR)/variant_nodes_index.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
@@ -979,9 +978,9 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/kim_settings.Plo
 	-rm -f ./$(DEPDIR)/kmer_nodes_subindex.Plo
 	-rm -f ./$(DEPDIR)/kmer_variant_edges_subindex.Plo
+	-rm -f ./$(DEPDIR)/kmer_variant_graph.Plo
 	-rm -f ./$(DEPDIR)/sort_helper.Plo
 	-rm -f ./$(DEPDIR)/variant_identification.Plo
-	-rm -f ./$(DEPDIR)/variant_kmer_index.Plo
 	-rm -f ./$(DEPDIR)/variant_nodes_index.Plo
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic

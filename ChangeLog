@@ -1,3 +1,205 @@
+2023-07-28  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/Makefile.am, src/Makefile.in, src/kim.cpp, src/kim.h,
+	src/kmer_variant_graph.cpp, src/{variant_kmer_index.h =>
+	kmer_variant_graph.h}, src/variant_kmer_index.cpp:
+	Update the kim main program.
+	The program options are not fully implemented.
+	
+	
+2023-07-28  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/Makefile.am, src/Makefile.in, src/variant_nodes_index.cpp,
+	src/variant_nodes_index.h:
+	Add an index structure to handle variant nodes in the graph.
+	
+	
+2023-07-28  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/Makefile.am, src/Makefile.in,
+	src/kmer_variant_edges_subindex.cpp,
+	src/kmer_variant_edges_subindex.h:
+	Add a (buggy) implementation of edges sub-index.
+	
+	
+2023-07-28  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/variant_identification.cpp, src/variant_identification.h:
+	Improve and fix some issues with class VariantIdentification.
+	
+	
+2023-07-28  DoccY <alban.mancheron@lirmm.fr>
+
+	* :
+	commit 44ee2f2a41e7af479bd51f136485c9dc0637005e
+	Author: DoccY <alban.mancheron@lirmm.fr>
+	Date:   Fri Jul 28 18:32:05 2023 +0200
+	
+	
+2023-07-28  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitignore, configure, configure.ac, resources/Makefile.am,
+	resources/Makefile.in:
+	Change the way code statistics are computed.
+	
+	
+2023-07-28  DoccY <alban.mancheron@lirmm.fr>
+
+	* Makefile.am, Makefile.in, config/version.configure.ac, configure,
+	configure.ac, doc/Makefile.am, doc/Makefile.in,
+	packaging/Makefile.am, packaging/Makefile.in,
+	resources/Makefile.in, src/Makefile.am, src/Makefile.in,
+	tests/Makefile.am, tests/Makefile.in:
+	Update software main e-mail contact.
+	
+	
+2023-07-28  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitignore:
+	Add unit test program to the git files to ignore.
+	
+	
+2023-07-28  DoccY <alban.mancheron@lirmm.fr>
+
+	* tests/test_kmer_nodes_subindex.cpp:
+	Small fix in unit test output.
+	
+	
+2023-07-28  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitignore, resources/Makefile.am, resources/test-reads.fastq,
+	src/fastq_file_reader.cpp, src/fastq_file_reader.h,
+	tests/Makefile.am, tests/Makefile.in,
+	tests/test_fastq_file_reader.cpp:
+	Adding a unit test for FastqFileReader class (and fix some bugs).
+	
+	
+2023-07-28  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/kim_settings.cpp, tests/test_kim_settings.cpp:
+	Big Fix in KimSettings when using non default values for constructor.
+	
+	
+2023-07-25  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/Makefile.am, src/Makefile.in, src/kmer_nodes_subindex.cpp,
+	src/kmer_nodes_subindex.h, tests/Makefile.am, tests/Makefile.in,
+	tests/test_kmer_nodes_subindex.cpp:
+	Adding a k-mer node sub-index class.
+	Adding a unit test for this class.
+	
+	
+2023-07-25  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitignore, src/Makefile.am, src/Makefile.in,
+	src/bounded_size_string.cpp, src/bounded_size_string.h, src/kim.h,
+	src/kim_exception.h, src/kim_settings.h, src/sort_helper.cpp,
+	src/sort_helper.h, tests/Makefile.am, tests/Makefile.in,
+	tests/test_bounded_size_string.cpp:
+	Add class BoundedSizeString in order to have a lighter memory management of k-mer suffixes.
+	Add a unit test for BoundedSizeString.
+	Improve documentation.
+	
+	
+2023-07-25  DoccY <alban.mancheron@lirmm.fr>
+
+	* tests/Makefile.am, tests/Makefile.in,
+	tests/test_kim_settings.cpp, tests/test_sort_helper.cpp:
+	Fix compilation issue if library is not yet built.
+	Add a test program for KimSettings.
+	
+	
+2023-07-25  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitignore, Makefile.am, Makefile.in, config/config.h.in,
+	configure, configure.ac, doc/Makefile.am, doc/Makefile.in,
+	doc/doxygen.cfg.in, packaging/Makefile.am, packaging/Makefile.in,
+	packaging/control.in, packaging/libkim.pc.in,
+	packaging/postinst.in, packaging/prerm.in, resources/Makefile.am,
+	resources/Makefile.in, src/Makefile.am, src/Makefile.in,
+	tests/Makefile.am, tests/Makefile.in:
+	Add a target for building a debian package.
+	
+	
+2023-07-24  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitignore, aclocal.m4, config/ltmain.sh, config/m4/libtool.m4,
+	config/m4/ltoptions.m4, config/m4/ltsugar.m4,
+	config/m4/ltversion.m4, config/m4/lt~obsolete.m4, config/version,
+	configure, configure.ac, doc/Makefile.in, src/Makefile.in,
+	tests/Makefile.in:
+	Libtoolize the program in order to generate a core library.
+	
+	
+2023-07-22  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitmodules, BitMagic, Makefile.in, aclocal.m4,
+	config/config.h.in, configure, configure.ac, doc/Makefile.in,
+	resources/Makefile.in, src/Makefile.in:
+	Add BitMagic submodule (requires a c++17 compiler).
+	Please visit http://bitmagic.io/ for more informations.
+	
+	
+2023-07-22  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/Makefile.am, src/Makefile.in, src/kim_settings.cpp,
+	src/kim_settings.h, src/sort_helper.h:
+	Add a dedicated class for handling settings of the k-mer identification metric program.
+	
+	
+2023-07-22  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/Makefile.am, src/Makefile.in, src/kim_exception.h:
+	Add an exception that mimics output stream objects.
+	
+	
+2023-07-22  DoccY <alban.mancheron@lirmm.fr>
+
+	* config/config.h.in, configure, configure.ac:
+	Add a configure option to enable/disable debug compilation options.
+	
+	
+2023-07-22  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitignore, config/test-driver, configure, configure.ac,
+	src/sort_helper.h, tests/Makefile.am, tests/Makefile.in,
+	tests/test_sort_helper.cpp:
+	Adding tests.
+	Add a sorting helper template which allows to sort a collection according to the sorting order of some other collection or using a given permutation.
+	
+	
+2023-07-20  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/Makefile.am, src/Makefile.in, src/{file_reader.cpp =>
+	fastq_file_reader.cpp}, src/{file_reader.h => fastq_file_reader.h},
+	src/kim.cpp:
+	Rename FileReader class to FastqFileReader.
+	
+	
+2023-07-17  Ositofeliz <remy.costa@live.fr>
+
+	* src/kim.cpp, src/variant_kmer_index.cpp:
+	tests mineurs
+	
+	
+2023-07-11  Ositofeliz <remy.costa@live.fr>
+
+	* src/kim.cpp:
+	Tests supplémentaires
+	
+	
+2023-07-10  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitignore, config/version.configure.ac, configure, configure.ac:
+	Fix package description string.
+	
+	
+2023-07-10  DoccY <alban.mancheron@lirmm.fr>
+
+	* README.md:
+	Fix README documentation.
+	
+	
 2023-07-10  DoccY <alban.mancheron@lirmm.fr>
 
 	* configure, src/kim.cpp, src/variant_kmer_index.cpp:

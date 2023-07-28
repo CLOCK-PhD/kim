@@ -98,10 +98,12 @@
 #include <kim_exception.h>
 #include <kim_settings.h>
 #include <kmer_nodes_subindex.h>
+#include <kmer_variant_edges_subindex.h>
+#include <kmer_variant_graph.h>
 #include <optionparser.h>
 #include <sort_helper.h>
 #include <variant_identification.h>
-#include <variant_kmer_index.h>
+#include <variant_nodes_index.h>
 
 #endif
 // Local Variables:

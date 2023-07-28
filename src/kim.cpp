@@ -87,13 +87,11 @@
 *                                                                             *
 ******************************************************************************/
 
+#include <kim.h>
+#include "optionparser.h"
+
 #include <iostream>
 #include <map>
-#include "optionparser.h"
-#include "fastq_file_reader.h"
-#include "variant_kmer_index.h"
-#include "variant_identification.h"
-#include "config.h"
 
 using namespace std;
 using namespace kim;
@@ -139,106 +137,417 @@ struct Arg: public option::Arg
 enum  optionIndex {
   UNKNOWN_OPT,
   HELP_OPT,
+  COPYRIGHT_OPT,
   VERSION_OPT,
-  INDEX_DIRECTORY_OPT
+  QUIET_OPT,
+  FORCE_OPT,
+  INDEX_DIRECTORY_OPT,
+  CREATE_INDEX_OPT,
+  KMER_LENGTH_OPT,
+  KMER_PREFIX_LENGTH_OPT,
+  REFERENCE_OPT,
+  VARIANTS_OPT,
+  OUTPUT_OPT
 };
+
+#define KIM_DEFAULT_INDEX_DIRECTORY     "kim_index"
+#define KIM_DEFAULT_KMER_LENGTH         27
+#define KIM_DEFAULT_KMER_PREFIX_LENGTH  6
+
+#define _str(x) #x
+#define stringify(x) _str(x)
 
 const option::Descriptor usage[] =
   {
-   { UNKNOWN_OPT,         0, "" , "",          option::Arg::None, ("Usage: kim [options] <file> [<file> ...]\n\n"
-                                                                   "Options:") },
-   { HELP_OPT,            0, "h", "help",      option::Arg::None, "  -h | --help  \tPrint usage and exit." },
-   { VERSION_OPT,         0, "v", "version",   option::Arg::None, "  -v | --version  \tPrint version and exit." },
-   { INDEX_DIRECTORY_OPT, 0, "d", "index-dir", Arg::Required,     "  -d | --index-dir <dir>  \tDirectory containing the index files." },
-   { UNKNOWN_OPT,         0, "" ,  "",         option::Arg::None, ("\nInput files are expected to be fastq formatted\n"
-                                                                   "Example:\n"
-                                                                   "  kim --index-dir /path/to/my/index/ file1.fastq file2.fastq\n") },
-   {0, 0, 0, 0, 0, 0}
+   { UNKNOWN_OPT,            0, "" , "",                   Arg::None,
+     PACKAGE " version " VERSION " -- " PACKAGE_DESCRIPTION "\n\n"
+     "Usages:\n"
+     "  kim [options] --create-index\n"
+     "  kim [options] <file> [<file> ...]\n"
+     "  kim [information option]\n"
+     "\n" },
+   ////////////////////////////////////////////////////////////////////////
+   { UNKNOWN_OPT,            0, "" , "",                   Arg::None,
+     "Available information options:" },
+   { HELP_OPT,               0, "h", "help",               Arg::None,
+     "  -h | --help \tPrint usage and exit." },
+   { VERSION_OPT,            0, "v", "version",            Arg::None,
+     "  -v | --version \tPrint version and exit." },
+   { COPYRIGHT_OPT,          0, "" , "copyright",          Arg::None,
+     "       --copyright \tPrint copyright summary and exit." },
+   { COPYRIGHT_OPT,          1, "" , "full-copyright",     Arg::None,
+     "       --full-copyright \tPrint full copyright and exit." },
+   ////////////////////////////////////////////////////////////////////////
+   { UNKNOWN_OPT,            0, "" , "",                   Arg::None,
+     "\n"
+     "Options available for both index creation and querying:" },
+   { QUIET_OPT,              0, "q", "quiet",              Arg::None,
+     "  -q | --quiet \tDon't produce warning or extra informations on"
+     " standard error channel." },
+   { FORCE_OPT,              0, "f", "force",              Arg::None,
+     "  -f | --force \tForce overwriting existing index directory (on index"
+     " creation) or output file (on querying). This is dangerous, you are"
+     " advertised." },
+   { INDEX_DIRECTORY_OPT,    0, "d", "index-dir",          Arg::Required,
+     "  -d | --index-dir <dir> \tDirectory containing the index files"
+     " (default: " KIM_DEFAULT_INDEX_DIRECTORY ")." },
+   { UNKNOWN_OPT,            0, "" , "",                   Arg::None,
+     "\n"
+     "Options available only for index creation:" },
+   { CREATE_INDEX_OPT,       0, "c", "create-index",       Arg::None,
+     "  -c | --create-index \tFlag to run in index creation mode. If this"
+     " flag is given, the --reference and --variants options must be"
+     " provided." },
+   { KMER_LENGTH_OPT,        0, "k", "kmer-length",        Arg::Numeric,
+     "  -k | --kmer-length <length> \tLength of the k-mers"
+     " (default: " stringify(KIM_DEFAULT_KMER_LENGTH) ")." },
+   { KMER_PREFIX_LENGTH_OPT, 0, "p", "kmer-prefix-length", Arg::Numeric,
+     "  -p | --kmer-prefix-length <length> \tLength of the k-mers prefix"
+     " (default: " stringify(KIM_DEFAULT_KMER_PREFIX_LENGTH) ")." },
+   { REFERENCE_OPT,          0, "r", "reference",          Arg::Required,
+     "  -r | --reference <file> \tReference sequence from which k-mers are"
+     " built. It is possible to use several references. Each given reference"
+     " must have exactly one variants file associated to it (see option"
+     " --variants). Reference file must be fasta or fastq formatted." },
+   { VARIANTS_OPT,           0, "v", "variants",           Arg::Required,
+     "  -v | --variants <file> \tVariants to index. There must be exactly"
+     " one variant file by reference provided (see option --reference). The"
+     " variants file must be VCF formatted (specification 4.3 or above). If"
+     " the '##reference' metadata is given and matches one of the reference"
+     " file basename, then the given variants file is associated to this"
+     " reference file. If some variants file hasn't any '##reference'"
+     " metadata or this metadata doesn't correspond to any given reference"
+     " file, the kim program will consider that the variants file order"
+     " follows the unbound sequence file order." },
+   ////////////////////////////////////////////////////////////////////////
+   { UNKNOWN_OPT,            0, "" , "",                   Arg::None,
+     "\n"
+     "Options available only for Index querying:" },
+   { OUTPUT_OPT,             0, "o", "output",             Arg::Required,
+     "-o | --output <file> \tPath to the filename where results are stored"
+     " (instead of being prompted to the standard output)." },
+   ////////////////////////////////////////////////////////////////////////
+   { UNKNOWN_OPT,            0, "" ,  "",                  Arg::None,
+     "\n"
+     "The kim program has two major features:\n"
+     "- The first one is to create a k-mer index related to some variant of"
+     " interest.\n"
+     "- The second one is to analyse some given input files (containing raw"
+     " biological data from some experiment) and to query an existing index"
+     " to exhibit variants that are present in the input data.\n"
+     "\nTo create an index, the kim program needs a (set of) reference"
+     " genome(s) or transcriptome(s) and the variant tof interest (in VCF"
+     " format). An example of command line to create an index is:\n"
+     "\n  kim --create-index \\"
+     "\n      --kmer-length 27 --prefix-length 6 \\"
+     "\n      --reference file1.fasta --reference file2.fasta \\"
+     "\n      --variants variants_file.vcf \\"
+     "\n      --index-dir /where/to/store/index/"
+     "\n"
+     "\nTo query an existing index, the kim program needs an index and some"
+     " files to analyse. An example of command line to query some index is:\n"
+     "\n  kim --index-dir /path/to/my/index/ file1.fastq file2.fastq"
+     "\n"
+     "\nOf course, it is possible to create the index then query it in a"
+     " unique command by combining the necessary options."
+     "\nThe biological sequence files (input files to analyse and"
+     " references) must be either fasta or fastq formatted."
+     "\n" },
+     {0, 0, 0, 0, 0, 0}
   };
+
+
+// Dump the file content (up to the number of given characters) to the
+// given stream.
+void dump_file(const string &filename, size_t n = size_t(-1), ostream &os = cout) {
+  ifstream ifs(filename);
+  static const size_t buffer_size = 1024;
+  char buffer[buffer_size + 1];
+  buffer[buffer_size] = '\0';
+  while (n && ifs.read(buffer, buffer_size)) {
+    if (n >= buffer_size) {
+      n -= buffer_size;
+    } else {
+      buffer[n] = '\0';
+      n = 0;
+    }
+    os << buffer;
+  }
+  ifs.close();
+  if (n) {
+    if (n > (size_t) ifs.gcount()) {
+      n = ifs.gcount();
+    }
+    buffer[n] = '\0';
+    os << buffer;
+  }
+}
+
+void show_copyright(bool full) {
+  cout << PACKAGE " version " VERSION " -- " PACKAGE_DESCRIPTION "\n\n";
+  string fname_orig = "LICENSE.md";
+  string fname = FastqFileReader::findFile(fname_orig);
+  if (!fname.empty()) {
+    dump_file(fname, 508);
+  } else {
+    cerr << "File '" << fname_orig << "' not found or not readable."
+         << " Please ensure the kim program is correctly installed."
+         << endl;
+  }
+  if (full) {
+    cout << endl
+         << "You will find below the english version of the licence then the french version."
+         << endl
+         << endl;
+    fname_orig = "LICENSE-en.md";
+    fname = FastqFileReader::findFile(fname_orig);
+    if (!fname.empty()) {
+      dump_file(fname);
+    } else {
+      cerr << "File '" << fname_orig << "' not found or not readable."
+           << " Please ensure the kim program is correctly installed."
+           << endl;
+    }
+    cout << endl;
+    fname_orig = "LICENSE-fr.md";
+    fname = FastqFileReader::findFile(fname_orig);
+    if (!fname.empty()) {
+      dump_file(fname);
+    } else {
+      cerr << "File '" << fname_orig << "' not found or not readable."
+           << " Please ensure the kim program is correctly installed."
+           << endl;
+    }
+  }
+  cout << endl;
+
+  cout << "The kim program also takes benefit from the BitMagic library:" << endl
+       << bm::_copyright<true>::_p << endl
+       << "This library is released under the terms of the Apache Licence 2.0:" << endl
+       << "http://www.apache.org/licenses/LICENSE-2.0" << endl
+       << endl;
+}
+
+
+void dump_results(const map<string, VariantIdentification> &results,
+                  const KmerVariantGraph &index,
+                  ostream &os) {
+  os << "---" << endl
+     << "SNPs:" << endl;
+  for (map<string, VariantIdentification>::const_iterator it = results.cbegin();
+       it != results.cend();
+       ++it) {
+    os << "  - id: " << it->first << endl
+       << "    reads:" << endl;
+    list<VariantIdentification::ReadID_type> reads = it->second.getReads();
+    for (list<VariantIdentification::ReadID_type>::const_iterator read_it = reads.cbegin();
+         read_it != reads.cend();
+         ++read_it) {
+      os << "      - \"" << *read_it << "\": "
+         << it->second.getReadScore(*read_it) * index.getVariantCount(it->first)
+         << endl;
+    }
+  }
+}
+
+struct _OptionHandler {
+  option::Stats  stats;
+  option::Option *options;
+  option::Option *buffer;
+  option::Parser parse;
+
+  _OptionHandler(int argc, char **argv):
+    stats(true, usage, argc, argv),
+    options(new option::Option[stats.options_max]),
+    buffer(new option::Option[stats.buffer_max]),
+    parse(usage, argc, argv, options, buffer) {
+  };
+  ~_OptionHandler() {
+    delete [] options;
+    delete [] buffer;
+  }
+};
 
 int main(int argc, char **argv) {
 
   argc -= (argc>0);
   argv += (argc>0); // skip program name argv[0] if present
-  option::Stats  stats(true, usage, argc, argv);
-  option::Option options[stats.options_max],
-                 buffer[stats.buffer_max];
-  option::Parser parse(usage, argc, argv, options, buffer);
+  _OptionHandler opts(argc, argv);
 
-  if (parse.error()) {
+  Settings settings;
+
+  if (opts.parse.error()) {
     return 1;
   }
 
-  if (options[HELP_OPT] || (argc == 0)) {
-    option::printUsage(std::cout, usage);
+  if (opts.options[HELP_OPT] || (argc == 0)) {
+    option::printUsage(cout, usage);
     return 0;
   }
 
-  if (options[VERSION_OPT]) {
+  if (opts.options[VERSION_OPT]) {
     cout << "kim version " << VERSION << endl;
     return 0;
   }
 
-  for (option::Option* opt = options[UNKNOWN_OPT]; opt; opt = opt->next()) {
-    std::cout << "Unknown option: " << opt->name << "\n";
-  }
-
-  if (options[UNKNOWN_OPT]) {
-    option::printUsage(std::cout, usage);
-    return 1;
-  }
-
-  const char *index_directory = NULL;
-  if (options[INDEX_DIRECTORY_OPT]) {
-    index_directory = options[INDEX_DIRECTORY_OPT].arg;
-  } else {
-    index_directory = "kim_index";
+  if (opts.options[COPYRIGHT_OPT]) {
+    show_copyright(opts.options[COPYRIGHT_OPT].type());
+    return 0;
   }
 
   try {
-    cout << "Index directory: '" << index_directory << "'" << endl;
-    cout << "Loading index..." << endl;
-    VariantKmerIndex kim_index(index_directory);
-    cout << "Index loaded" << endl;
-    //size_t k = kim_index.getKmerLength()+10; // +10 ?
-    size_t k = kim_index.getKmerLength() + 1; // test : core dumped sans +1
-    cout << "k = " << k << endl;
-    map<VariantKmerIndex::VariantID_type, VariantIdentification> variants_map;
 
-    // Process each input file
-    for (int i = 0; i < parse.nonOptionsCount(); ++i) {
-      cout << "Processing file '" << parse.nonOption(i) << "'" << endl;
-      FastqFileReader reader(parse.nonOption(i), k);
-      // Process each k-mer from the current input file
-      for (std::string kmer = reader.getNextKmer(); !kmer.empty(); kmer = reader.getNextKmer()) {
-        //cout << "K-mer : " << kmer << endl;
-        list<VariantKmerIndex::VariantKmerAssociation> variant_ids = kim_index.search(kmer);
-        for (list<VariantKmerIndex::VariantKmerAssociation>::const_iterator it = variant_ids.cbegin(); it != variant_ids.cend(); ++it) {
-          VariantIdentification &v_ident = variants_map[it->rs_id];
-          v_ident.add(reader.getCurrentRead(), reader.getCurrentKmerRelativePosition());
+    settings.warn(!opts.options[QUIET_OPT]);
+
+    if (settings.warn()) {
+      cerr << "kim version " << VERSION << endl;
+    }
+
+    if (opts.options[UNKNOWN_OPT]) {
+      Exception e("The kim program doesn't accept the following options:");
+      for (option::Option* opt = opts.options[UNKNOWN_OPT]; opt; opt = opt->next()) {
+        e << " ";
+        if (opt->name[0] != '-') {
+          e << "-";
+        }
+        e << opt->name;
+      }
+      throw e;
+    }
+
+    const char *index_directory = KIM_DEFAULT_INDEX_DIRECTORY;
+    if (opts.options[INDEX_DIRECTORY_OPT]) {
+      index_directory = opts.options[INDEX_DIRECTORY_OPT].arg;
+    }
+
+    if (!opts.options[CREATE_INDEX_OPT]) {
+      // If not in index creation mode, then must be in query mode.
+      if (opts.parse.nonOptionsCount() == 0) {
+        throw Exception("Bad usage");
+      }
+    }
+
+    // Check if all given input files (if any) are readable
+    for (int i = 0; i < opts.parse.nonOptionsCount(); ++i) {
+      ifstream ifs(opts.parse.nonOption(i));
+      if (ifs) {
+        ifs.close();
+      } else {
+        Exception e;
+        e << "Unable to find or open the file '"
+          << opts.parse.nonOption(i) << "'.";
+        throw e;
+      }
+    }
+
+    // Ensure that given output filename (if provided) is writable.
+    if (opts.options[OUTPUT_OPT]) {
+      if (!opts.options[FORCE_OPT]) {
+        ifstream ifs(opts.options[OUTPUT_OPT].arg);
+        if (ifs) {
+          ifs.close();
+          Exception e;
+          e << "File '" << opts.options[OUTPUT_OPT].arg
+            << "' already exists. Please use a new file name or use option '--force'.";
+          throw e;
         }
       }
-    }
-
-    cout << "---" << endl
-         << "SNPs:" << endl;
-    for (map<VariantKmerIndex::VariantID_type, VariantIdentification>::const_iterator it = variants_map.cbegin();
-         it != variants_map.cend();
-         ++it) {
-      cout << "  - id: " << it->first << endl
-           << "    reads:" << endl;
-      list<VariantIdentification::ReadID_type> reads = it->second.getReads();
-      for (list<VariantIdentification::ReadID_type>::const_iterator read_it = reads.begin();
-           read_it != reads.end();
-           ++read_it) {
-        cout << "      - " << *read_it << ":" << it->second.getReadScore(*read_it) << endl;
+      ofstream ofs(opts.options[OUTPUT_OPT].arg);
+      if (ofs) {
+        ofs.close();
+      } else {
+        Exception e;
+        e << "Unable to open '" << opts.options[OUTPUT_OPT].arg
+          << "' file to print results.";
+        throw e;
       }
     }
+
+    if (opts.options[CREATE_INDEX_OPT]) {
+      if (opts.options[REFERENCE_OPT].count() != opts.options[VARIANTS_OPT].count()) {
+        Exception e;
+        e << "The number of reference files provided for index creation ("
+          << opts.options[REFERENCE_OPT].count()
+          << ") must be the same as the number of variants files provided ("
+          << opts.options[VARIANTS_OPT].count()
+          << ").";
+        throw e;
+      }
+
+      size_t kmer_length = KIM_DEFAULT_KMER_LENGTH;
+      if (opts.options[KMER_LENGTH_OPT]) {
+        kmer_length = stoull(opts.options[KMER_LENGTH_OPT].arg);
+      }
+      settings.setKmerLength(kmer_length);
+
+      size_t kmer_prefix_length = KIM_DEFAULT_KMER_PREFIX_LENGTH;
+      if (opts.options[KMER_PREFIX_LENGTH_OPT]) {
+        kmer_prefix_length = stoull(opts.options[KMER_PREFIX_LENGTH_OPT].arg);
+      }
+      settings.setKmerPrefixLength(kmer_prefix_length);
+      settings.freeze();
+
+    }
+
+    // If in query mode...
+    if (opts.parse.nonOptionsCount()) {
+
+      // Loading the index.
+      KmerVariantGraph kim_index(index_directory, settings);
+      kim_index.freeze();
+      map<string, VariantIdentification> variants_map;
+      // Process each input file
+      for (int i = 0; i < opts.parse.nonOptionsCount(); ++i) {
+        if (settings.warn()) {
+          cerr << "Processing file '" << opts.parse.nonOption(i) << "'" << endl;
+        }
+        FastqFileReader reader(opts.parse.nonOption(i), settings);
+        // Process each k-mer from the current input file
+        for (string kmer = reader.getNextKmer(); !kmer.empty(); kmer = reader.getNextKmer()) {
+          //cout << "K-mer : " << kmer << endl;
+          list<KmerVariantEdgesSubindex::KmerVariantAssociation> assoc_variant = kim_index.search(kmer);
+          for (list<KmerVariantEdgesSubindex::KmerVariantAssociation>::const_iterator it = assoc_variant.cbegin(); it != assoc_variant.cend(); ++it) {
+            // cerr << "Current variant association concerns variant '" << it->variant_node->first << "' which concerns " << it->variant_node->second << " k-mers" << endl;
+            // cerr << "This variant is potentially seen in read " << reader.getCurrentRead()
+            //      << " by the k-mer at position " << reader.getCurrentKmerRelativePosition()
+            //      << " in the read" << endl;
+            VariantIdentification &v_ident = variants_map[it->variant_node.variant];
+            v_ident.add(reader.getCurrentRead(), reader.getCurrentKmerRelativePosition());
+          }
+        }
+      }
+
+      // Write the results
+      if (opts.options[OUTPUT_OPT]) {
+        ofstream ofs(opts.options[OUTPUT_OPT].arg);
+        if (ofs) {
+          dump_results(variants_map, kim_index, ofs);
+          ofs.close();
+        } else {
+          Exception e;
+          e << "Unable to open '"
+            << opts.options[OUTPUT_OPT].arg
+            << "' file to print results.";
+          throw e;
+        }
+      } else {
+        dump_results(variants_map, kim_index, cout);
+      }
+    }
+
   } catch (const exception &e) {
     cerr << "The program has encountered the following error:" << endl
-         << " => " << e.what() << endl;
+         << endl
+         << " => " << e.what() << endl
+         << endl;
+    //    option::printUsage(cerr, usage);
+    return 1;
   };
 
-  cout << "That's All, Folks!!!" << endl;
+  if (settings.warn()) {
+    cerr << "That's All, Folks!!!" << endl;
+  }
+
   return 0;
+
 }

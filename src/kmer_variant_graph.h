@@ -87,95 +87,207 @@
 *                                                                             *
 ******************************************************************************/
 
-#ifndef __VARIANT_KMER_INDEX_H__
-#define __VARIANT_KMER_INDEX_H__
+#ifndef __KMER_VARIANT_GRAPH_H__
+#define __KMER_VARIANT_GRAPH_H__
 
 #include <cstdlib>
 #include <list>
 #include <vector>
-#include <map>
 #include <string>
 
-#include <variant_identification.h>
+#include <bm.h>
+
+#include <kim_settings.h>
+#include <bounded_size_string.h>
+#include <kmer_nodes_subindex.h>
+#include <variant_nodes_index.h>
+#include <kmer_variant_edges_subindex.h>
 
 namespace kim {
 
+
   /**
-   * The Variant k-mer index
+   * The k-mer/Variant graph parse error.
    */
-  class VariantKmerIndex {
+  class KmerVariantGraphParseError: public Exception {
+
+  public:
+
+    /**
+     * Create an exception dedicated to k-mer/variant graph parse
+     * error.
+     *
+     * \param msg The initial message of this exception.
+     */
+    inline KmerVariantGraphParseError(const std::string &msg = ""): Exception(msg) {}
+
+  };
+
+
+  /**
+   * The k-mer/variant graph.
+   *
+   * This is mostly a bipartite graph where k-mers corresponds to the
+   * first independent set of vertices and variants corresponds to the
+   * second independent set of vertices. An edge in this graph
+   * therefore corresponds to the association between a k-mer and a
+   * variant.
+   */
+  class KmerVariantGraph {
 
 
   public:
 
     /**
-     * The type of the variant identifier.
+     * The type of "k-mer" node collection.
      */
-    typedef std::string VariantID_type;
+    typedef std::vector<KmerNodesSubindex> KmerNodeIndex;
 
     /**
-     * The association between some given k-mer and some variant
+     * The type of edges index.
      */
-    struct VariantKmerAssociation {
-
-      /**
-       * The variant ID.
-       */
-      VariantID_type rs_id;
-
-      /**
-       * The rank of the k-mer in the variant k-mer markers.
-       */
-      size_t kmer_rank;
-
-      /**
-       * True if the k-mer appears natively in the genome.
-       */
-      bool in_genome;
-
-    };
-
-    /**
-     * The type of the (partial) index associated to some k-mer
-     * suffix.
-     */
-    typedef std::multimap<std::string, VariantKmerAssociation> PartialIndex_type;
+    typedef std::vector<KmerVariantEdgesSubindex>  KmerVariantEdgesIndex;
 
   private:
 
-    size_t k, k1, k2;
+    /**
+     * The index settings
+     */
+    Settings &_settings;
 
-    std::vector<PartialIndex_type> index;
+    /**
+     * The total number of k-mer nodes in the graph.
+     */
+    size_t _nb_kmers;
 
-    bool warn;
+    /**
+     * The total number of edges in the graph.
+     */
+    size_t _nb_edges;
 
-    size_t checkFilenameCorrectness(const std::string &filename);
+    /**
+     * The array of all k-mer nodes sub-indexes.
+     */
+    KmerNodeIndex _kmer_nodes;
 
-    void parseFile(const std::string &filename, size_t prefix, bool is_first);
+    /**
+     * The set of all variant nodes.
+     */
+    VariantNodesIndex _variant_nodes;
+
+    /**
+     * The array of all k-mer to variant edges sub-indexes.
+     */
+    KmerVariantEdgesIndex _edges;
+
+    /**
+     * Clear and resize sub-indexes to the given size.
+     *
+     * \param total The number of sub-indexes.
+     *
+     * \param estimated_nb_kmers The number of estimated k-mers (to
+     * preallocate enough room for each sub-index).
+     */
+    void _resizeSubindexes(size_t total, size_t estimated_nb_kmers);
+
+    /**
+     * Ensure that the filename is correct (composed with exactly k_1
+     * DNA symbols: A, C, G or T) and returns the endoded value for
+     * this prefix file name.
+     *
+     * \param filename The name of the file containing an edges
+     * sub-index (thus the k-mer nodes sub-index and some of the
+     * variant nodes).
+     *
+     * \return Return the rank of the k-mer nodes and edges
+     * sub-indexes.
+     */
+    size_t _checkFilenameCorrectness(const std::string &filename) const;
+
+    /**
+     * Parse the given file associated to the given k-mer encoded
+     * prefix.
+     *
+     * If this file is the first analyzed one (i.e., settings are
+     * unfrozen), then the prefix length, suffix length and then the
+     * total length of the k-mers are computed from the index data
+     * structure, then the settings are frozen. Otherwise, the
+     * correctness of the index data structure is verified according
+     * to the computed parameters.
+     *
+     * Said with more simplicity, only the first analyzed file must be
+     * set this parameter to true and all other must be analyzed with
+     * this parameter set to false.
+     *
+     * \param filename The full path of the file containing the given
+     * sub-index to load.
+     *
+     * \param The k-mer encoded prefix (the rank of the sub-indexes to
+     * load).
+     */
+    void _parseFile(const std::string &filename, size_t prefix);
 
   public:
 
     /**
+     * Initialize the index of k-mers associated to variants using the
+     * given directory and the given parameters.
+     *
+     * \param settings The k-mer identification metric program
+     * settings. The settings are frozen after this instance
+     * construction and prior to any other initialization.
+     *
+     * \param estimated_nb_kmers Estimation of the number of k-mers
+     * (used to preallocate memory and thus to reduce time due to
+     * dynamic memory reallocation). If not set, 1GB in the limit of
+     * half the available memory is used.
+     */
+    KmerVariantGraph(Settings &settings, size_t estimated_nb_kmers = -1);
+
+    /**
      * Load the index of k-mers associated to variants using the files
-     * form the given directory.
+     * from the given directory.
      *
      * \param path Directory where index files are stored.
      *
-     * \param warn Activate (default) or deactivate warnings while
-     * loading index.
+     * \param settings The k-mer identification metric program
+     * settings. Notice that only the warning status will be
+     * unmodified. After instance construction, the settings will be
+     * updated and frozen.
      */
-    VariantKmerIndex(const char *path, bool warn = true);
+    KmerVariantGraph(const char *path, Settings &settings);
 
     /**
-     * Get the length of the k-mers.
+     * Get the number of indexed k-mers.
      *
-     * \return Returns the length of the k-mers.
+     * \return Returns the number of indexed k-mers.
      */
-    size_t getKmerLength() const;
+    inline size_t getNbKmers() const {
+      return _nb_kmers;
+    }
 
     /**
-     * Get the list of variant identifications involving the given
-     * k-mer.
+     * Get the number of indexed variants.
+     *
+     * \return Returns the number of indexed variants.
+     */
+    inline size_t getNbVariants() const {
+      return _variant_nodes.size();
+    }
+
+    /**
+     * Get the number of associations between k-mers and variants.
+     *
+     * \return Returns the number of associations between k-mers and
+     * variants (the number of edges of the bipartite graph).
+     */
+    inline size_t getNbKmerVariantEdges() const {
+      return _nb_edges;
+    }
+
+
+    /**
+     * Get the list of variant involving the given k-mer.
      *
      * \param kmer A string representing the k-mer (k-mer lookup is
      * case insensitive).
@@ -183,7 +295,39 @@ namespace kim {
      * \return Returns the list of variant identifications involving
      * the given k-mer.
      */
-    std::list<VariantKmerAssociation> search(const std::string &kmer) const;
+    std::list<KmerVariantEdgesSubindex::KmerVariantAssociation> search(const std::string &kmer) const;
+
+
+    /**
+     *
+     */
+    bool addKmerNode(const std::string &kmer, bool in_reference);
+
+    void freeze();
+
+
+    /**
+     *
+     */
+    KmerVariantGraph &add(const std::string &variant, const std::string &kmer, size_t rank);
+
+    /**
+     *
+     */
+    bool setInReferenceKmer(const std::string &kmer, bool state = true);
+
+    bool isInReferenceKmer(const std::string &kmer) const;
+
+    inline uint16_t getVariantCount(const std::string &variant) const {
+      return _variant_nodes.getVariantCount(variant);
+    }
+
+    /**
+     * Dump this index to the given directory.
+     *
+     * \param path Directory where index files are stored.
+     */
+    void dump(const char *path);
 
   };
 
