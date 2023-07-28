@@ -102,6 +102,7 @@ library_include_HEADERS =	\
   kim_exception.h		\
   kim_settings.h		\
   kmer_nodes_subindex.h		\
+  kmer_variant_edges_subindex.h	\
   sort_helper.h                 \
   variant_identification.h	\
   variant_kmer_index.h
@@ -120,6 +121,7 @@ libkim_la_SOURCES =						\
   kim_exception.h						\
   kim_settings.h kim_settings.cpp				\
   kmer_nodes_subindex.h kmer_nodes_subindex.cpp			\
+  kmer_variant_edges_subindex.h kmer_variant_edges_subindex.cpp	\
   sort_helper.h sort_helper.cpp					\
   variant_identification.h variant_identification.cpp		\
   variant_kmer_index.h variant_kmer_index.cpp
