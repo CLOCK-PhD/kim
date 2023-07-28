@@ -23,6 +23,7 @@ tests/*.trs
 tests/test_bounded_size_string
 tests/test_fastq_file_reader
 tests/test_kim_settings
+tests/test_kmer_nodes_subindex
 tests/test_sort_helper
 
 resources/kim-*.stats
