@@ -278,7 +278,8 @@ am__depfiles_remade = ./$(DEPDIR)/bounded_size_string.Plo \
 	./$(DEPDIR)/kmer_variant_edges_subindex.Plo \
 	./$(DEPDIR)/sort_helper.Plo \
 	./$(DEPDIR)/variant_identification.Plo \
-	./$(DEPDIR)/variant_kmer_index.Plo
+	./$(DEPDIR)/variant_kmer_index.Plo \
+	./$(DEPDIR)/variant_nodes_index.Plo
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -534,7 +535,8 @@ library_include_HEADERS = \
   kmer_variant_edges_subindex.h	\
   sort_helper.h                 \
   variant_identification.h	\
-  variant_kmer_index.h
+  variant_kmer_index.h		\
+  variant_nodes_index.h
 
 # End of bug fix
 lib_LTLIBRARIES = libkim.la
@@ -548,7 +550,8 @@ libkim_la_SOURCES = \
   kmer_variant_edges_subindex.h kmer_variant_edges_subindex.cpp	\
   sort_helper.h sort_helper.cpp					\
   variant_identification.h variant_identification.cpp		\
-  variant_kmer_index.h variant_kmer_index.cpp
+  variant_kmer_index.h variant_kmer_index.cpp			\
+  variant_nodes_index.h variant_nodes_index.cpp
 
 GCDA_FILES = $(patsubst %.cpp,%.gcda,$(filter %.cpp,$(SOURCES)))
 GCNO_FILES = $(GCDA_FILES:.gcda=.gcno)
@@ -702,6 +705,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sort_helper.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/variant_identification.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/variant_kmer_index.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/variant_nodes_index.Plo@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -921,6 +925,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/sort_helper.Plo
 	-rm -f ./$(DEPDIR)/variant_identification.Plo
 	-rm -f ./$(DEPDIR)/variant_kmer_index.Plo
+	-rm -f ./$(DEPDIR)/variant_nodes_index.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags

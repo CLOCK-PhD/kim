@@ -105,7 +105,8 @@ library_include_HEADERS =	\
   kmer_variant_edges_subindex.h	\
   sort_helper.h                 \
   variant_identification.h	\
-  variant_kmer_index.h
+  variant_kmer_index.h		\
+  variant_nodes_index.h
 
 # Bug fix for path with spaces
 bindir="@bindir@"
@@ -124,7 +125,8 @@ libkim_la_SOURCES =						\
   kmer_variant_edges_subindex.h kmer_variant_edges_subindex.cpp	\
   sort_helper.h sort_helper.cpp					\
   variant_identification.h variant_identification.cpp		\
-  variant_kmer_index.h variant_kmer_index.cpp
+  variant_kmer_index.h variant_kmer_index.cpp			\
+  variant_nodes_index.h variant_nodes_index.cpp
 
 GCDA_FILES = $(patsubst %.cpp,%.gcda,$(filter %.cpp,$(SOURCES)))
 GCNO_FILES = $(GCDA_FILES:.gcda=.gcno)
