@@ -247,6 +247,15 @@ int main(int argc, char **argv) {
   assert(s.getKmerSuffixLength() == 6);
   assert(s.valid());
 
+  Settings s2(10, 4, true, true);
+  assert(s2.warn());
+  assert(s2.frozen());
+  assert(s2.getKmerLength() == s2.k());
+  assert(s2.getKmerLength() == 10);
+  assert(s2.getKmerPrefixLength() == 4);
+  assert(s2.getKmerSuffixLength() == 6);
+  assert(s2.valid());
+
   cout << "That's All, Folk!!!" << endl;
   return 0;
 

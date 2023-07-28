@@ -103,7 +103,7 @@ Settings::Settings(size_t k, size_t p, bool warn, bool freeze):
   if (k || p) {
     setKmerLength(k);
     _warn = warn;
-    setKmerLength(p);
+    setKmerPrefixLength(p);
   }
   _warn = warn;
   _frozen = freeze;
