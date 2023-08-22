@@ -87,83 +87,68 @@
 *                                                                             *
 ******************************************************************************/
 
-#ifndef __KIM_EXCEPTION_H__
-#define __KIM_EXCEPTION_H__
+#include <kim_exception.h>
 
-#include <exception>
-#include <string>
-#include <sstream>
+#include <cstring>
+#include <iostream>
+#ifdef NDEBUG
+#  undef NDEBUG
+#endif
+#include <cassert>
 
-namespace kim {
+using namespace std;
+using namespace kim;
 
-  /**
-   * Generic k-mer identification metric program exception with an
-   * associated message that can be given extra informations as a
-   * string stream.
-   */
-  class Exception: public std::exception {
+#define TEST_EXPECTED_EXCEPTION(code, expected_message)                 \
+  exception_thrown = false;                                             \
+  correct_message = false;                                              \
+  try code catch (const Exception &e) {                                 \
+      cout << "A Kim Exception with message '" << e.what()              \
+           << "' has been thrown." << endl                              \
+           << "Message '" << expected_message                           \
+           << "' was expected." << endl;                                \
+      exception_thrown = true;                                          \
+      correct_message = !strcmp(e.what(), expected_message);            \
+    }                                                                   \
+  assert(exception_thrown);                                             \
+  assert(correct_message);                                              \
+  cout << endl
 
-  protected:
 
-    /**
-     * The exception message.
-     */
-    std::string _msg;
+int main() {
 
-  public:
+  cout << "Testing kim exceptions" << endl;
 
-    /**
-     * Create an exception with some initial message.
-     *
-     * \param msg The initial message string.
-     */
-    inline Exception(const std::string &msg = ""): std::exception(), _msg(msg) {}
+  bool exception_thrown;
+  bool correct_message;
 
-    /**
-     * Get the message associated with this exception.
-     *
-     * \return Returns the C string message associated to this exception.
-     */
-    inline virtual const char *what() const noexcept {
-      return _msg.c_str();
-    }
+  cout << "Throwing a default kim exception" << endl;
+  TEST_EXPECTED_EXCEPTION({
+      Exception e;
+      throw e;
+    }, "");
 
-    /**
-     * Template operator << to inject any type having the capacity to
-     * be injected into an output stream.
-     *
-     * \param t The value to append to this exception message.
-     *
-     * \return Returns this exception.
-     */
-    template <typename T>
-    Exception &operator<<(const T &t) {
-      std::ostringstream s;
-      s << t;
-      _msg += s.str();
-      return *this;
-    }
+  cout << "Throwing a kim exception with builtin message" << endl;
+  TEST_EXPECTED_EXCEPTION({
+      Exception e("[Builtin message]");
+      throw e;
+    }, "[Builtin message]");
 
-    /**
-     * Injects modifier function (like std::endl) into the message.
-     *
-     * \param pf The stream modifier function to apply to this
-     * exception message.
-     *
-     * \return Returns this exception.
-     */
-    Exception &operator<<(std::ostream &(*pf)(std::ostream &)) {
-      std::ostringstream s;
-      s << pf;
-      _msg += s.str();
-      return *this;
-    }
+  cout << "Throwing a default kim exception with message injection" << endl;
+  TEST_EXPECTED_EXCEPTION({
+      Exception e;
+      e << "Multiline Message" << endl << "injection.";
+      throw e;
+    }, "Multiline Message\ninjection.");
 
-  };
+  cout << "Throwing a kim exception with builtin message and message injection" << endl;
+  TEST_EXPECTED_EXCEPTION({
+      Exception e("[Builtin message]");
+      e << "Multiline Message" << endl << "injection.";
+      throw e;
+    }, "[Builtin message]Multiline Message\ninjection.");
+
+  cout << "That's All, Folk!!!" << endl;
+  return 0;
 
 }
-
-#endif
-// Local Variables:
-// mode:c++
-// End:
