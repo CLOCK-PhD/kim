@@ -87,201 +87,83 @@
 *                                                                             *
 ******************************************************************************/
 
-#include "kmer_variant_edges_subindex.h"
+#include <variant_nodes_index.h>
 
-#include "config.h"
-#include "sort_helper.h"
+#include <string>
+#include <iostream>
+#ifdef NDEBUG
+#  undef NDEBUG
+#endif
+#include <cassert>
 
 using namespace std;
-using namespace bm;
+using namespace kim;
 
-BEGIN_KIM_NAMESPACE
-
-KmerVariantEdgesSubindex::KmerVariantEdgesSubindex(KmerNodesSubindex &kmer_nodes,
-                                                   VariantNodesIndex &variant_nodes,
-                                                   size_t estimated_nb_edges):
-  _first_kmer_edges(),
-  _rank_select_helper(),
-  _kmer_variant_edges(),
-  _kmer_nodes(kmer_nodes),
-  _variant_nodes(variant_nodes),
-  _max_associations(0),
-  _frozen(false)
-{
-  _first_kmer_edges.resize(0);
-  _kmer_variant_edges.reserve(estimated_nb_edges);
+ostream &operator<<(ostream &os, const VariantNodesIndex::VariantNode &node) {
+  os << "'" << node.variant << "' [" << node.in_degree << "]";
+  return os;
 }
 
-void KmerVariantEdgesSubindex::compact() {
-  if (!_kmer_nodes.sorted()) {
-    if (_kmer_nodes.size() != size()) {
-      throw KmerVariantEdgesSubindexException("The k-mer nodes sub-index and this edges sub-index must have the same size to be compacted.");
-    }
-    vector<size_t> permutation = _kmer_nodes.sort();
-    SortHelper<_KmerVariantEdge>::sort<_KmerVariantEdge>(_kmer_variant_edges, permutation);
-    _first_kmer_edges = _kmer_nodes.unique();
+void variant_infos(const VariantNodesIndex::VariantNode &node, const string &k, uint16_t v) {
+  cout << node << endl;
+  assert(node.variant == k);
+  assert(node.in_degree == v);
+}
+
+void index_infos(const VariantNodesIndex &idx, bool empty, size_t size) {
+  cout << "Variant node index informations:" << endl;
+  cout << "- empty status: " << idx.empty() << endl;
+  assert(idx.empty() == empty);
+  cout << "- size: " << idx.size() << endl;
+  assert(idx.size() == size);
+  cout << "- content: " << endl;
+  for (VariantNodesIndex::const_iterator it = idx.cbegin();
+       it != idx.cend();
+       ++it) {
+    cout << "  - " << VariantNodesIndex::VariantNode(it) << endl;
   }
 }
 
-void KmerVariantEdgesSubindex::freeze() {
-  assert(_kmer_nodes.sorted());
-  if (!_first_kmer_edges.is_ro()) {
-    _first_kmer_edges.freeze();
-  }
-  _first_kmer_edges.build_rs_index(&(_rank_select_helper));
-  _updateMaxAssociations();
-  _kmer_nodes.freeze();
-}
 
-void KmerVariantEdgesSubindex::unfreeze() {
-  if (!frozen()) return;
-  if (_first_kmer_edges.is_ro()) {
-    bvector<> tmp(_first_kmer_edges, finalization::READWRITE);
-    _first_kmer_edges.swap(tmp);
-  }
-  _kmer_nodes.unfreeze();
-  _frozen = false;
-}
+int main() {
 
-list<KmerVariantEdgesSubindex::KmerVariantAssociation> KmerVariantEdgesSubindex::getKmerVariantAssociation(const BoundedSizeString &suffix) const {
-  list<KmerVariantAssociation> l;
-  if (!frozen()) {
-    throw KmerVariantEdgesSubindexException("Sub-index must be frozen before calling KmerNodesSubindex::getKmerVariantAssociation() method.");
-  }
-  size_t rank = _kmer_nodes.getKmerNodeRank(suffix);
-  size_t p = _selectKmerFirstEdgePosition(rank);
-  if (p != size_t(-1)) {
-    do {
-      l.emplace_back(_kmer_variant_edges[p]);
-    } while ((++p < _kmer_variant_edges.size()) && !_first_kmer_edges[p]);
-  }
-  return l;
-}
+  cout << "Testing VariantNodesIndex" << endl;
 
-KmerVariantEdgesSubindex &KmerVariantEdgesSubindex::add(KmerNodesSubindex::KmerNode node,
-                                                        const string &variant,
-                                                        size_t rank) {
-  bool new_node = _kmer_nodes.add(node);
-  VariantNodesIndex::iterator variant_node_iterator = _variant_nodes.addVariantNode(variant, true);
-  if (rank > uint64_t(uint16_t(-1))) {
-    throw KmerNodesSubindexException() << "The current k-mer suffix ("
-                                       << node.suffix
-                                       << ") rank is greater than the maximal size allowed by the current implementation ("
-                                       << (size_t) (uint16_t(-1)) << ")";
-  }
-  _KmerVariantEdge edge = { variant_node_iterator, uint16_t(rank) };
-  _kmer_variant_edges.push_back(edge);
-  assert(_kmer_nodes.size() > 0);
-  _first_kmer_edges[_kmer_nodes.size() - 1] = new_node;
-  return *this;
-}
+  VariantNodesIndex idx;
+  index_infos(idx, true, 0);
 
+  cout << "Adding new variant 'V1'" << endl;
+  idx.addVariantNode("V1");
+  index_infos(idx, false, 1);
 
-KmerVariantEdgesSubindex &KmerVariantEdgesSubindex::merge(KmerVariantEdgesSubindex &idx) {
-#ifndef NDEBUG
-  size_t orig_n1 = _kmer_nodes.size();
-  size_t n2 = idx._kmer_nodes.size();
-#endif
-  size_t orig_m1 = size();
-  assert(orig_m1 >= orig_n1);
+  cout << "Adding new variant 'V2'" << endl;
+  idx += "V2";
+  index_infos(idx, false, 2);
 
-  size_t m2 = idx.size();
-  assert(m2 >= n2);
+  cout << "Adding existing variant 'V1'" << endl;
+  idx += "V1";
+  index_infos(idx, false, 2);
 
-  bvector<> pos1, pos2;
-  _kmer_nodes.merge(idx._kmer_nodes, pos1, pos2);
-  assert(pos1.size() == pos2.size());
-  assert(pos1.size() == n1);
-  assert(n1 >= orig_n1);
-  assert(n1 >= n2);
-  assert(n1 <= orig_n1 + n2);
+  cout << "Retrieving variant node associated to 'V1'" << endl;
+  variant_infos(idx.getVariantNode("V1"), "V1", 0);
 
-  size_t n1 = _kmer_nodes.size();
-  size_t m1 = orig_m1 + m2;
-  assert(m1 >= n1);
+  cout << "Retrieving variant node associated to 'V1'" << endl;
+  variant_infos(idx.getVariantNode("V2"), "V2", 0);
 
-  _kmer_variant_edges.resize(m1);
-  _first_kmer_edges.resize(m1);
+  cout << "Trying to retrieve inexistant variant node associated to 'V3'" << endl;
+  variant_infos(idx.getVariantNode("V3"), "", 0);
 
-  size_t i = orig_m1, j = m2, k = n1;
+  cout << "Incrementing the incoming degree of node associated to 'V1'" << endl;
+  idx.addVariantNode("V1", true);
+  index_infos(idx, false, 2);
+  variant_infos(idx["V1"], "V1", 1);
 
-  while (k--) {
-    assert(i + j > 0);
-    if (pos2[k]) {
-      // Move the newly inserted edges for the pre-existing node.
-      do {
-        assert(j);
-        --j;
-        _kmer_variant_edges[i + j] = idx._kmer_variant_edges[j];
-        _first_kmer_edges[i + j] = 0;
-      } while (!idx._first_kmer_edges[j]);
-    }
-    if (pos1[k]) {
-      // Move the pre-existing associated edges.
-      do {
-        assert(i);
-        --i;
-        _kmer_variant_edges[i + j] = _kmer_variant_edges[i];
-        _first_kmer_edges[i + j] = 0;
-      } while (!_first_kmer_edges[i]);
-    }
-    _first_kmer_edges[i + j] = 1;
-  }
-  assert(i == 0);
-  assert(j == 0);
-  return *this;
+  cout << "Incrementing the incoming degree of node associated to 'V1'" << endl;
+  idx.addVariantNode("V1", true);
+  index_infos(idx, false, 2);
+  variant_infos(idx["V1"], "V1", 2);
+
+  cout << "That's All, Folk!!!" << endl;
+  return 0;
 
 }
-
-void KmerVariantEdgesSubindex::toStream(ostream &os) const {
-  if (!frozen()) {
-    throw KmerVariantEdgesSubindexException("Sub-index must be frozen before being printed");
-  }
-  size_t kmer_pos = 0, n = size();
-  os << "#NbKmers: " << _kmer_nodes.size() << endl
-     << "#NbAssociations: " << size() << endl
-     << "#MaxAssociations: " << getMaxAssociations() << endl;
-  for (size_t i = 0; i < n; ++i) {
-    KmerNodesSubindex::KmerNode kmer_node = _kmer_nodes[kmer_pos];
-    KmerVariantAssociation edge = _kmer_variant_edges[i];
-    os << kmer_node.suffix << "\t"
-       << edge.variant_node.variant << "\t"
-       << edge.rank << "\t"
-       << edge.variant_node.in_degree << "\t"
-       << kmer_node.in_reference << endl;
-    kmer_pos += _first_kmer_edges[i];
-  }
-}
-
-void KmerVariantEdgesSubindex::_updateMaxAssociations() {
-  id_t i = 0, prev = 0;
-  _max_associations = 0;
-  assert(_first_kmer_edges.empty() || _first_kmer_edges[0]);
-  while ((i = _first_kmer_edges.get_next(i)) != 0) {
-    if (i - prev > _max_associations) {
-      _max_associations = i - prev;
-    }
-    prev = i;
-  }
-  if (prev) {
-    i = _first_kmer_edges.size();
-    if (i - prev > _max_associations) {
-      _max_associations = i - prev;
-    }
-  }
-}
-
-size_t KmerVariantEdgesSubindex::_selectKmerFirstEdgePosition(size_t pos) const {
-  if (!frozen()) {
-    throw KmerVariantEdgesSubindexException("Sub-index must be frozen before calling the "
-                                            "KmerVariantEdgesSubindexException::_selectKmerFirstEdgePosition() "
-                                            "method.");
-  }
-  bvector<>::size_type p;
-  if (!_first_kmer_edges.select(pos + 1, p, _rank_select_helper)) {
-    p = -1;
-  }
-  return p;
-}
-
-END_KIM_NAMESPACE

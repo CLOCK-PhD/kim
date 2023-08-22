@@ -119,7 +119,11 @@ namespace kim {
       mapped_type in_degree;
 
       /**
-       * Constructs a VariantNode view from a read-only iterator.
+       * Constructs a VariantNode "view".
+       *
+       * \remark The "view" means that both the variant label and the
+       * incoming degree used to build the view must exists while
+       * current view is alive.
        *
        * \param it The read-only iterator "pointing to" the variant
        * node.
@@ -128,6 +132,19 @@ namespace kim {
         variant(it->first),
         in_degree(it->second)
       {}
+
+      /**
+       * The undefined node with an empty identifier and a 0 incoming
+       * degree.
+       */
+      static const VariantNode undefined;
+
+    private:
+
+      /**
+       * Constructs a default VariantNode "view".
+       */
+      VariantNode();
 
     };
 
@@ -140,18 +157,49 @@ namespace kim {
     using std::map<std::string, uint16_t>::size;
     using std::map<std::string, uint16_t>::max_size;
     using std::map<std::string, uint16_t>::empty;
-    using std::map<std::string, uint16_t>::find;
+
+    /**
+     * Get the read-only node associated to the given variant.
+     *
+     * \param variant The variant for which the node is queried.
+     *
+     * \return Returns a "view" of the node associated to the given
+     * variant if found ot the VariantNode::undefined node otherwise.
+     */
+    inline VariantNode getVariantNode(const std::string &variant) const {
+      const_iterator it = find(variant);
+      return ((it == cend())
+              ? VariantNode::undefined
+              : VariantNode(it));
+    }
+
+    /**
+     * Random access operator.
+     *
+     * This is a shortcut for getVariantNode() method.
+     *
+     * \param variant The variant for which the node is queried.
+     *
+     * \return Returns a "view" of the node associated to the given
+     * variant if found ot the VariantNode::undefined node otherwise.
+     */
+    inline VariantNode operator[](const std::string &variant) const {
+      return getVariantNode(variant);
+    }
 
     /**
      * Get the number of k-mers associated to the given variant (the
-     * incoming degree of ts associated node).
+     * incoming degree of its associated node).
      *
      * \param variant The variant for which the number of associated
      * k-mer is queried.
      *
-     * \return Returns the number of k-mers associated to the given variant.
+     * \return Returns the number of k-mers associated to the given
+     * variant.
      */
-    uint16_t getVariantCount(const std::string &variant) const;
+    inline uint16_t getVariantCount(const std::string &variant) const {
+      return getVariantNode(variant).in_degree;
+    }
 
     /**
      * Add (if necessary) a new node associated to the given variant.
@@ -161,10 +209,28 @@ namespace kim {
      *
      * \param variant The variant to add.
      *
+     * \param increment_in_degree Increment the incoming degree of the
+     * variant node.
+     *
      * \return Returns a read-write iterator to the node corresponding
      * to the given variant.
      */
-    iterator addVariantNode(const std::string &variant);
+    iterator addVariantNode(const std::string &variant, bool increment_in_degree = false);
+
+    /**
+     * Add (if necessary) a new node associated to the given variant.
+     *
+     * This is a shortcut for addVariantNode() without incrementing
+     * the incoming degree.
+     *
+     * \param variant The variant to add.
+     *
+     * \return Returns this index.
+     */
+    inline VariantNodesIndex &operator+=(const std::string &variant) {
+      addVariantNode(variant);
+      return *this;
+    }
 
   };
 

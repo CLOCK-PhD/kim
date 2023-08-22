@@ -91,21 +91,26 @@
 
 #include "config.h"
 
+#include <cassert>
+
 using namespace std;
 
 BEGIN_KIM_NAMESPACE
 
-uint16_t VariantNodesIndex::getVariantCount(const string &variant) const {
-  const_iterator it = find(variant);
-  return ((it == cend()) ? 0 : it->second);
-}
+const VariantNodesIndex::VariantNode VariantNodesIndex::VariantNode::undefined;
+static const string _empty_string;
+VariantNodesIndex::VariantNode::VariantNode():
+  variant(_empty_string), in_degree(0)
+{}
 
-VariantNodesIndex::iterator VariantNodesIndex::addVariantNode(const string &variant) {
+VariantNodesIndex::iterator VariantNodesIndex::addVariantNode(const string &variant, bool increment_in_degree) {
   // Add or update the variant node.
+  assert(!variant.empty());
   pair<iterator, bool> it = emplace(variant, uint16_t(0));
   // Emplace doesn't update the value if the variant already exist
   // in the index and in any case, an iterator on the variant node
   // is returned.
+  it.first->second += increment_in_degree;
   return it.first;
 }
 

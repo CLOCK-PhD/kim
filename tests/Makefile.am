@@ -104,7 +104,8 @@ check_PROGRAMS =		\
   test_kim_exception		\
   test_kim_settings		\
   test_kmer_nodes_subindex	\
-  test_sort_helper
+  test_sort_helper		\
+  test_variant_nodes_index
 
 test_bounded_size_string_SOURCES = test_bounded_size_string.cpp
 
@@ -117,6 +118,8 @@ test_kim_exception_SOURCES = test_kim_exception.cpp
 test_kmer_nodes_subindex_SOURCES = test_kmer_nodes_subindex.cpp
 
 test_sort_helper_SOURCES = test_sort_helper.cpp
+
+test_variant_nodes_index_SOURCES = test_variant_nodes_index.cpp
 
 force_check_libkim.la:
 
