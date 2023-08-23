@@ -96,8 +96,8 @@ using namespace bm;
 
 BEGIN_KIM_NAMESPACE
 
-KmerNodesSubindex::KmerNodesSubindex(size_t estimated_nb_kmers):
-  _suffixes(), _in_reference(), _sorted(true), _frozen(false)
+KmerNodesSubindex::KmerNodesSubindex(size_t estimated_nb_kmers, bool sorted):
+  _suffixes(), _in_reference(), _sorted(sorted), _frozen(false)
 {
   _suffixes.reserve(estimated_nb_kmers);
   _in_reference.resize(0);
@@ -130,7 +130,7 @@ bool KmerNodesSubindex::add(const KmerNode &node) {
     --p;
     int cmp = node.suffix.compare(_suffixes[p]);
     if (cmp == 0) {
-      to_add = false;
+      to_add = !_sorted;
       if (node.in_reference != _in_reference[p]) {
         KmerNodesSubindexException e;
         e << "Unable to add the k-mer suffix '" << node.suffix
@@ -150,7 +150,6 @@ bool KmerNodesSubindex::add(const KmerNode &node) {
   }
   return to_add;
 }
-
 
 void KmerNodesSubindex::setInReferenceKmer(size_t rank, bool status) {
   if (frozen()) {
@@ -242,6 +241,25 @@ bvector<> KmerNodesSubindex::unique() {
     _in_reference.resize(i);
   }
   return kept;
+}
+
+void KmerNodesSubindex::expand(const bvector<> &schema) {
+  size_t orig_n = _suffixes.size();
+  assert(_in_reference.size() == orig_n);
+  if (orig_n == 0) return;
+  size_t n = schema.size();
+  assert(n >= orig_n);
+  assert(schema.count() == orig_n);
+  _suffixes.resize(n);
+  _in_reference.resize(n);
+  --orig_n;
+  while (orig_n < --n) {
+    _suffixes[n] = _suffixes[orig_n];
+    _in_reference[n] = _in_reference[orig_n];
+    if (schema[n]) {
+      --orig_n;
+    }
+  }
 }
 
 KmerNodesSubindex &KmerNodesSubindex::merge(const KmerNodesSubindex &idx, bvector<> &pos1, bvector<> &pos2) {

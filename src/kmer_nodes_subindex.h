@@ -226,8 +226,14 @@ namespace kim {
      * \param estimated_nb_kmers Estimation of the number of k-mers
      * (used to preallocate memory and thus to reduce time due to
      * dynamic memory reallocation).
+     *
+     * \param sorted Consider future nodes of this sub-index to be
+     * added in sorted order. If set to false, then each added k-mer
+     * suffix is appended at the end even if duplicated. If true,
+     * while k-mer suffixes are added in lexicographic order, then
+     * duplicates are not appended.
      */
-    explicit KmerNodesSubindex(size_t estimated_nb_kmers = 0);
+    explicit KmerNodesSubindex(size_t estimated_nb_kmers = 0, bool sorted = true);
 
     /**
      * Get the frozen state of this sub-index.
@@ -527,6 +533,24 @@ namespace kim {
      * that were removed.
      */
     bm::bvector<> unique();
+
+    /**
+     * Expand current sub-index according to the given bit vector.
+     *
+     * After expansion, this sub-index will have size the size of the
+     * schema.
+     *
+     * \remark The number of true bits in the given schema must
+     * corresponds to the number of k-mer suffixes in this sub-index.
+     *
+     * \param schema Bit vector describing expansion to operate. The
+     * i^th true bit corresponds to the position in the expanded
+     * sub-index of the i^th k-mer suffix in the initial
+     * sub-index. Each false bit after the i^th true bit and before
+     * the (i+1)^th true bit corresponds to a duplicate of the i^th
+     * k-mer suffix in the expanded sub-index.
+     */
+    void expand(const bm::bvector<> &schema);
 
     /**
      * Merges the given sub-index with this one.

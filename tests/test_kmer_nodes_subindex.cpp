@@ -122,6 +122,7 @@ void infos(const KmerNodesSubindex &idx, bool frozen, bool sorted, bool empty, s
     idx[i].toYaml(cout);
     cout << endl;
   }
+  cout << endl;
 }
 
 #define TEST_EXPECTED_EXCEPTION(code) \
@@ -141,7 +142,7 @@ int main() {
   BoundedSizeString::setMaximalSize(3);
   bool exception_thrown;
 
-  cout << "Creation of an empty sub-index with allocated space for 10 nodes" << endl;
+  cout << "Creation of an empty sub-index with allocated space for 10 nodes (to be inserted in lexicographic order)" << endl;
   KmerNodesSubindex idx(10);
   infos(idx, false, true, true, 0, 10);
 
@@ -195,17 +196,18 @@ int main() {
   for (size_t i = 0; i < kmers.size(); ++i) {
     cout << "- Adding '" << kmers[i] << "'" << endl;
     bool new_kmer = idx.add(KmerNodesSubindex::KmerNode(kmers[i], false));
-    assert((i == 4) xor new_kmer);
+    assert(new_kmer);
   }
+  infos(idx, false, false, false, 13, 16);
   cout << "Shrinking the sub-index" << endl;
   idx.shrink_to_fit();
-  infos(idx, false, false, false, 12, 12);
+  infos(idx, false, false, false, 13, 13);
   cout << "Sorting the sub-index" << endl;
   idx.sort();
-  infos(idx, false, true, false, 12, 12);
+  infos(idx, false, true, false, 13, 13);
   cout << "Removing duplicated 3-mers from the sub-index" << endl;
   idx.unique();
-  infos(idx, false, true, false, 6, 12);
+  infos(idx, false, true, false, 6, 13);
 
   vector<BoundedSizeString> kmers2 = {"TAC", "ACA", "AAA", "GGG" };
   cout << "Adding unordered 3-mers:" << endl;
@@ -266,9 +268,9 @@ int main() {
   idx.freeze();
   infos(idx, true, true, false, 9, 10);
 
-  cout << "Creating a new k-mer node sub-index." << endl;
-  KmerNodesSubindex idx2;
-  infos(idx2, false, true, true, 0, 0);
+  cout << "Creating a new k-mer node sub-index without assuming insertion in lexicographic order." << endl;
+  KmerNodesSubindex idx2(0, false);
+  infos(idx2, false, false, true, 0, 0);
   vector<BoundedSizeString> kmers3 = {"AGT", "CAG", "TGA", "AGT", "TGA", "CCC", "GCG", "GGG" };
   cout << "Adding unordered 3-mers:" << endl;
   for (size_t i = 0; i < kmers3.size(); ++i) {
@@ -283,31 +285,55 @@ int main() {
   idx2.shrink_to_fit();
   infos(idx2, false, false, false, 8, 8);
 
-  cout << "Sorting the sub-index" << endl;
+  bvector<> schema(15);
+  schema[0] = schema[1] = schema[2] = schema[5] = schema[6] = schema[8] = schema[12] = schema[13] = true;
+  // schema: 1 1 1 0 0 1 1 0 1 0 0 0 1 1 0
+
+  cout << "Expanding the sub-index using schema:";
+  for (size_t i = 0; i < schema.size(); ++i) {
+    cout << " " << schema[i];
+  }
+  cout << endl;
+  idx2.expand(schema);
+  idx2.shrink_to_fit();
+  infos(idx2, false, false, false, 15, 15);
+  for (size_t i = 0; i < schema.size(); ++i) {
+    if (!schema[i]) {
+      assert(i > 0);
+      assert(idx2[i - 1].suffix == idx2[i].suffix);
+      assert(idx2[i - 1].in_reference == idx2[i].in_reference);
+    }
+  }
+  // idx2: AGT CAG TGA TGA TGA AGT TGA TGA CCC CCC CCC CCC GCG GGG GGG
+    cout << "Sorting the sub-index" << endl;
   permutation = idx2.sort();
-  expected_permutation = { 0, 3, 1, 5, 6, 7, 2, 4 };
-  cout << "The computed permutation must have 8 elements:" << endl;
+  // idx2:        AGT AGT CAG CCC CCC CCC CCC GCG GGG GGG TGA TGA TGA TGA TGA
+  // permutation:   0   5   1   8   9  10  11  12  13  14   2   3   4   6   7
+  expected_permutation = { 0, 5, 1, 8, 9, 10, 11, 12, 13, 14, 2, 3, 4, 6, 7 };
+  cout << "The computed permutation must have 15 elements:" << endl;
   assert(permutation.size() == expected_permutation.size());
   for (size_t i = 0; i < permutation.size(); ++i) {
     cout << "permutation[" << i << "] = " << permutation[i]
          << " (expecting " << expected_permutation[i] << ")" << endl;
     assert(permutation[i] == expected_permutation[i]);
   }
-  infos(idx2, false, true, false, 8, 8);
+  infos(idx2, false, true, false, 15, 15);
 
   cout << "Removing duplicated 3-mers from the sub-index" << endl;
   kept = idx2.unique();
-  expected_kept.resize(8);
-  expected_kept.set();
-  expected_kept[1] = expected_kept[7] = false;
-  cout << "The computed kept bit vector must have 8 elements:" << endl;
+  // idx2: AGT CAG CCC GCG GGG TGA
+  // kept: 1 0 1 1 0 0 0 1 1 0 1 0 0 0 0
+  expected_kept.resize(15);
+  expected_kept.reset();
+  expected_kept[0] = expected_kept[2] = expected_kept[3] = expected_kept[7] = expected_kept[8] = expected_kept[10] = true;
+  cout << "The computed kept bit vector must have 15 elements:" << endl;
   assert(kept.size() == expected_kept.size());
   for (size_t i = 0; i < kept.size(); ++i) {
     cout << "kept[" << i << "] = " << kept[i]
          << " (expecting " << expected_kept[i] << ")" << endl;
     assert(kept[i] == expected_kept[i]);
   }
-  infos(idx2, false, true, false, 6, 8);
+  infos(idx2, false, true, false, 6, 15);
 
   // idx =  {"AAA", "AAC", "ACA", "ACT", "AGG", "ATA", "GGG", "TAC", "TTA"}
   // idx2 = {"AGT", "CAG", "CCC", "GCG", "GGG", "TGA" }
