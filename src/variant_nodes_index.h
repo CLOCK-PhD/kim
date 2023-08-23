@@ -101,6 +101,9 @@ namespace kim {
      */
   class VariantNodesIndex: private std::map<std::string, uint16_t> {
 
+  private:
+    friend class KmerVariantEdgesSubindex;
+
   public:
 
     /**

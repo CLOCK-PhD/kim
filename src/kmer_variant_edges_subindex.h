@@ -137,7 +137,7 @@ namespace kim {
       /**
        * Iterator pointing to the given variant in the index.
        */
-      VariantNodesIndex::const_iterator variant_node_iterator;
+      VariantNodesIndex::iterator variant_node_iterator;
 
       /**
        * The rank of the associated k-mer for the pointed variant.
@@ -276,6 +276,42 @@ namespace kim {
                              size_t estimated_nb_edges = 0);
 
     /**
+     * Get the related subindex of k-mer nodes.
+     *
+     * \return Returns the related subindex of k-mer nodes.
+     */
+    inline KmerNodesSubindex &kmerNodesSubindex() {
+      return _kmer_nodes;
+    }
+
+    /**
+     * Get the related read-only subindex of k-mer nodes.
+     *
+     * \return Returns the related read-only subindex of k-mer nodes.
+     */
+    inline const KmerNodesSubindex &kmerNodesSubindex() const {
+      return _kmer_nodes;
+    }
+
+    /**
+     * Get the related index of variant nodes.
+     *
+     * \return Returns the related index of variant nodes.
+     */
+    inline VariantNodesIndex &variantNodesIndex() {
+      return _variant_nodes;
+    }
+
+    /**
+     * Get the related read-only index of variant nodes.
+     *
+     * \return Returns the related read-only index of variant nodes.
+     */
+    inline const VariantNodesIndex &variantNodesIndex() const {
+      return _variant_nodes;
+    }
+
+    /**
      * Compact this sub-index and its associated k-mer nodes sub-index.
      *
      * \remark Compacting this sub-index will call the
@@ -293,6 +329,7 @@ namespace kim {
      * \see See unfreeze() and frozen() methods.
      */
     void compact();
+
     /**
      * Get the frozen state of this sub-index.
      *
@@ -366,22 +403,13 @@ namespace kim {
      *
      * \param n The capacity to reserve.
      */
-    inline void reserve(size_t n) {
-      size_t old_n = _first_kmer_edges.size();
-      _kmer_variant_edges.reserve(n);
-      _first_kmer_edges.resize(_kmer_variant_edges.capacity());
-      if (old_n < n) {
-        _first_kmer_edges.set_range(old_n, n - 1);
-      }
-    }
+    void reserve(size_t n);
 
     /**
      * Shrink the memory in order to fit the data but have no extra
      * reserved memory.
      */
-    inline void shrink_to_fit() {
-      _kmer_variant_edges.shrink_to_fit();
-    }
+    void shrink_to_fit();
 
     /**
      * Get a view of the edge at the given rank.
@@ -452,9 +480,9 @@ namespace kim {
      * k-mer node doesn't exist in the k-mer nodes sub-index, it is
      * added at the end of the k-mer nodes sub-index (possibly
      * breaking sub-index consistency). In such case, you should
-     * consider using the append method which will perform better.
+     * consider using the merge method which will perform better.
      *
-     * \see See the append() method.
+     * \see See the merge() method.
      *
      * \param node The k-mer node.
      *
@@ -478,6 +506,9 @@ namespace kim {
      * to the merge operation. Otherwise a
      * KmerVariantEdgesSubindexException is thrown.
      *
+     * \remark Both edges sub-indexes must share the same variant
+     * index.
+     *
      * \param idx The sub-index to merge with the current one.
      *
      * \return The current updated sub-index is returned.
@@ -499,6 +530,10 @@ namespace kim {
 
     /**
      * Clear the sub-index.
+     *
+     * \remark This clears the k-mer nodes associated to this
+     * sub-index, the edges (of course) of this sub-index and variant
+     * nodes involved in edges that have now a 0 incoming degree.
      */
     void clear();
 
@@ -518,8 +553,26 @@ namespace kim {
      * output stream.
      *
      * \param os Output stream in which to print this sub-index.
+     *
+     * \param header If not empty, print the given string (by
+     * prepending a '#' on each line of this header) at the beginning
+     * of the given stream.
+     *
+     * \param footer If not empty, print the given string (by
+     * prepending a '#' on each line of this footer) at the end of the
+     * given stream.
+     *
+     * \param infos_in_header If true, print a summary in header
+     * comment.
+     *
+     * \param legend_in_header If true, print column significations in
+     * header comment.
      */
-    void toStream(std::ostream &os) const;
+    void toStream(std::ostream &os,
+                  const std::string &header = "Start of sub-index",
+                  const std::string &footer = "End of sub-index",
+                  bool infos_in_header = true,
+                  bool legend_in_header = true) const;
 
   };
 
@@ -534,7 +587,7 @@ namespace kim {
    * \return The output stream is returned.
    */
   inline std::ostream &operator<<(std::ostream &os, const KmerVariantEdgesSubindex &idx) {
-    idx.toStream(os);
+    idx.toStream(os, "", "", true, false);
     return os;
   }
 
