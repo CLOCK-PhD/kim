@@ -114,6 +114,7 @@ libdir="@libdir@"
 # End of bug fix
 
 lib_LTLIBRARIES = libkim.la
+check_LTLIBRARIES = libkim-debug.la
 
 libkim_ladir = @abs_srcdir@
 libkim_la_SOURCES =						\
@@ -127,6 +128,10 @@ libkim_la_SOURCES =						\
   sort_helper.h sort_helper.cpp					\
   variant_identification.h variant_identification.cpp		\
   variant_nodes_index.h variant_nodes_index.cpp
+
+libkim_debug_ladir = @abs_srcdir@
+libkim_debug_la_SOURCES = $(libkim_la_SOURCES)
+libkim_debug_la_CXXFLAGS = $(AM_CXXFLAGS) -UNDEBUG
 
 GCDA_FILES = $(patsubst %.cpp,%.gcda,$(filter %.cpp,$(SOURCES)))
 GCNO_FILES = $(GCDA_FILES:.gcda=.gcno)

@@ -210,7 +210,7 @@ am_test_bounded_size_string_OBJECTS =  \
 test_bounded_size_string_OBJECTS =  \
 	$(am_test_bounded_size_string_OBJECTS)
 test_bounded_size_string_LDADD = $(LDADD)
-test_bounded_size_string_DEPENDENCIES = ../src/libkim.la
+test_bounded_size_string_DEPENDENCIES = ../src/libkim-debug.la
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -218,31 +218,31 @@ am__v_lt_1 =
 am_test_fastq_file_reader_OBJECTS = test_fastq_file_reader.$(OBJEXT)
 test_fastq_file_reader_OBJECTS = $(am_test_fastq_file_reader_OBJECTS)
 test_fastq_file_reader_LDADD = $(LDADD)
-test_fastq_file_reader_DEPENDENCIES = ../src/libkim.la
+test_fastq_file_reader_DEPENDENCIES = ../src/libkim-debug.la
 am_test_kim_exception_OBJECTS = test_kim_exception.$(OBJEXT)
 test_kim_exception_OBJECTS = $(am_test_kim_exception_OBJECTS)
 test_kim_exception_LDADD = $(LDADD)
-test_kim_exception_DEPENDENCIES = ../src/libkim.la
+test_kim_exception_DEPENDENCIES = ../src/libkim-debug.la
 am_test_kim_settings_OBJECTS = test_kim_settings.$(OBJEXT)
 test_kim_settings_OBJECTS = $(am_test_kim_settings_OBJECTS)
 test_kim_settings_LDADD = $(LDADD)
-test_kim_settings_DEPENDENCIES = ../src/libkim.la
+test_kim_settings_DEPENDENCIES = ../src/libkim-debug.la
 am_test_kmer_nodes_subindex_OBJECTS =  \
 	test_kmer_nodes_subindex.$(OBJEXT)
 test_kmer_nodes_subindex_OBJECTS =  \
 	$(am_test_kmer_nodes_subindex_OBJECTS)
 test_kmer_nodes_subindex_LDADD = $(LDADD)
-test_kmer_nodes_subindex_DEPENDENCIES = ../src/libkim.la
+test_kmer_nodes_subindex_DEPENDENCIES = ../src/libkim-debug.la
 am_test_sort_helper_OBJECTS = test_sort_helper.$(OBJEXT)
 test_sort_helper_OBJECTS = $(am_test_sort_helper_OBJECTS)
 test_sort_helper_LDADD = $(LDADD)
-test_sort_helper_DEPENDENCIES = ../src/libkim.la
+test_sort_helper_DEPENDENCIES = ../src/libkim-debug.la
 am_test_variant_nodes_index_OBJECTS =  \
 	test_variant_nodes_index.$(OBJEXT)
 test_variant_nodes_index_OBJECTS =  \
 	$(am_test_variant_nodes_index_OBJECTS)
 test_variant_nodes_index_LDADD = $(LDADD)
-test_variant_nodes_index_DEPENDENCIES = ../src/libkim.la
+test_variant_nodes_index_DEPENDENCIES = ../src/libkim-debug.la
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -704,7 +704,7 @@ AM_CXXFLAGS = \
   -DPACKAGE_DATADIR="\"$(pkgdatadir)\""	\
   -DSRCDIR="\"$(abs_srcdir)\""
 
-LDADD = ../src/libkim.la
+LDADD = ../src/libkim-debug.la
 test_bounded_size_string_SOURCES = test_bounded_size_string.cpp
 test_fastq_file_reader_SOURCES = test_fastq_file_reader.cpp
 test_kim_settings_SOURCES = test_kim_settings.cpp
@@ -1270,10 +1270,10 @@ uninstall-am:
 .PRECIOUS: Makefile
 
 
-force_check_libkim.la:
+force_check_libkim-debug.la:
 
-../src/libkim.la: force_check_libkim.la
-	$(MAKE) $(AM_MAKEFLAGS) libkim.la -C ../src/
+../src/libkim-debug.la: force_check_libkim-debug.la
+	$(MAKE) $(AM_MAKEFLAGS) libkim-debug.la -C ../src/
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

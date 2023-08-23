@@ -188,15 +188,17 @@ KmerVariantEdgesSubindex &KmerVariantEdgesSubindex::merge(KmerVariantEdgesSubind
   size_t m2 = idx.size();
   assert(m2 >= n2);
 
+  assert(&(idx._variant_nodes) == &_variant_nodes);
   bvector<> pos1, pos2;
   _kmer_nodes.merge(idx._kmer_nodes, pos1, pos2);
   assert(pos1.size() == pos2.size());
+
+  size_t n1 = _kmer_nodes.size();
   assert(pos1.size() == n1);
   assert(n1 >= orig_n1);
   assert(n1 >= n2);
   assert(n1 <= orig_n1 + n2);
 
-  size_t n1 = _kmer_nodes.size();
   size_t m1 = orig_m1 + m2;
   assert(m1 >= n1);
 

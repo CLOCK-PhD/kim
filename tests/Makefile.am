@@ -96,7 +96,7 @@ AM_CXXFLAGS =				\
   -DPACKAGE_DATADIR="\"$(pkgdatadir)\""	\
   -DSRCDIR="\"$(abs_srcdir)\""
 
-LDADD = ../src/libkim.la
+LDADD = ../src/libkim-debug.la
 
 check_PROGRAMS =		\
   test_bounded_size_string	\
@@ -121,10 +121,10 @@ test_sort_helper_SOURCES = test_sort_helper.cpp
 
 test_variant_nodes_index_SOURCES = test_variant_nodes_index.cpp
 
-force_check_libkim.la:
+force_check_libkim-debug.la:
 
-../src/libkim.la: force_check_libkim.la
-	$(MAKE) $(AM_MAKEFLAGS) libkim.la -C ../src/
+../src/libkim-debug.la: force_check_libkim-debug.la
+	$(MAKE) $(AM_MAKEFLAGS) libkim-debug.la -C ../src/
 
 TESTS = $(check_PROGRAMS)
 
