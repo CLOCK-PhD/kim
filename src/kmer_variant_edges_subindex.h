@@ -149,6 +149,28 @@ namespace kim {
   public:
 
     /**
+     * The type of edge view.
+     */
+    struct Edge {
+
+      /**
+       * The starting k-mer suffix node view.
+       */
+      KmerNodesSubindex::KmerNode kmer_node;
+
+      /**
+       * The rank of the associated k-mer for the linked variant.
+       */
+      uint16_t rank;
+
+      /**
+       * The ending variant node view.
+       */
+      VariantNodesIndex::VariantNode variant_node;
+
+    };
+
+    /**
      * The type of the association of some given k-mer with some variant.
      */
     struct KmerVariantAssociation {
@@ -422,9 +444,7 @@ namespace kim {
      *
      * \return Returns a view of the edge at the given rank.
      */
-    inline KmerVariantAssociation operator[](size_t rank) const {
-      return KmerVariantAssociation(_kmer_variant_edges[rank]);
-    }
+    Edge operator[](size_t rank) const;
 
     /**
      * Return the first edge of this sub-index.
@@ -434,7 +454,7 @@ namespace kim {
      *
      * \return Returns a view of the first edge of this sub-index.
      */
-    inline KmerVariantAssociation front() const {
+    inline Edge front() const {
       return operator[](0);
     }
 
@@ -446,7 +466,7 @@ namespace kim {
      *
      * \return Returns a view of the last edge of this sub-index.
      */
-    inline KmerVariantAssociation back() const {
+    inline Edge back() const {
       return operator[](size() - 1);
     }
 

@@ -101,10 +101,14 @@ using namespace std;
 using namespace bm;
 using namespace kim;
 
-ostream &operator<<(ostream &os, const KmerVariantEdgesSubindex::KmerVariantAssociation &assoc) {
-  os << assoc.variant_node.variant
-     << " (in_degree: " << assoc.variant_node.in_degree
-     << ", rank: " << assoc.rank << ")";
+ostream &operator<<(ostream &os, const KmerVariantEdgesSubindex::Edge &e) {
+  os << e.kmer_node.suffix;
+  if (e.kmer_node.in_reference) {
+    os << "[ref]";
+  }
+  os << " to " << e.variant_node.variant
+     << " (in_degree: " << e.variant_node.in_degree
+     << ", rank: " << e.rank << ")";
   return os;
 }
 

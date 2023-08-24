@@ -168,6 +168,23 @@ void KmerVariantEdgesSubindex::shrink_to_fit() {
   _first_kmer_edges.resize(_kmer_variant_edges.size());
 }
 
+
+KmerVariantEdgesSubindex::Edge KmerVariantEdgesSubindex::operator[](size_t i) const {
+  size_t p;
+  if (frozen()) {
+    p = _first_kmer_edges.rank(i, _rank_select_helper);
+  } else {
+    p = _first_kmer_edges.count_range_no_check(0, i);
+  }
+  assert(p);
+  --p;
+  return {
+          _kmer_nodes[p],
+          _kmer_variant_edges[i].rank,
+          VariantNodesIndex::VariantNode(_kmer_variant_edges[i].variant_node_iterator)
+  };
+}
+
 list<KmerVariantEdgesSubindex::KmerVariantAssociation> KmerVariantEdgesSubindex::getKmerVariantAssociation(const BoundedSizeString &suffix) const {
   list<KmerVariantAssociation> l;
   if (!frozen()) {
@@ -189,6 +206,7 @@ KmerVariantEdgesSubindex &KmerVariantEdgesSubindex::add(KmerNodesSubindex::KmerN
   if (frozen()) {
     throw KmerVariantEdgesSubindexException("Sub-index must be unfrozen before calling KmerVariantEdgesSubindex::add() method.");
   }
+
   bool new_node = _kmer_nodes.add(node);
   VariantNodesIndex::iterator variant_node_iterator = _variant_nodes.addVariantNode(variant, true);
   if (rank > uint64_t(uint16_t(-1))) {
