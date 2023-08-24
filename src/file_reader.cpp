@@ -87,209 +87,141 @@
 *                                                                             *
 ******************************************************************************/
 
-#ifndef __FASTQ_FILE_READER_H__
-#define __FASTQ_FILE_READER_H__
+#include "file_reader.h"
 
-#include <string>
-#include <fstream>
+#include "config.h"
+#include "kim_exception.h"
 
-#include <kim_exception.h>
-#include <kim_settings.h>
-#include <file_reader.h>
+#include <cassert>
+#include <iostream>
 
-namespace kim {
+using namespace std;
 
-  /**
-   * Fastq file reader which allows to extract k-mers from reads.
-   */
-  class FastqFileReader: public FileReader {
+BEGIN_KIM_NAMESPACE
 
-  private:
-
-    /**
-     * Flag to distinguish when some new sequence is to be started or
-     * if some sequence is currently being processed.
-     */
-    bool _start_sequence_state;
-
-    /**
-     * Number of processed nucleotides in the current sequence in the
-     * processed sequence.
-     */
-    size_t _nb_nucl;
-
-    /**
-     * Number of rightmost consecutive valid processed nucleotides in
-     * the processed sequence.
-     */
-    size_t _nb_valid_nucl;
-
-    /**
-     * The current sequence header.
-     */
-    std::string _read_id;
-
-    /**
-     * The current k-mer (might be under construction) of the
-     * currently processed sequence.
-     */
-    std::string _kmer;
-
-    /**
-     * The hook method called at the end of reset().
-     *
-     * This method overrides the base class one.
-     */
-    virtual void _onReset();
-
-    /**
-     * Process the sequence header.
-     *
-     * The cursor must be located just after the '@' symbol starting
-     * the new sequence and the input stream must be valid in order to
-     * use this method.
-     */
-    void _processSequenceHeader();
-
-    /**
-     * This method must be called whenever a new sequence is expected.
-     *
-     * The next visible character is supposed to be an '@' located at
-     * the beginning of a new line. If this is not the case, a
-     * FastqFileReaderParseError is thrown with an explicit message.
-     *
-     * \return Returns true if the header has been correctly parsed
-     * (i.e., end of file is not reached).
-     */
-    bool _parseSequenceHeader();
-
-    /**
-     * Parse the quality separator string and verify its conformity
-     * (otherwise a warning is emitted).
-     */
-    void _parseQualitySeparator();
-
-    /**
-     * Simply skip the quality sequence.
-     *
-     * After this method, either a new sequence is expected or the end
-     * of file.
-     */
-    void _parseQualitySequence();
-
-    /**
-     * Parse the file according to its current state.
-     *
-     * If some new sequence is expected, then process the new sequence
-     * header (see _parseSequenceHeader() method). If the quality
-     * separator is encountered, the separator is analyzed for
-     * conformity (see _parseQualitySeparator() method) then the
-     * quality sequence is parsed (see _parseQualitySequence()
-     * method). In all other case, the next visible character is
-     * expected to be a nucleotide and thus it is processed to update
-     * the current k-mer if it is valid and not degenerated.
-     */
-    void _parse();
-
-  public:
-
-    /**
-     * Creates a Fastq file reader with no associated file.
-     *
-     * \param settings The k-mer identification metric program
-     * settings.
-     */
-    FastqFileReader(const Settings &settings);
-
-    /**
-     * Creates a Fastq file reader.
-     *
-     * This internally calls the open method.
-     *
-     * \param filename The name of the fastq file to read.
-     *
-     * \param settings The k-mer identification metric program
-     * settings.
-     */
-    FastqFileReader(const char *filename, const Settings &settings);
-
-    /**
-     * Creates a Fastq file reader.
-     *
-     * This internally calls the open method.
-     *
-     * \param filename The name of the fastq file to read.
-     *
-     * \param settings The k-mer identification metric program
-     * settings.
-     */
-    FastqFileReader(const std::string &filename, const Settings &settings);
-
-    /**
-     * Get the next k-mer from this file reader object.
-     *
-     * This method may update the current read id and updates the
-     * current k-mer position.
-     *
-     * \return Returns the next available k-mer or an empty string.
-     */
-    const std::string &getNextKmer();
-
-    /**
-     * Get the current k-mer extracted by this file reader object.
-     *
-     * \return Returns the current available k-mer or an empty string.
-     */
-    const std::string &getCurrentKmer() const;
-
-    /**
-     * Get the read ID the current k-mer comes from.
-     *
-     * \return Returns the current available read ID or an empty
-     * string.
-     */
-    inline const std::string &getCurrentRead() const {
-      return _read_id;
-    }
-
-    /**
-     * Get the position of the current k-mer in the sequence (starting
-     * from 0).
-     *
-     * \return Returns the position of the current available k-mer or
-     * -1.
-     */
-    inline size_t getCurrentKmerRelativePosition() const {
-      return ((_nb_valid_nucl >= _settings.k()) ? _nb_nucl - _settings.k() : -1);
-    }
-
-    /**
-     * Set the reading cursor to the start of the next available
-     * sequence (the first non blank character following the sequence
-     * header).
-     *
-     * Calling this method on a newly file opened file position the
-     * cursor to the beginning of the first sequence.
-     *
-     * \param check_consistency When set to false, just goes to the
-     * next '@' character starting a newline without ensuring the
-     * validity of the current processed sequence (if any), then read
-     * the line as the header and consider the first next non-empty
-     * position as the beginning of the sequence. This performs faster
-     * but may lead to bad positioning (for example, if some [part of]
-     * quality sequence starts with an '@' of some new line).
-     *
-     * \return This method returns true if the cursor is correctly
-     * positioned to the start of a new sequence and false if no new
-     * sequence has been found.
-     */
-    bool gotoNextSequence(bool check_consistency = true);
-
-  };
-
+FileReaderParseError::FileReaderParseError(FileReader &reader):
+  Exception()
+{
+  if (reader.getFilename().empty()) return;
+  (*this) << "File '" << reader.getFilename() << "': "
+          << "line " << reader.getFileLineNumber() << ", "
+          << "column " << reader.getFileColumnNumber()
+          << ": ";
 }
 
-#endif
-// Local Variables:
-// mode:c++
-// End:
+#define WARNING_MSG(msg)          \
+  if (_settings.warn()) {         \
+    cerr << "Warning:"            \
+         << _filename << ":"      \
+         << (_line + 1) << ":"    \
+         << _col << ": "          \
+         << msg << endl;          \
+  }                               \
+  (void) 0
+
+#define ERROR_MSG(msg)                          \
+  do {                                          \
+    FileReaderParseError error(*this);          \
+    error << msg;                               \
+    throw error;                                \
+  } while (0)
+
+FileReader::FileReader(const Settings &settings): _settings(settings) {
+  assert(settings.valid());
+}
+
+FileReader::~FileReader() {
+  close();
+}
+
+void FileReader::open(const string &filename) {
+  close();
+  _filename = filename;
+  _ifs.open(_filename.c_str());
+  if (!*this) {
+    _filename = "";
+    if (_settings.warn()) {
+      cerr << "Unable to open file '" << filename << "'." << endl;
+    }
+  }
+  _onOpen();
+}
+
+void FileReader::close() {
+  if (_ifs.is_open()) {
+    _ifs.close();
+  }
+  _filename = "";
+  reset();
+  _onClose();
+}
+
+void FileReader::reset() {
+  _ifs.clear();
+  if (_ifs) {
+    _ifs.seekg(0);
+  }
+  _line = _col = 0;
+  _onReset();
+}
+
+char FileReader::_nextVisibleCharacter() {
+  int c = -1;
+  while (*this && ((c = _ifs.get()) <= 32)) {
+    switch (c) {
+    case '\t':
+    case ' ':
+      ++_col;
+      break;
+    case '\n':
+      ++_line;
+      _col = 0;
+      break;
+    default:
+      if (*this) {
+        WARNING_MSG("Unexpected non printable character (code " << c << ")");
+      }
+    }
+  }
+  ++_col;
+  return ((c != -1) ? c : 0);
+}
+
+const char *FileReader::_search_directories[] = {
+                                                      "./",
+                                                      PACKAGE_DATADIR "/",
+                                                      /* The following directories are mostly for development purpose */
+                                                      "resources/",
+                                                      "../resources/",
+                                                      "../",
+                                                      /* The last array entry must be NULL */
+                                                      NULL
+};
+
+string FileReader::findFile(const string &filename, const char **directories) {
+  if (filename.empty()) return filename;
+  string res = filename;
+  const char *dir = NULL;
+  do {
+    ifstream ifs(res);
+    if (ifs) {
+      ifs.close();
+      dir = NULL;
+    } else {
+      if (directories && (filename[0] != '/')) {
+        dir = *directories++;
+        res = dir;
+        if (res.back() != '/') {
+          res += '/';
+        }
+        res += filename;
+      } else {
+        dir = NULL;
+        res = "";
+      }
+    }
+  } while (dir);
+  return res;
+}
+
+END_KIM_NAMESPACE

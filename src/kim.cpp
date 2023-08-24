@@ -286,7 +286,7 @@ void dump_file(const string &filename, size_t n = size_t(-1), ostream &os = cout
 void show_copyright(bool full) {
   cout << PACKAGE " version " VERSION " -- " PACKAGE_DESCRIPTION "\n\n";
   string fname_orig = "LICENSE.md";
-  string fname = FastqFileReader::findFile(fname_orig);
+  string fname = FileReader::findFile(fname_orig);
   if (!fname.empty()) {
     dump_file(fname, 508);
   } else {
@@ -300,7 +300,7 @@ void show_copyright(bool full) {
          << endl
          << endl;
     fname_orig = "LICENSE-en.md";
-    fname = FastqFileReader::findFile(fname_orig);
+    fname = FileReader::findFile(fname_orig);
     if (!fname.empty()) {
       dump_file(fname);
     } else {
@@ -310,7 +310,7 @@ void show_copyright(bool full) {
     }
     cout << endl;
     fname_orig = "LICENSE-fr.md";
-    fname = FastqFileReader::findFile(fname_orig);
+    fname = FileReader::findFile(fname_orig);
     if (!fname.empty()) {
       dump_file(fname);
     } else {
@@ -327,7 +327,6 @@ void show_copyright(bool full) {
        << "http://www.apache.org/licenses/LICENSE-2.0" << endl
        << endl;
 }
-
 
 void dump_results(const map<string, VariantIdentification> &results,
                   const KmerVariantGraph &index,
@@ -549,5 +548,4 @@ int main(int argc, char **argv) {
   }
 
   return 0;
-
 }

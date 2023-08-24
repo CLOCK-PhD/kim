@@ -99,16 +99,6 @@ using namespace std;
 
 BEGIN_KIM_NAMESPACE
 
-FastqFileReaderParseError::FastqFileReaderParseError(FastqFileReader &reader):
-  Exception()
-{
-  if (reader.getFilename().empty()) return;
-  (*this) << "File '" << reader.getFilename() << "': "
-          << "line " << reader.getFileLineNumber() << ", "
-          << "column " << reader.getFileColumnNumber()
-          << ": ";
-}
-
 #define WARNING_MSG(msg)          \
   if (_settings.warn()) {         \
     cerr << "Warning:"            \
@@ -121,55 +111,26 @@ FastqFileReaderParseError::FastqFileReaderParseError(FastqFileReader &reader):
 
 #define ERROR_MSG(msg)                          \
   do {                                          \
-    FastqFileReaderParseError error(*this);     \
+    FileReaderParseError error(*this);          \
     error << msg;                               \
     throw error;                                \
   } while (0)
 
-FastqFileReader::FastqFileReader(const Settings &settings): _settings(settings) {
-  assert(settings.valid());
-}
+FastqFileReader::FastqFileReader(const Settings &settings): FileReader(settings) {}
 
-FastqFileReader::FastqFileReader(const char *filename, const Settings &settings): _settings(settings) {
-  assert(settings.valid());
+FastqFileReader::FastqFileReader(const char *filename, const Settings &settings):
+  FileReader(settings)
+{
   open(filename);
 }
 
-FastqFileReader::FastqFileReader(const string &filename, const Settings &settings): _settings(settings) {
-  assert(settings.valid());
+FastqFileReader::FastqFileReader(const string &filename, const Settings &settings):
+  FileReader(settings)
+{
   open(filename);
 }
 
-FastqFileReader::~FastqFileReader() {
-  close();
-}
-
-void FastqFileReader::open(const string &filename) {
-  close();
-  _filename = filename;
-  _ifs.open(_filename.c_str());
-  if (!*this) {
-    _filename = "";
-    if (_settings.warn()) {
-      cerr << "Unable to open file '" << filename << "'." << endl;
-    }
-  }
-}
-
-void FastqFileReader::close() {
-  if (_ifs.is_open()) {
-    _ifs.close();
-  }
-  _filename = "";
-  reset();
-}
-
-void FastqFileReader::reset() {
-  _ifs.clear();
-  if (_ifs) {
-    _ifs.seekg(0);
-  }
-  _line = _col = 0;
+void FastqFileReader::_onReset() {
   _start_sequence_state = true;
   _nb_nucl = _nb_valid_nucl = 0;
   _read_id = "";
@@ -210,28 +171,6 @@ uint8_t getIUPACNucleotide(char c) {
   default:
     return IUPAC_UNDEFINED;
   }
-}
-
-char FastqFileReader::_nextVisibleCharacter() {
-  int c = -1;
-  while (*this && ((c = _ifs.get()) <= 32)) {
-    switch (c) {
-    case '\t':
-    case ' ':
-      ++_col;
-      break;
-    case '\n':
-      ++_line;
-      _col = 0;
-      break;
-    default:
-      if (*this) {
-        WARNING_MSG("Unexpected non printable character (code " << c << ")");
-      }
-    }
-  }
-  ++_col;
-  return ((c != -1) ? c : 0);
 }
 
 void FastqFileReader::_processSequenceHeader() {
@@ -347,17 +286,6 @@ const string &FastqFileReader::getCurrentKmer() const {
   return (*this && (_nb_valid_nucl >= _settings.k()) ? _kmer : empty_string);
 }
 
-const char *FastqFileReader::_search_directories[] = {
-                                                      "./",
-                                                      PACKAGE_DATADIR "/",
-                                                      /* The following directories are mostly for development purpose */
-                                                      "resources/",
-                                                      "../resources/",
-                                                      "../",
-                                                      /* The last array entry must be NULL */
-                                                      NULL
-};
-
 bool FastqFileReader::gotoNextSequence(bool check_consistency) {
   bool found = false;
   if (check_consistency) {
@@ -399,31 +327,6 @@ bool FastqFileReader::gotoNextSequence(bool check_consistency) {
     }
   }
   return found;
-}
-string FastqFileReader::findFile(const string &filename, const char **directories) {
-  if (filename.empty()) return filename;
-  string res = filename;
-  const char *dir = NULL;
-  do {
-    ifstream ifs(res);
-    if (ifs) {
-      ifs.close();
-      dir = NULL;
-    } else {
-      if (directories && (filename[0] != '/')) {
-        dir = *directories++;
-        res = dir;
-        if (res.back() != '/') {
-          res += '/';
-        }
-        res += filename;
-      } else {
-        dir = NULL;
-        res = "";
-      }
-    }
-  } while (dir);
-  return res;
 }
 
 END_KIM_NAMESPACE

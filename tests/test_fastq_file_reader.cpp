@@ -132,7 +132,7 @@ int main() {
                       /* The last array entry must be NULL */
                       NULL
   };
-  fname = FastqFileReader::findFile(fname, dirs);
+  fname = FileReader::findFile(fname, dirs);
   cout << "File path should not be empty: '" << fname << "'" << endl;
   assert(!fname.empty());
 
@@ -195,8 +195,8 @@ int main() {
         cout << "No new sequence found." << endl;
         --cpt;
       }
-    } catch (const FastqFileReaderParseError &e) {
-      cout << "A FastqFileReaderParseError with message '" << e.what() << "' has been thrown" << endl;
+    } catch (const FileReaderParseError &e) {
+      cout << "A FileReaderParseError with message '" << e.what() << "' has been thrown" << endl;
       if (cpt == 16) { // The expected exception is thrown when attempting to go to the sequence 16
         --cpt;
       } else {
