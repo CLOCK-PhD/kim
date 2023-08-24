@@ -159,7 +159,29 @@ namespace kim {
     /**
      * The type of edges index.
      */
-    typedef std::vector<KmerVariantEdgesSubindex>  KmerVariantEdgesIndex;
+    typedef std::vector<KmerVariantEdgesSubindex> KmerVariantEdgesIndex;
+
+    /**
+     * The type of Edge view.
+     */
+    struct Edge {
+
+      /**
+       * The source k-mer node label
+       */
+      const std::string &kmer;
+
+      /**
+       * The k-mer rank in the variant (edge label)
+       */
+      size_t rank;
+
+      /**
+       * The destination variant node label.
+       */
+      const std::string &variant;
+
+    };
 
   private:
 
@@ -206,8 +228,10 @@ namespace kim {
      *
      * \param estimated_nb_kmers The number of estimated k-mers (to
      * preallocate enough room for each sub-index).
+     *
+     * \param sorted Set the node sub-indexes mode to this value.
      */
-    void _resizeSubindexes(size_t total, size_t estimated_nb_kmers);
+    void _resizeSubindexes(size_t total, size_t estimated_nb_kmers, bool sorted);
 
     /**
      * Ensure that the filename is correct (composed with exactly k_1
@@ -241,8 +265,8 @@ namespace kim {
      * \param filename The full path of the file containing the given
      * sub-index to load.
      *
-     * \param The k-mer encoded prefix (the rank of the sub-indexes to
-     * load).
+     * \param prefix The k-mer encoded prefix (the rank of the
+     * sub-indexes to load).
      */
     void _parseFile(const std::string &filename, size_t prefix);
 
@@ -267,6 +291,9 @@ namespace kim {
      * Load the index of k-mers associated to variants using the files
      * from the given directory.
      *
+     * \remark Once loaded, this graph is frozen (see freeze(),
+     * unfreeze() and frozen() methods).
+     *
      * \param path Directory where index files are stored.
      *
      * \param settings The k-mer identification metric program
@@ -274,10 +301,37 @@ namespace kim {
      * unmodified. After instance construction, the settings will be
      * updated and frozen.
      */
-    KmerVariantGraph(const char *path, Settings &settings);
+    KmerVariantGraph(const std::string &path, Settings &settings);
+
+    /**
+     * Load the index of k-mers associated to variants using the files
+     * from the given directory.
+     *
+     * Any existing k-mer nodes, variant nodes and thus edges is
+     * removed before loading the graph (by calling the clear() method
+     * at the beginning).
+     *
+     * \remark Once loaded, this graph is frozen (see freeze(),
+     * unfreeze() and frozen() methods).
+     *
+     * \param path Directory where index files are stored.
+     */
+    void load(const std::string &path);
+
+    /**
+     * Get this graph settings.
+     *
+     * \return Returns this graph settings.
+     */
+    inline const Settings &settings() const {
+      return _settings;
+    }
 
     /**
      * Get the number of indexed k-mers.
+     *
+     * \remark If graph is unfrozen, the result is not guaranteed and
+     * might be overestimated.
      *
      * \return Returns the number of indexed k-mers.
      */
@@ -304,6 +358,32 @@ namespace kim {
       return _nb_edges;
     }
 
+    /**
+     * Get the number of edges sub-indexes.
+     *
+     * \return Returns the number of sub-indexes.
+     */
+    inline size_t getNbSubindexes() const {
+      return _edges.size();
+    }
+
+    /**
+     * Get the variant nodes index.
+     *
+     * \return Returns the variant nodes index.
+     */
+    inline const VariantNodesIndex &getVariantNodesIndex() const {
+      return _variant_nodes;
+    }
+
+    /**
+     * Get the whole set of edges sub-indexes.
+     *
+     * \return Returns the whole set of edges sub-indexes.
+     */
+    inline const KmerVariantEdgesIndex &getKmerVariantEdgesIndex() const {
+      return _edges;
+    }
 
     /**
      * Get the list of variant involving the given k-mer.
@@ -316,27 +396,112 @@ namespace kim {
      */
     std::list<KmerVariantEdgesSubindex::KmerVariantAssociation> search(const std::string &kmer) const;
 
+    /**
+     * Get the frozen state of this graph.
+     *
+     * \see See freeze() and unfreeze() methods.
+     *
+     * \return Returns true if this graph is frozen and false
+     * otherwise.
+     */
+    inline bool frozen() const {
+      return _frozen;
+    }
 
     /**
+     * Freeze this graph in order to prevent any further
+     * modification and to allow queries.
      *
+     * \see See unfreeze() and frozen() methods.
      */
-    bool addKmerNode(const std::string &kmer, bool in_reference);
-
     void freeze();
 
-
     /**
+     * Unfreeze this graph in order to allow modifications.
      *
+     * Result of queries on unfrozen graph may lead to inconsistent
+     * results and may lead to throwing KmerVariantGraphException.
+     *
+     * \see See freeze() and frozen() methods.
      */
-    KmerVariantGraph &add(const std::string &variant, const std::string &kmer, size_t rank);
+    void unfreeze();
 
     /**
+     * Add an edge (thus its starting and ending nodes) from the given
+     * k-mer to the given variant to this graph with the given rank.
      *
+     * \param kmer The k-mer associated to the variant.
+     *
+     * \param rank The rank of the k-mer for this variant.
+     *
+     * \param variant The variant to associate to the given k-mer.
+     *
+     * \return Returns this graph.
+     */
+    KmerVariantGraph &add(const std::string &kmer, size_t rank, const  std::string &variant);
+
+    /**
+     * Another way to add an edge to the graph.
+     *
+     * \param e The edge to add.
+     *
+     * \return Returns this graph.
+     */
+    inline KmerVariantGraph &add(const Edge &e) {
+      return add(e.kmer, e.rank, e.variant);
+    }
+
+    /**
+     * A shortcut to add an edge to the graph.
+     *
+     * \param e The edge to add.
+     *
+     * \return Returns this graph.
+     */
+    inline KmerVariantGraph &operator+=(const Edge &e) {
+      return add(e);
+    }
+
+    /**
+     * (Un)set the given k-mer as a reference k-mer.
+     *
+     * This needs the graph to just have been frozen then unfrozen in
+     * order to perform correct lookups in the k-mer sub-index.
+     *
+     * \see See the unit test test_kmer_variant_graph.cpp for an
+     * example.
+     *
+     * \param kmer The k-mer to (un)set as reference.
+     *
+     * \param state The reference flag value to set.
+     *
+     * \return Returns true if the k-mer has been found (and (un)set
+     * as expected).
      */
     bool setInReferenceKmer(const std::string &kmer, bool state = true);
 
+    /**
+     * Get the reference flag of the given k-mer.
+     *
+     * \param kmer The query k-mer.
+     *
+     * \return Returns true if the k-mer was found and is set as a
+     * reference k-mer and false otherwise.
+     */
     bool isInReferenceKmer(const std::string &kmer) const;
 
+    /**
+     * Get the number of k-mers associated to the given variant (the
+     * incoming degree of its associated node).
+     *
+     * \param variant The variant for which the number of associated
+     * k-mer is queried.
+     *
+     * \see See the VariantNodesIndex::getVariantCount() method.
+     *
+     * \return Returns the number of k-mers associated to the given
+     * variant.
+     */
     inline uint16_t getVariantCount(const std::string &variant) const {
       return _variant_nodes.getVariantCount(variant);
     }
@@ -344,9 +509,37 @@ namespace kim {
     /**
      * Dump this index to the given directory.
      *
+     * \remark The graph is frozen at the beginning of the dumping
+     * operation.
+     *
+     * If the destination directory already exists and overwrite is
+     * false, an exception with an explicit message is thrown.
+     *
+     * If the destination directory already exists and overwrite is
+     * true, the existing dumped index should have all the files
+     * associated to the k-mer nodes prefixes and no other ones and
+     * may lead to unexpected behavior.
+     *
+     * \param path Directory where index files are stored.
+     *
+     * \param overwrite If true and if path directory already exists,
+     * then invokes the removeDumpedIndex() static method.
+     */
+    void dump(const std::string &path, bool overwrite = false);
+
+    /**
+     * Remove the dumped index located at the given directory and
+     * corresponding to this graph settings (for the k-mer prefix
+     * length only).
+     *
      * \param path Directory where index files are stored.
      */
-    void dump(const char *path);
+    void removeDumpedIndex(const std::string &path) const;
+
+    /**
+     * Clears this graph.
+     */
+    void clear();
 
   };
 

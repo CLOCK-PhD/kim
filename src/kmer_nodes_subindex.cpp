@@ -162,12 +162,14 @@ bool KmerNodesSubindex::add(const KmerNode &node) {
       }
     } else {
       _sorted &= (cmp > 0);
-      ++p;
     }
+    p += to_add;
   }
   if (to_add) {
+    assert(_suffixes.size() == _in_reference.size());
     _suffixes.push_back(node.suffix);
     _in_reference[p] = node.in_reference;
+    assert(_suffixes.size() == _in_reference.size());
   }
   return to_add;
 }

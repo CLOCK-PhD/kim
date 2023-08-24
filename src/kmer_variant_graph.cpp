@@ -95,14 +95,15 @@
 #include <iostream>
 #include <dirent.h>
 #include <sys/types.h>
-
+#include <sys/stat.h>
 #include <unistd.h>
+#include <cerrno>
+
 #include <cassert>
 
 using namespace std;
 
 BEGIN_KIM_NAMESPACE
-
 
 #define WARNING_MSG(msg)        \
   if (_settings.warn()) {       \
@@ -134,6 +135,7 @@ BEGIN_KIM_NAMESPACE
 /////////////// Some stuff to handle ATGC <=> bits ///////////////
 
 size_t encode(char c) {
+  c = toupper(c);
   size_t v = ((c == 'A')
               ? 0
               : ((c == 'C')
@@ -277,15 +279,15 @@ map<HeaderInformations::Tag, string> HeaderInformations::_tag2string;
 
 //////////////////////////////////////////////////////////////////
 
-void KmerVariantGraph::_resizeSubindexes(size_t total, size_t estimated_nb_kmers) {
-  _kmer_nodes.clear();
-  _kmer_nodes.shrink_to_fit();
-  _kmer_nodes.reserve(total);
+void KmerVariantGraph::_resizeSubindexes(size_t total, size_t estimated_nb_kmers, bool sorted) {
   _edges.clear();
   _edges.shrink_to_fit();
   _edges.reserve(total);
+  _kmer_nodes.clear();
+  _kmer_nodes.shrink_to_fit();
+  _kmer_nodes.reserve(total);
   for (size_t prefix = 0; prefix < total; ++prefix) {
-    _kmer_nodes.emplace_back(estimated_nb_kmers);
+    _kmer_nodes.emplace_back(estimated_nb_kmers, sorted);
     _edges.emplace_back(_kmer_nodes.back(), _variant_nodes, estimated_nb_kmers);
   }
 }
@@ -405,18 +407,20 @@ void KmerVariantGraph::_parseFile(const string &filename, size_t prefix) {
       }
     }
   }
-
+  edges.freeze();
+  kmer_nodes.freeze();
   ifs.close();
-
 }
 
 KmerVariantGraph::KmerVariantGraph(Settings &settings, size_t estimated_nb_kmers):
   _settings(settings),
   _nb_kmers(0), _nb_edges(0),
   _kmer_nodes(), _variant_nodes(),
-  _edges()
+  _edges(), _frozen(false)
 {
+  assert(_settings.valid());
   _settings.freeze();
+  BoundedSizeString::setMaximalSize(_settings.getKmerSuffixLength());
   size_t mem;
   if (estimated_nb_kmers == size_t(-1)) {
     // Half the available memory
@@ -428,16 +432,24 @@ KmerVariantGraph::KmerVariantGraph(Settings &settings, size_t estimated_nb_kmers
   }
   size_t total = 1 << (_settings.getKmerPrefixLength() << 1);
   estimated_nb_kmers /= total;
-  _resizeSubindexes(total, estimated_nb_kmers);
+  _resizeSubindexes(total, estimated_nb_kmers, false);
 }
 
-KmerVariantGraph::KmerVariantGraph(const char *path, Settings &settings):
+KmerVariantGraph::KmerVariantGraph(const string &path, Settings &settings):
   _settings(settings),
   _nb_kmers(0), _nb_edges(0),
   _kmer_nodes(), _variant_nodes(),
-  _edges()
+  _edges(), _frozen(false)
 {
-  DIR *dir = opendir(path);
+  load(path);
+}
+
+void KmerVariantGraph::load(const string &path) {
+  CHECK_FROZEN_STATE(!frozen(), load);
+  clear();
+  _kmer_nodes.clear();
+  _edges.clear();
+  DIR *dir = opendir(path.c_str());
   if (dir == NULL) {
     PARSE_ERROR_MSG("Unable to open the given directory index '" << path << "'");
   }
@@ -452,13 +464,16 @@ KmerVariantGraph::KmerVariantGraph(const char *path, Settings &settings):
   }
   _settings.unfreeze();
   _settings.setKmerLength(size_t(-1));
+  _settings.freeze();
   while ((entry = readdir(dir))) {
     string fname(entry->d_name);
     if (!fname.empty() && (fname[0] != '.')) {
       if (!cpt) {
+        _settings.unfreeze();
         _settings.setKmerPrefixLength(fname.length());
+        // _settings.freeze();
         total = 1 << (_settings.getKmerPrefixLength() << 1);
-        _resizeSubindexes(total, 0);
+        _resizeSubindexes(total, 0, true);
       }
       size_t prefix = _checkFilenameCorrectness(fname);
       fname = path;
@@ -476,11 +491,19 @@ KmerVariantGraph::KmerVariantGraph(const char *path, Settings &settings):
       if (_settings.warn()) {
         cerr << " (" << (cpt * 10000 / total) / 100. << "%)\033[K\033[u";
       }
-      // if (prefix == 284) {
-      //   break;
-      // }
     }
   }
+  if (!_settings.frozen()) {
+    if (_nb_edges || _nb_kmers) {
+      PARSE_ERROR_MSG("The index directory '" << path
+                      << "' describes is badly formatted.");
+    }
+    assert(_nb_kmers == 0);
+    assert(_nb_edges == 0);
+    assert(_variant_nodes.empty());
+    _settings.freeze();
+  }
+  _frozen = true;
   if (_settings.warn()) {
     cerr << "\033[K"
          << "Number of indexed variants: " << getNbVariants() << endl
@@ -497,11 +520,31 @@ KmerVariantGraph::KmerVariantGraph(const char *path, Settings &settings):
 }
 
 void KmerVariantGraph::freeze() {
+  if (frozen()) return;
+  _nb_kmers = 0;
+  _nb_edges = 0;
   for (size_t prefix = 0; prefix < _kmer_nodes.size(); ++prefix) {
+    KmerNodesSubindex &kmer_nodes = _kmer_nodes[prefix];
     KmerVariantEdgesSubindex &edges = _edges[prefix];
     edges.compact();
     edges.freeze();
+    kmer_nodes.freeze();
+    _nb_kmers += kmer_nodes.size();
+    _nb_edges += edges.size();
   }
+  _settings.freeze();
+  _frozen = true;
+}
+
+void KmerVariantGraph::unfreeze() {
+  if (!frozen()) return;
+  for (size_t prefix = 0; prefix < _kmer_nodes.size(); ++prefix) {
+    KmerNodesSubindex &kmer_nodes = _kmer_nodes[prefix];
+    KmerVariantEdgesSubindex &edges = _edges[prefix];
+    kmer_nodes.unfreeze();
+    edges.unfreeze();
+  }
+  _frozen = false;
 }
 
 list<KmerVariantEdgesSubindex::KmerVariantAssociation> KmerVariantGraph::search(const std::string &kmer) const {
@@ -513,22 +556,111 @@ list<KmerVariantEdgesSubindex::KmerVariantAssociation> KmerVariantGraph::search(
   return edges.getKmerVariantAssociation(suffix);
 }
 
-KmerVariantGraph &KmerVariantGraph::add(const string &variant, const string &kmer, size_t rank) {
+KmerVariantGraph &KmerVariantGraph::add(const string &kmer, size_t rank, const string &variant) {
   CHECK_FROZEN_STATE(!frozen(), add);
   size_t prefix = encode(kmer, _settings.getKmerPrefixLength());
   BoundedSizeString suffix = kmer.substr(_settings.getKmerPrefixLength());
+  KmerNodesSubindex &kmer_nodes = _kmer_nodes[prefix];
   KmerVariantEdgesSubindex &edges = _edges[prefix];
   KmerNodesSubindex::KmerNode kmer_node = { suffix, false };
+  size_t old_n = kmer_nodes.size();
   edges.add(kmer_node, variant, rank);
+  size_t new_n = kmer_nodes.size();
+  _nb_kmers += (old_n != new_n);
+  ++_nb_edges;
   return *this;
 }
 
-bool KmerVariantGraph::addKmerNode(const string &kmer, bool in_reference) {
+bool KmerVariantGraph::setInReferenceKmer(const std::string &kmer, bool state) {
   CHECK_FROZEN_STATE(!frozen(), setInReferenceKmer);
   size_t prefix = encode(kmer, _settings.getKmerPrefixLength());
-  KmerNodesSubindex::KmerNode kmer_node = { kmer.substr(_settings.getKmerPrefixLength()), in_reference};
+  BoundedSizeString suffix = kmer.substr(_settings.getKmerPrefixLength());
   KmerNodesSubindex &kmer_nodes = _kmer_nodes[prefix];
-  return kmer_nodes.add(kmer_node);
+  size_t r = kmer_nodes.getKmerNodeRank(suffix);
+  bool ok = (r != size_t(-1));
+  if (ok) {
+    kmer_nodes.setInReferenceKmer(r, state);
+  }
+  return ok;
+}
+
+bool KmerVariantGraph::isInReferenceKmer(const std::string &kmer) const {
+  CHECK_FROZEN_STATE(frozen(), isInReferenceKmer);
+  size_t prefix = encode(kmer, _settings.getKmerPrefixLength());
+  BoundedSizeString suffix = kmer.substr(_settings.getKmerPrefixLength());
+  const KmerNodesSubindex &kmer_nodes = _kmer_nodes[prefix];
+  size_t r = kmer_nodes.getKmerNodeRank(suffix);
+  return ((r == size_t(-1)) ? kmer_nodes.isInReferenceKmer(r) : false);
+}
+
+void KmerVariantGraph::dump(const string &path, bool overwrite) {
+  freeze();
+  int res = mkdir(path.c_str(), 0700);
+  if (res) {
+    if (overwrite && (errno == EEXIST)) {
+      removeDumpedIndex(path);
+      res = mkdir(path.c_str(), 0700);
+    }
+  }
+  if (res) {
+    ERROR_MSG(Exception, "Unable to dump graph to '" << path << "' directory:"
+              << strerror(errno));
+  }
+  assert(_edges.size() == (4u << _settings.getKmerPrefixLength()));
+  for (size_t i = 0; i < _edges.size(); ++i) {
+    string prefix = decode(i, _settings.getKmerPrefixLength());
+    string fname = path;
+    fname += "/";
+    fname += prefix;
+    ofstream ofs(fname);
+    if (!ofs) {
+      ERROR_MSG(Exception, "Unable to dump graph sub-index #" << i
+                << " to '" << fname << "' file:");
+    }
+    ofs << _edges[i];
+    ofs.close();
+  }
+}
+
+void KmerVariantGraph::removeDumpedIndex(const string &path) const {
+  if (path.find_first_not_of("./") == string::npos) {
+    ERROR_MSG(Exception, "The path '" << path << "' is not considered as valid for removal");
+  }
+  if (_settings.warn()) {
+    cerr << "Removing dumped index located at '" << path << "'" << endl;
+  }
+  size_t nb = 1 << (_settings.getKmerPrefixLength() << 1);
+  for (size_t i = 0; i < nb; ++i) {
+    string f = path;
+    f += "/";
+    f += decode(i, _settings.getKmerPrefixLength());
+    if (_settings.warn()) {
+      cerr << "Removing file '" << f << "'" << endl;
+    }
+#ifndef NDEBUG
+    int res =
+#endif
+      unlink(f.c_str());
+    assert(res == 0);
+  }
+  if (_settings.warn()) {
+    cerr << "Removing directory '" << path << "'" << endl;
+  }
+#ifndef NDEBUG
+  int res =
+#endif
+    rmdir(path.c_str());
+  assert(res == 0);
+}
+
+void KmerVariantGraph::clear() {
+  CHECK_FROZEN_STATE(!frozen(), clear);
+  for (size_t i = 0; i < _edges.size(); ++i) {
+    _edges[i].clear();
+    assert(_edges[i].kmerNodesSubindex().empty());
+  }
+  assert(_variant_nodes.empty());
+  _nb_kmers = _nb_edges = 0;
 }
 
 END_KIM_NAMESPACE

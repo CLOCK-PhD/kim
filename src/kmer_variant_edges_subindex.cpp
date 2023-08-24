@@ -352,7 +352,6 @@ void KmerVariantEdgesSubindex::toStream(ostream &os, const string &header, const
     os << kmer_node.suffix << "\t"
        << edge.variant_node.variant << "\t"
        << edge.rank << "\t"
-       << edge.variant_node.in_degree << "\t"
        << kmer_node.in_reference << endl;
   }
   if (!header.empty()) {
@@ -364,7 +363,7 @@ void KmerVariantEdgesSubindex::toStream(ostream &os, const string &header, const
 void KmerVariantEdgesSubindex::_updateMaxAssociations() {
   CHECK_FROZEN_STATE(!frozen(), _updateMaxAssociations);
   size_t i = 0, prev = 0, n = _kmer_variant_edges.size();
-  _max_associations = 0;
+  _max_associations = (n > 0);
   assert(_first_kmer_edges.empty() || _first_kmer_edges[0]);
   while (i < n) {
     if (i - prev > _max_associations) {

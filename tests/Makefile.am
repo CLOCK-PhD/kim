@@ -105,6 +105,7 @@ check_PROGRAMS =			\
   test_kim_settings			\
   test_kmer_nodes_subindex		\
   test_kmer_variant_edges_subindex	\
+  test_kmer_variant_graph		\
   test_sort_helper			\
   test_variant_nodes_index
 
@@ -119,6 +120,8 @@ test_kim_exception_SOURCES = test_kim_exception.cpp
 test_kmer_nodes_subindex_SOURCES = test_kmer_nodes_subindex.cpp
 
 test_kmer_variant_edges_subindex_SOURCES = test_kmer_variant_edges_subindex.cpp
+
+test_kmer_variant_graph_SOURCES = test_kmer_variant_graph.cpp
 
 test_sort_helper_SOURCES = test_sort_helper.cpp
 
