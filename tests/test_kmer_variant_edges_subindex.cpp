@@ -110,24 +110,30 @@ ostream &operator<<(ostream &os, const KmerVariantEdgesSubindex::KmerVariantAsso
 
 void infos(const KmerVariantEdgesSubindex &idx, bool frozen, bool empty, size_t size, size_t capacity, size_t max_associations, size_t nb_kmer_nodes, size_t nb_variant_nodes) {
   cout << "Sub-index informations:" << endl
-       << "- frozen status: " << idx.frozen() << endl;
+       << "- frozen status: " << idx.frozen()
+       << " (expecting " << frozen << ")" << endl;
   assert(idx.frozen() == frozen);
-  cout << "- empty status: " << idx.empty() << endl;
+  cout << "- empty status: " << idx.empty()
+       << " (expecting " << empty << ")" << endl;
   assert(idx.empty() == empty);
-  cout << "- size: " << idx.size() << endl;
+  cout << "- size: " << idx.size()
+       << " (expecting " << size << ")" << endl;
   assert(idx.size() == size);
-  cout << "- capacity: " << idx.capacity() << endl;
+  cout << "- capacity: " << idx.capacity()
+       << " (expecting " << capacity << ")" << endl;
   assert(idx.capacity() == capacity);
-  cout << "- maximal number of associations: " << idx.getMaxAssociations() << endl;
+  cout << "- maximal number of associations: " << idx.getMaxAssociations()
+       << " (expecting " << max_associations << ")" << endl;
   assert(idx.getMaxAssociations() == max_associations);
-  cout << "- nb k-mer nodes: " << idx.kmerNodesSubindex().size() << endl;
+  cout << "- nb k-mer nodes: " << idx.kmerNodesSubindex().size()
+       << " (expecting " << nb_kmer_nodes << ")" << endl;
   assert(idx.kmerNodesSubindex().size() == nb_kmer_nodes);
-  cout << "- nb variant nodes: " << idx.variantNodesIndex().size() << endl;
+  cout << "- nb variant nodes: " << idx.variantNodesIndex().size()
+       << " (expecting " << nb_variant_nodes << ")" << endl;
   assert(idx.variantNodesIndex().size() == nb_variant_nodes);
-  cout << "- content of edges associations: " << endl;
+  cout << "- content of edges associations: ";
   for (size_t i = 0; i < idx.size(); ++i) {
-    cout << "  - " << idx[i]
-         << endl;
+    cout << "  - " << idx[i] << endl;
   }
   cout << "- content of sub-index: " << endl;
   idx.toStream(cout);

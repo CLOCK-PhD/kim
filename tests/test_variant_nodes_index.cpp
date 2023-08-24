@@ -105,16 +105,18 @@ ostream &operator<<(ostream &os, const VariantNodesIndex::VariantNode &node) {
 }
 
 void variant_infos(const VariantNodesIndex::VariantNode &node, const string &k, uint16_t v) {
-  cout << node << endl;
+  cout << node << " (expecting '" << k << "' [" << v << "])" << endl;
   assert(node.variant == k);
   assert(node.in_degree == v);
 }
 
 void index_infos(const VariantNodesIndex &idx, bool empty, size_t size) {
   cout << "Variant node index informations:" << endl;
-  cout << "- empty status: " << idx.empty() << endl;
+  cout << "- empty status: " << idx.empty()
+       << " (expecting " << empty << ")" << endl;
   assert(idx.empty() == empty);
-  cout << "- size: " << idx.size() << endl;
+  cout << "- size: " << idx.size()
+       << " (expecting " << size << ")" << endl;
   assert(idx.size() == size);
   cout << "- content: " << endl;
   for (VariantNodesIndex::const_iterator it = idx.cbegin();

@@ -106,15 +106,21 @@ using namespace kim;
 
 void infos(const KmerNodesSubindex &idx, bool frozen, bool sorted, bool empty, size_t size, size_t capacity) {
   cout << "Sub-index informations:" << endl
-       << "- frozen status: " << idx.frozen() << endl;
+       << "- frozen status: " << idx.frozen()
+       << " (expecting " << frozen << ")" << endl;
   assert(idx.frozen() == frozen);
-  cout << "- sorted status: " << idx.sorted() << endl;
+  cout << "- sorted status: " << idx.sorted()
+       << " (expecting " << sorted << ")" << endl;
   assert(idx.sorted() == sorted);
-  cout << "- empty status: " << idx.empty() << endl;
+  cout << "- empty status: " << idx.empty()
+       << " (expecting " << empty << ")" << endl;
+
   assert(idx.empty() == empty);
-  cout << "- size: " << idx.size() << endl;
+  cout << "- size: " << idx.size()
+       << " (expecting " << size << ")" << endl;
   assert(idx.size() == size);
-  cout << "- capacity: " << idx.capacity() << endl;
+  cout << "- capacity: " << idx.capacity()
+       << " (expecting " << capacity << ")" << endl;
   assert(idx.capacity() == capacity);
   cout << "- content: #JSON: " << idx << endl;
   for (size_t i = 0; i < idx.size(); ++i) {
