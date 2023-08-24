@@ -171,7 +171,7 @@ int main() {
   assert(BoundedSizeString::getMaximalSize() == 5);
   assert(BoundedSizeString::getNbInstances() == 0);
 
-  cout << "Creating a BoundedSizeString with \"ABC\"" << endl; 
+  cout << "Creating a BoundedSizeString with \"ABC\"" << endl;
   BoundedSizeString s1 = "ABC";
   cout << "There is " << BoundedSizeString::getNbInstances() << " living instances at now." << endl;
   assert(BoundedSizeString::getNbInstances() == 1);
@@ -185,8 +185,8 @@ int main() {
   cout << "The s1 BoundedSizeString is '" << s1 << "', its length is " << s1.length() << " and its empty status is " << s1.empty() << endl;
   assert(s1.length() == 0);
   assert(s1.empty());
-  
-  cout << "Creating a BoundedSizeString with \"0123456789\"" << endl; 
+
+  cout << "Creating a BoundedSizeString with \"0123456789\"" << endl;
   BoundedSizeString s2 = "0123456789";
   cout << "There is " << BoundedSizeString::getNbInstances() << " living instances at now." << endl;
   assert(BoundedSizeString::getNbInstances() == 2);
@@ -267,7 +267,7 @@ int main() {
 
   cout << "Setting the std::string to \"XYZ\"" << endl;
   s = "XYZ";
-  cout << "Creating a BoundedSizeString with teh content of s = '" << s << "'" << endl; 
+  cout << "Creating a BoundedSizeString with teh content of s = '" << s << "'" << endl;
   BoundedSizeString s3 = s;
   cout << "There is " << BoundedSizeString::getNbInstances() << " living instances at now." << endl;
   assert(BoundedSizeString::getNbInstances() == 3);

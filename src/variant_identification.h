@@ -90,7 +90,6 @@
 #ifndef __VARIANT_IDENITIFICATION_H__
 #define __VARIANT_IDENITIFICATION_H__
 
-
 #include <string>
 #include <map>
 #include <list>

@@ -120,8 +120,11 @@ FastqFileReaderParseError::FastqFileReaderParseError(FastqFileReader &reader):
   (void) 0
 
 #define ERROR_MSG(msg)                          \
-  throw FastqFileReaderParseError(*this) << msg
-
+  do {                                          \
+    FastqFileReaderParseError error(*this);     \
+    error << msg;                               \
+    throw error;                                \
+  } while (0)
 
 FastqFileReader::FastqFileReader(const Settings &settings): _settings(settings) {
   assert(settings.valid());
@@ -343,9 +346,6 @@ const string &FastqFileReader::getCurrentKmer() const {
   static const string empty_string;
   return (*this && (_nb_valid_nucl >= _settings.k()) ? _kmer : empty_string);
 }
-
-
-
 
 const char *FastqFileReader::_search_directories[] = {
                                                       "./",

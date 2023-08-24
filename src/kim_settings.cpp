@@ -97,6 +97,21 @@ using namespace std;
 
 BEGIN_KIM_NAMESPACE
 
+#define ERROR_MSG(msg)          \
+  do {                          \
+    BadSettingsException error; \
+    error << msg;               \
+    throw error;                \
+  } while (0)
+
+#define CHECK_FROZEN_STATE(expected_state, mth)                         \
+  if (!(expected_state)) {                                              \
+    ERROR_MSG("Settings must be " << (expected_state ? "frozen" : "unfrozen") \
+              << " before calling Settings::" << #mth                   \
+              << "() method.");                                         \
+  }                                                                     \
+  (void) 0
+
 Settings::Settings(size_t k, size_t p, bool warn, bool freeze):
   _k(0), _p(0), _s(0),
   _warn(false), _frozen(false) {
@@ -111,20 +126,16 @@ Settings::Settings(size_t k, size_t p, bool warn, bool freeze):
 
 void Settings::freeze() {
   if (!valid()) {
-    throw BadSettingsException("Settings aren't valid, thus calling the Settings::freeze() method is not allowed.");
+    ERROR_MSG("Settings aren't valid, thus calling the Settings::freeze() method is not allowed.");
   }
   _frozen = true;
 }
 
 void Settings::setKmerLength(size_t k) {
-  if (frozen()) {
-    throw BadSettingsException("Settings are frozen and calling the Settings::setKmerLength() method is not allowed.");
-  }
+  CHECK_FROZEN_STATE(!frozen(), setKmerLength);
   if (k < 2) {
-    BadSettingsException e;
-    e << "Can't set the length of the k-mers to " << k
-      << " (length must be greater or equal to 2).";
-    throw e;
+    ERROR_MSG("Can't set the length of the k-mers to " << k
+              << " (length must be greater or equal to 2).");
   }
   _k = k;
   if (_p + 1 >= _k) {
@@ -140,11 +151,9 @@ void Settings::setKmerLength(size_t k) {
 }
 
 void Settings::setKmerPrefixLength(size_t p) {
-  if (frozen()) {
-    throw BadSettingsException("Settings are frozen and calling the Settings::setKmerPrefixLength() method is not allowed.");
-  }
+  CHECK_FROZEN_STATE(!frozen(), setKmerPrefixLength);
   if (p == 0) {
-    throw BadSettingsException("Can't set the prefix length of the k-mers to 0 (it must be a strictly positive value).");
+    ERROR_MSG("Can't set the prefix length of the k-mers to 0 (it must be a strictly positive value).");
   }
   _p = p;
   if (_p + 1 >= _k) {
@@ -160,9 +169,7 @@ void Settings::setKmerPrefixLength(size_t p) {
 }
 
 void Settings::warn(bool status) {
-  if (frozen()) {
-    throw BadSettingsException("Settings are frozen and calling the Settings::warn() method is not allowed.");
-  }
+  CHECK_FROZEN_STATE(!frozen(), warn);
   _warn = status;
 }
 

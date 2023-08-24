@@ -307,23 +307,13 @@ namespace kim {
      *
      * \param n The capacity to reserve.
      */
-    inline void reserve(size_t n) {
-      if (frozen()) {
-        throw KmerNodesSubindexException("Sub-index is frozen and calling the KmerNodesSubindex::reserve() method is not allowed.");
-      }
-      _suffixes.reserve(n);
-    }
+    void reserve(size_t n);
 
     /**
      * Shrink the memory in order to fit the data but have no extra
      * reserved memory.
      */
-    inline void shrink_to_fit() {
-      if (frozen()) {
-        throw KmerNodesSubindexException("Sub-index is frozen and calling the KmerNodesSubindex::shrink_to_fit() method is not allowed.");
-      }
-      _suffixes.shrink_to_fit();
-    }
+    void shrink_to_fit();
 
     /**
      * Get a view of the k-mer node at the given rank.

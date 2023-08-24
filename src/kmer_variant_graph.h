@@ -105,6 +105,21 @@
 
 namespace kim {
 
+  /**
+   * The k-mer/Variant graph generic exception.
+   */
+  class KmerVariantGraphException: public Exception {
+
+  public:
+
+    /**
+     * Create an exception dedicated to k-mer/variant graph.
+     *
+     * \param msg The initial message of this exception.
+     */
+    inline KmerVariantGraphException(const std::string &msg = ""): Exception(msg) {}
+
+  };
 
   /**
    * The k-mer/Variant graph parse error.
@@ -123,7 +138,6 @@ namespace kim {
 
   };
 
-
   /**
    * The k-mer/variant graph.
    *
@@ -134,7 +148,6 @@ namespace kim {
    * variant.
    */
   class KmerVariantGraph {
-
 
   public:
 
@@ -179,6 +192,12 @@ namespace kim {
      * The array of all k-mer to variant edges sub-indexes.
      */
     KmerVariantEdgesIndex _edges;
+
+    /**
+     * This graph can't be modified if _frozen is set to true.  Graph
+     * can't be queried if _frozen is set to false.
+     */
+    bool _frozen;
 
     /**
      * Clear and resize sub-indexes to the given size.

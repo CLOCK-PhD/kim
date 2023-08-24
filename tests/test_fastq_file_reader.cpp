@@ -195,8 +195,8 @@ int main() {
         cout << "No new sequence found." << endl;
         --cpt;
       }
-    } catch (const Exception &e) {
-      cout << "An Exception with message '" << e.what() << "' has been thrown" << endl;
+    } catch (const FastqFileReaderParseError &e) {
+      cout << "A FastqFileReaderParseError with message '" << e.what() << "' has been thrown" << endl;
       if (cpt == 16) { // The expected exception is thrown when attempting to go to the sequence 16
         --cpt;
       } else {

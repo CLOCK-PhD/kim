@@ -111,8 +111,23 @@ BEGIN_KIM_NAMESPACE
   }                             \
   (void) 0
 
-#define ERROR_MSG(msg)                          \
-  throw KmerVariantGraphParseError() << msg
+#define ERROR_MSG(kind, msg)                    \
+  do {                                          \
+    KmerVariantGraph ## kind error;             \
+    error << msg;                               \
+    throw error;                                \
+  } while (0)
+
+#define PARSE_ERROR_MSG(msg) ERROR_MSG(ParseError, msg)
+
+#define CHECK_FROZEN_STATE(expected_state, mth)                         \
+  if (!(expected_state)) {                                              \
+    ERROR_MSG(Exception,                                                \
+              "Graph must be " << (expected_state ? "frozen" : "unfrozen") \
+              << " before calling KmerVariantGraph::" << #mth           \
+              << "() method.");                                         \
+  }                                                                     \
+  (void) 0
 
 //////////////////////////////////////////////////////////////////
 
@@ -129,7 +144,7 @@ size_t encode(char c) {
                        ? 3
                        : -1))));
   if (v == size_t(-1)) {
-    ERROR_MSG("Unable to encode character '" << c << "'");
+    PARSE_ERROR_MSG("Unable to encode character '" << c << "'");
   }
   return v;
 }
@@ -150,7 +165,7 @@ char decode(size_t v) {
   case 2: return 'G';
   case 3: return 'T';
   default:
-    ERROR_MSG("Unable to decode value " << (int) v);
+    PARSE_ERROR_MSG("Unable to decode value " << (int) v);
   }
 }
 
@@ -277,14 +292,15 @@ void KmerVariantGraph::_resizeSubindexes(size_t total, size_t estimated_nb_kmers
 
 size_t KmerVariantGraph::_checkFilenameCorrectness(const string &filename) const {
   if (filename.length() != _settings.getKmerPrefixLength()) {
-    ERROR_MSG("Name of the index file '" << filename << "' should have length " << _settings.getKmerPrefixLength());
+    PARSE_ERROR_MSG("Name of the index file '" << filename
+                    << "' should have length " << _settings.getKmerPrefixLength());
   }
   size_t prefix;
   try {
     prefix = encode(filename, _settings.getKmerPrefixLength());
   } catch (...) {
-    ERROR_MSG("Name of the index file '" << filename
-              << "' should contains only 'A', 'C', 'G', 'T' or 'U' character.\n");
+    PARSE_ERROR_MSG("Name of the index file '" << filename
+                    << "' should contains only 'A', 'C', 'G', 'T' or 'U' character.\n");
   }
   return prefix;
 }
@@ -292,7 +308,7 @@ size_t KmerVariantGraph::_checkFilenameCorrectness(const string &filename) const
 void KmerVariantGraph::_parseFile(const string &filename, size_t prefix) {
   ifstream ifs(filename);
   if (!ifs) {
-    ERROR_MSG("Unable to open index file '" << filename << "'");
+    PARSE_ERROR_MSG("Unable to open index file '" << filename << "'");
   }
 
   // First pass, adding new encountered variants, count number of
@@ -318,7 +334,7 @@ void KmerVariantGraph::_parseFile(const string &filename, size_t prefix) {
   }
 
   if (!header_infos) {
-    ERROR_MSG("Header is missing or incomplete.");
+    PARSE_ERROR_MSG("Header is missing or incomplete.");
   }
 
   // Get the number of k-mers in this file.
@@ -329,12 +345,12 @@ void KmerVariantGraph::_parseFile(const string &filename, size_t prefix) {
   KmerVariantEdgesSubindex &edges = _edges[prefix];
 
   if (!kmer_nodes.empty()) {
-    ERROR_MSG("There is existing k-mer nodes related to prefix " << decode(prefix, _settings.getKmerPrefixLength()) << "."
-              << " This situation must not occur!");
+    PARSE_ERROR_MSG("There is existing k-mer nodes related to prefix " << decode(prefix, _settings.getKmerPrefixLength()) << "."
+                    << " This situation must not occur!");
   }
   if (!edges.empty()) {
-    ERROR_MSG("There is existing edges related to k-mer having prefix " << decode(prefix, _settings.getKmerPrefixLength()) << "."
-              << " This situation must not occur!");
+    PARSE_ERROR_MSG("There is existing edges related to k-mer having prefix " << decode(prefix, _settings.getKmerPrefixLength()) << "."
+                    << " This situation must not occur!");
   }
   // Reserve enough space for the k-mer nodes sub-index.
   kmer_nodes.reserve(nb_nodes);
@@ -359,7 +375,9 @@ void KmerVariantGraph::_parseFile(const string &filename, size_t prefix) {
       // kmer suffix).
       if (_settings.frozen()) {
         if (suffix.length() != _settings.getKmerSuffixLength()) {
-          ERROR_MSG("Badly formatted index file '" << filename << "' (line " << line << ": suffix '" << suffix << "' should have length " << _settings.getKmerSuffixLength() << ").");
+          PARSE_ERROR_MSG("Badly formatted index file '" << filename
+                          << "' (line " << line << ": suffix '" << suffix
+                          << "' should have length " << _settings.getKmerSuffixLength() << ").");
         }
       } else {
         _settings.setKmerLength(_settings.getKmerPrefixLength() + suffix.length());
@@ -373,17 +391,17 @@ void KmerVariantGraph::_parseFile(const string &filename, size_t prefix) {
         KmerNodesSubindex::KmerNode kmer_node = { suffix, in_reference };
         if (!kmer_nodes.sorted()) {
           BoundedSizeString prev_kmer = kmer_nodes.back().suffix;
-          ERROR_MSG("All k-mers must be lexicographically sorted within index file '" << filename
-                    << "' but k-mer " << decode(prefix, _settings.getKmerPrefixLength()) << "." << kmer_node.suffix
-                    << " at line " << line << " is less than "
-                    << decode(prefix, _settings.getKmerPrefixLength()) << "." << prev_kmer
-                    << " at line " << (line - 1) << ".");
+          PARSE_ERROR_MSG("All k-mers must be lexicographically sorted within index file '" << filename
+                          << "' but k-mer " << decode(prefix, _settings.getKmerPrefixLength())
+                          << "." << kmer_node.suffix
+                          << " at line " << line << " is less than "
+                          << decode(prefix, _settings.getKmerPrefixLength()) << "." << prev_kmer
+                          << " at line " << (line - 1) << ".");
         }
         edges.add(kmer_node, variant, rank);
       } catch (const KmerVariantGraphParseError &err) {
-        ERROR_MSG("Badly formatted index file '" << filename
-                  << "' at line " << line << ": "
-                  << err.what());
+        PARSE_ERROR_MSG("Badly formatted index file '" << filename
+                        << "' at line " << line << ": " << err.what());
       }
     }
   }
@@ -421,7 +439,7 @@ KmerVariantGraph::KmerVariantGraph(const char *path, Settings &settings):
 {
   DIR *dir = opendir(path);
   if (dir == NULL) {
-    ERROR_MSG("Unable to open the given directory index '" << path << "'");
+    PARSE_ERROR_MSG("Unable to open the given directory index '" << path << "'");
   }
 
   struct dirent *entry;
@@ -487,6 +505,7 @@ void KmerVariantGraph::freeze() {
 }
 
 list<KmerVariantEdgesSubindex::KmerVariantAssociation> KmerVariantGraph::search(const std::string &kmer) const {
+  CHECK_FROZEN_STATE(frozen(), search);
   size_t prefix = encode(kmer, _settings.getKmerPrefixLength());
   const KmerVariantEdgesSubindex &edges = _edges[prefix];
 
@@ -495,6 +514,7 @@ list<KmerVariantEdgesSubindex::KmerVariantAssociation> KmerVariantGraph::search(
 }
 
 KmerVariantGraph &KmerVariantGraph::add(const string &variant, const string &kmer, size_t rank) {
+  CHECK_FROZEN_STATE(!frozen(), add);
   size_t prefix = encode(kmer, _settings.getKmerPrefixLength());
   BoundedSizeString suffix = kmer.substr(_settings.getKmerPrefixLength());
   KmerVariantEdgesSubindex &edges = _edges[prefix];
@@ -504,6 +524,7 @@ KmerVariantGraph &KmerVariantGraph::add(const string &variant, const string &kme
 }
 
 bool KmerVariantGraph::addKmerNode(const string &kmer, bool in_reference) {
+  CHECK_FROZEN_STATE(!frozen(), setInReferenceKmer);
   size_t prefix = encode(kmer, _settings.getKmerPrefixLength());
   KmerNodesSubindex::KmerNode kmer_node = { kmer.substr(_settings.getKmerPrefixLength()), in_reference};
   KmerNodesSubindex &kmer_nodes = _kmer_nodes[prefix];

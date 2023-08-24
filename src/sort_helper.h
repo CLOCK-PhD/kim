@@ -97,7 +97,6 @@
 #include <functional> // for std::less
 #include <cassert>    // for assert
 
-
 namespace kim {
 
   /**
@@ -119,7 +118,6 @@ namespace kim {
   void swap(reference t1, reference t2) {
     std::swap(t1, t2);
   }
-
 
   /**
    * Specialization of the swap wrapper template fucntion for

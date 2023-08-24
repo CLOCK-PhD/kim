@@ -96,6 +96,21 @@ using namespace bm;
 
 BEGIN_KIM_NAMESPACE
 
+#define ERROR_MSG(msg)                          \
+  do {                                          \
+    KmerNodesSubindexException error;           \
+    error << msg;                               \
+    throw error;                                \
+  } while (0)
+
+#define CHECK_FROZEN_STATE(expected_state, mth)                         \
+  if (!(expected_state)) {                                              \
+    ERROR_MSG("k-mer nodes sub-index must be " << (expected_state ? "frozen" : "unfrozen") \
+              << " before calling KmerNodesSubindex::" << #mth          \
+              << "() method.");                                         \
+  }                                                                     \
+  (void) 0
+
 KmerNodesSubindex::KmerNodesSubindex(size_t estimated_nb_kmers, bool sorted):
   _suffixes(), _in_reference(), _sorted(sorted), _frozen(false)
 {
@@ -120,10 +135,18 @@ void KmerNodesSubindex::unfreeze() {
   _frozen = false;
 }
 
+void KmerNodesSubindex::reserve(size_t n) {
+  CHECK_FROZEN_STATE(!frozen(), reserve);
+  _suffixes.reserve(n);
+}
+
+void KmerNodesSubindex::shrink_to_fit() {
+  CHECK_FROZEN_STATE(!frozen(), shrink_to_fit);
+  _suffixes.shrink_to_fit();
+}
+
 bool KmerNodesSubindex::add(const KmerNode &node) {
-  if (frozen()) {
-    throw KmerNodesSubindexException("Sub-index is frozen and calling the KmerNodesSubindex::add() method is not allowed.");
-  }
+  CHECK_FROZEN_STATE(!frozen(), add);
   bool to_add = true;
   size_t p = _suffixes.size();
   if (p) {
@@ -132,12 +155,10 @@ bool KmerNodesSubindex::add(const KmerNode &node) {
     if (cmp == 0) {
       to_add = !_sorted;
       if (node.in_reference != _in_reference[p]) {
-        KmerNodesSubindexException e;
-        e << "Unable to add the k-mer suffix '" << node.suffix
-          << "' to the current sub-index since it already exists and it was said to be "
-          << (_in_reference[p] ? "present" : "absent")
-          << " from reference sequences and now the opposite is said.";
-        throw e;
+        ERROR_MSG("Unable to add the k-mer suffix '" << node.suffix
+                  << "' to the current sub-index since it already exists and it was said to be "
+                  << (_in_reference[p] ? "present" : "absent")
+                  << " from reference sequences and now the opposite is said.");
       }
     } else {
       _sorted &= (cmp > 0);
@@ -152,31 +173,25 @@ bool KmerNodesSubindex::add(const KmerNode &node) {
 }
 
 void KmerNodesSubindex::setInReferenceKmer(size_t rank, bool status) {
-  if (frozen()) {
-    throw KmerNodesSubindexException("Sub-index is frozen and calling the KmerNodesSubindex::setInReferenceKmer() method is not allowed.");
-  }
+  CHECK_FROZEN_STATE(!frozen(), setInReferenceKmer);
   if (rank >= _suffixes.size()) {
-    KmerNodesSubindexException e;
-    e << "Unable to change the status of the k-mer node at rank " << rank
-      << " since there is only " << _suffixes.size() << " nodes.";
-    throw e;
+    ERROR_MSG("Unable to change the status of the k-mer node at rank " << rank
+              << " since there is only " << _suffixes.size() << " nodes.");
   }
   _in_reference[rank] = status;
 }
 
 bool KmerNodesSubindex::isInReferenceKmer(size_t rank) const {
   if (rank >= _suffixes.size()) {
-    KmerNodesSubindexException e;
-    e << "Unable to get the status of the k-mer node at rank " << rank
-      << " since there is only " << _suffixes.size() << " nodes.";
-    throw e;
+    ERROR_MSG("Unable to get the status of the k-mer node at rank " << rank
+              << " since there is only " << _suffixes.size() << " nodes.");
   }
   return _in_reference[rank];
 }
 
 size_t KmerNodesSubindex::getKmerNodeRank(const BoundedSizeString &suffix) const {
   if (!_sorted) {
-    throw KmerNodesSubindexException("Unable to perform a dichotomic lookup in the k-mer node sub-index since it is not sorted");
+    ERROR_MSG("Unable to perform a dichotomic lookup in the k-mer node sub-index since it is not sorted");
   }
 
   size_t start = 0, end = _suffixes.size(), p;
@@ -198,9 +213,7 @@ size_t KmerNodesSubindex::getKmerNodeRank(const BoundedSizeString &suffix) const
 }
 
 std::vector<size_t> KmerNodesSubindex::sort() {
-  if (frozen()) {
-    throw KmerNodesSubindexException("Sub-index is frozen and calling the KmerNodesSubindex::sort() method is not allowed.");
-  }
+  CHECK_FROZEN_STATE(!frozen(), sort);
   SortHelper<BoundedSizeString> helper(_suffixes);
   helper.sort<bool, bvector<>, bvector<>::reference>(_in_reference);
   helper.sort<BoundedSizeString>(_suffixes);
@@ -209,9 +222,7 @@ std::vector<size_t> KmerNodesSubindex::sort() {
 }
 
 bvector<> KmerNodesSubindex::unique() {
-  if (frozen()) {
-    throw KmerNodesSubindexException("Sub-index is frozen and calling the KmerNodesSubindex::sort() method is not allowed.");
-  }
+  CHECK_FROZEN_STATE(!frozen(), unique);
   size_t i = 0, j = 1, n = _suffixes.size();
   bvector<> kept;
   kept.resize(n);
@@ -225,12 +236,10 @@ bvector<> KmerNodesSubindex::unique() {
     } else {
       // suffixes at rank i an j are the same.
       if (_in_reference[i] != _in_reference[j]) {
-        KmerNodesSubindexException e;
-        e << "Unable to remove duplicated k-mer suffix '" << _suffixes[j]
-          << "' from the current sub-index since it already exists and it was said to be "
-          << (_in_reference[i] ? "present" : "absent")
-          << " from reference sequences and now the opposite is said.";
-        throw e;
+        ERROR_MSG("Unable to remove duplicated k-mer suffix '" << _suffixes[j]
+                  << "' from the current sub-index since it already exists and it was said to be "
+                  << (_in_reference[i] ? "present" : "absent")
+                  << " from reference sequences and now the opposite is said.");
       }
       kept[j] = false;
     }
@@ -263,14 +272,12 @@ void KmerNodesSubindex::expand(const bvector<> &schema) {
 }
 
 KmerNodesSubindex &KmerNodesSubindex::merge(const KmerNodesSubindex &idx, bvector<> &pos1, bvector<> &pos2) {
-  if (frozen()) {
-    throw KmerNodesSubindexException("Sub-index is frozen and calling the KmerNodesSubindex::merge() method is not allowed.");
-  }
+  CHECK_FROZEN_STATE(!frozen(), merge);
   if (!sorted()) {
-    throw KmerNodesSubindexException("Current sub-index must be sorted before calling the KmerNodesSubindex::merge() method.");
+    ERROR_MSG("Current sub-index must be sorted before calling the KmerNodesSubindex::merge() method.");
   }
   if (!idx.sorted()) {
-    throw KmerNodesSubindexException("Right hand side sub-index must be sorted before calling the KmerNodesSubindex::merge() method.");
+    ERROR_MSG("Right hand side sub-index must be sorted before calling the KmerNodesSubindex::merge() method.");
   }
   // First pass, compute the number of common nodes.
   size_t i = 0, j = 0, k = 0, m = size(), n = idx.size();
@@ -286,12 +293,10 @@ KmerNodesSubindex &KmerNodesSubindex::merge(const KmerNodesSubindex &idx, bvecto
     } else {
       if (cmp == 0) {
         if (_in_reference[i] != idx._in_reference[j]) {
-          KmerNodesSubindexException e;
-          e << "Unable to add the k-mer suffix '" << idx._suffixes[j]
-            << "' to the current sub-index since it already exists and it was said to be "
-            << (_in_reference[i] ? "present" : "absent")
-            << " from reference sequences and now the opposite is said.";
-          throw e;
+          ERROR_MSG("Unable to add the k-mer suffix '" << idx._suffixes[j]
+                    << "' to the current sub-index since it already exists and it was said to be "
+                    << (_in_reference[i] ? "present" : "absent")
+                    << " from reference sequences and now the opposite is said.");
         }
         pos1[k] = true;
         ++i;
@@ -363,9 +368,7 @@ KmerNodesSubindex &KmerNodesSubindex::merge(const KmerNodesSubindex &idx, bvecto
 }
 
 void KmerNodesSubindex::clear() {
-  if (frozen()) {
-    throw KmerNodesSubindexException("Sub-index is frozen and calling the KmerNodesSubindex::clear() method is not allowed.");
-  }
+  CHECK_FROZEN_STATE(!frozen(), clear);
   _suffixes.clear();
   _in_reference.resize(0);
   _sorted = true;
