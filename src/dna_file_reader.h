@@ -87,72 +87,236 @@
 *                                                                             *
 ******************************************************************************/
 
-#ifndef __FASTQ_FILE_READER_H__
-#define __FASTQ_FILE_READER_H__
+#ifndef __DNA_FILE_READER_H__
+#define __DNA_FILE_READER_H__
 
 #include <string>
 
 #include <kim_settings.h>
-#include <dna_file_reader.h>
+#include <file_reader.h>
 
 namespace kim {
 
   /**
-   * Fastq file reader which allows to extract k-mers from reads.
+   * DNA file reader which allows to extract k-mers from sequences.
    */
-  class FastqFileReader: public DNAFileReader {
+  class DNAFileReader: public FileReader {
 
-  private:
+  protected:
 
     /**
-     * Get the available start symbols for a new fastq sequence
-     * (a.k.a., only '@' is used as a new sequence symbol).
+     * Flag to distinguish when some new sequence is to be started or
+     * if some sequence is currently being processed.
+     */
+    bool _start_sequence_state;
+
+    /**
+     * Number of processed nucleotides in the current sequence in the
+     * processed sequence.
+     */
+    size_t _nb_nucl;
+
+    /**
+     * Number of rightmost consecutive valid processed nucleotides in
+     * the processed sequence.
+     */
+    size_t _nb_valid_nucl;
+
+    /**
+     * The current sequence description.
+     */
+    std::string _current_sequence_description;
+
+    /**
+     * The current k-mer (might be under construction) of the
+     * currently processed sequence.
+     */
+    std::string _kmer;
+
+    /**
+     * The hook method called at the end of reset().
+     *
+     * This method overrides the base class one.
+     */
+    virtual void _onReset() override;
+
+    /**
+     * Get the available start symbols for a new sequence.
+     *
+     * Any derived class must override this method.
      *
      * \return Returns the available start symbols for a new sequence.
      */
-    virtual const std::string &_sequenceStartSymbols() const override;
+    virtual const std::string &_sequenceStartSymbols() const = 0;
 
     /**
-     * Parse the quality separator string and verify its conformity
-     * (otherwise a warning is emitted).
-     */
-    void _parseQualitySeparator();
-
-    /**
-     * Simply skip the quality sequence.
+     * Process the sequence description.
      *
-     * After this method, either a new sequence is expected or the end
-     * of file.
+     * The cursor must be located just at the beginning of the new
+     * sequence description and the input stream must be valid in
+     * order to use this method.
+     *
+     * This default implementation allows only single line
+     * description. If some want to allow multi-lines sequence
+     * description (as the original fasta format allows), then some
+     * derived class must be defined that overrides this method.
      */
-    void _parseQualitySequence();
+    virtual void _processSequenceDescription();
 
     /**
-     * Parse the file according to its current state.
+     * This method must be called whenever a new sequence is expected.
      *
-     * If some new sequence is expected, then process the new sequence
-     * header (see _parseSequenceHeader() method). If the quality
-     * separator is encountered, the separator is analyzed for
-     * conformity (see _parseQualitySeparator() method) then the
-     * quality sequence is parsed (see _parseQualitySequence()
-     * method). In all other case, the next visible character is
-     * expected to be a nucleotide and thus it is processed to update
-     * the current k-mer if it is valid and not degenerated.
+     * The next visible character is supposed to be one of those given
+     * as argument and must be located at the beginning of a new
+     * line. If this is not the case, a FileReaderParseError is thrown
+     * with an explicit message.
+     *
+     * \return Returns true if the header has been correctly parsed
+     * (i.e., end of file is not reached).
      */
-    virtual void _parse() override;
+    virtual bool _parseSequenceDescription();
+
+    /**
+     * Parse the file until some new k-mer is available (positioning
+     * the cursor at the end of the current k-mer) or some new
+     * sequence is started (positioning the cursor at the beginning of
+     * the nucleotide sequence.
+     *
+     * Any derived class must override this method.
+     */
+    virtual void _parse() = 0;
+
+    enum IUPAC {
+                IUPAC_UNDEFINED = 0,
+                IUPAC_A = 1,
+                IUPAC_C = 2,
+                IUPAC_G = 4,
+                IUPAC_T = 8,
+                IUPAC_U = 8,
+                IUPAC_GAP = 16,
+                IUPAC_R = IUPAC_A | IUPAC_G, // Purine
+                IUPAC_Y = IUPAC_C | IUPAC_T, // Pyrimidine
+                IUPAC_K = IUPAC_G | IUPAC_T, // Ketones
+                IUPAC_M = IUPAC_A | IUPAC_C, // Amino groups
+                IUPAC_S = IUPAC_C | IUPAC_G, // Strong
+                IUPAC_W = IUPAC_A | IUPAC_T, // Weak
+                IUPAC_B = IUPAC_C | IUPAC_G | IUPAC_T, // Not A
+                IUPAC_D = IUPAC_A | IUPAC_G | IUPAC_T, // Not C
+                IUPAC_H = IUPAC_A | IUPAC_C | IUPAC_T, // Not G
+                IUPAC_V = IUPAC_A | IUPAC_C | IUPAC_G, // Not T neither U
+                IUPAC_N = IUPAC_A | IUPAC_C | IUPAC_G | IUPAC_T // Any
+    };
+
+
+    /**
+     * Get the IUPAC constant associated to the given nucleotide.
+     *
+     * \param c The nucleotide character (case insensitive).
+     *
+     * \return Returns the IUPAC constant corresponding to c.
+     */
+    static IUPAC _toIUPAC(char c);
 
   public:
 
     /**
-     * Creates a Fastq file reader.
+     * Creates a DNA sequence file reader.
      *
      * This internally calls the open method.
      *
      * \param settings The k-mer identification metric program
      * settings.
      *
-     * \param filename The name of the fastq file to read.
+     * \param filename The name of the DNA sequence file to read
+     * (calls open() method except if filename is empty).
      */
-    FastqFileReader(const Settings &settings, const std::string &filename = "");
+    DNAFileReader(const Settings &settings, const std::string &filename = "");
+
+    /**
+     * Get the current k-mer extracted by this file reader object.
+     *
+     * \return Returns the current available k-mer or an empty string.
+     */
+    const std::string &getCurrentKmer() const;
+
+    /**
+     * Get the k-mer starting at the given relative position in the current sequence.
+     *
+     * \param p The start position of the expected k-mer in the
+     * current sequence (starting from 0). The position must be
+     * located at or after the current position. If the given positon
+     * is the current position, then it returns the current k-mer. If
+     * the position is located before the current k-mer position, then
+     * an exception is thrown with an explicit message. If the given
+     * position is greater or equal to the last available k-mer
+     * position of the sequence (i.e., the expected k-mer doesn't
+     * exist), then an empty string is returned.
+     *
+     * \param check_consistency When set to false, just goes to the
+     * next visible character that should correspond the wanted
+     * position, then read the k-mer at this location. If the wanted
+     * k-mer doesn't exist in the sequence, the rest of the file
+     * reading will be erroneous. When set to true, then it is mostly
+     * equivalent to call getNextKmer() until the wanted k-mer is
+     * reached. This goes slower but can detect inconstant calls by
+     * returning an empty k-mer.
+     *
+     * \return Returns the k-mer located at the given position or an
+     * empty string.
+     */
+    const std::string &getForwardKmer(size_t p, bool check_consistency = true);
+
+    /**
+     * Get the next k-mer from this file reader object.
+     *
+     * This method may update the current sequence description and
+     * updates the current k-mer position.
+     *
+     * \return Returns the next available k-mer or an empty string.
+     */
+    const std::string &getNextKmer();
+
+    /**
+     * Get the sequence description the current k-mer comes from.
+     *
+     * \return Returns the current available sequence description or
+     * an empty string.
+     */
+    inline const std::string &getCurrentSequenceDescription() const {
+      return _current_sequence_description;
+    }
+
+    /**
+     * Get the position of the current k-mer in the sequence (starting
+     * from 0).
+     *
+     * \return Returns the position of the current available k-mer or
+     * -1.
+     */
+    inline size_t getCurrentKmerRelativePosition() const {
+      return ((_nb_valid_nucl >= _settings.k()) ? _nb_nucl - _settings.k() : -1);
+    }
+
+    /**
+     * Set the reading cursor to the start of the next available
+     * sequence (the first non blank character following the sequence
+     * header).
+     *
+     * Calling this method on a newly file opened file position the
+     * cursor to the beginning of the first sequence.
+     *
+     * \param check_consistency When set to false, just goes to the
+     * next "new sequence character" starting a newline without
+     * ensuring the validity of the current processed sequence (if
+     * any), then read the line as the description and consider the
+     * first next non-empty position as the beginning of the
+     * sequence. This performs faster but may lead to bad positioning.
+     *
+     * \return This method returns true if the cursor is correctly
+     * positioned to the start of a new sequence and false if no new
+     * sequence has been found.
+     */
+    bool gotoNextSequence(bool check_consistency = true);
 
   };
 

@@ -116,123 +116,48 @@ BEGIN_KIM_NAMESPACE
     throw error;                                \
   } while (0)
 
-FastqFileReader::FastqFileReader(const Settings &settings): FileReader(settings) {}
+FastqFileReader::FastqFileReader(const Settings &settings, const string &filename):
+  DNAFileReader(settings, filename)
+{}
 
-FastqFileReader::FastqFileReader(const char *filename, const Settings &settings):
-  FileReader(settings)
-{
-  open(filename);
+static const string _FASTQ_START_SEQUENCE_SYMBOLS = "@";
+const string &FastqFileReader::_sequenceStartSymbols() const {
+  return _FASTQ_START_SEQUENCE_SYMBOLS;
 }
 
-FastqFileReader::FastqFileReader(const string &filename, const Settings &settings):
-  FileReader(settings)
-{
-  open(filename);
-}
-
-void FastqFileReader::_onReset() {
-  _start_sequence_state = true;
-  _nb_nucl = _nb_valid_nucl = 0;
-  _read_id = "";
-  _kmer = string(_settings.k(), '?');
-}
-
-#define IUPAC_A 1
-#define IUPAC_C 2
-#define IUPAC_G 4
-#define IUPAC_T 8
-#define IUPAC_GAP 16
-#define IUPAC_UNDEFINED 0
-
-uint8_t getIUPACNucleotide(char c) {
-  if ((c >= 'a') && (c <= 'z')) {
-    c += 'A' - 'a'; // Upcase
-  }
-  switch (c) {
-  case 'A': return IUPAC_A;
-  case 'C': return IUPAC_C;
-  case 'G': return IUPAC_G;
-  case 'T':
-  case 'U': return IUPAC_T;
-  case 'R': return IUPAC_A | IUPAC_G; // Purine
-  case 'Y': return IUPAC_C | IUPAC_T; // Pyrimidine
-  case 'K': return IUPAC_G | IUPAC_T; // Ketones
-  case 'M': return IUPAC_A | IUPAC_C; // Amino groups
-  case 'S': return IUPAC_C | IUPAC_G; // Strong
-  case 'W': return IUPAC_A | IUPAC_T; // Weak
-  case 'B': return IUPAC_C | IUPAC_G | IUPAC_T; // Not A
-  case 'D': return IUPAC_A | IUPAC_G | IUPAC_T; // Not C
-  case 'H': return IUPAC_A | IUPAC_C | IUPAC_T; // Not G
-  case 'V': return IUPAC_A | IUPAC_C | IUPAC_G; // Not T neither U
-  case 'N': return IUPAC_A | IUPAC_C | IUPAC_G | IUPAC_T; // Any
-  case '.':
-  case '-': return IUPAC_GAP; // Gap is valid in IUPAC even if it's
-                              // not a nucleotide
-  default:
-    return IUPAC_UNDEFINED;
-  }
-}
-
-void FastqFileReader::_processSequenceHeader() {
-  _start_sequence_state = false;
-  std::getline(_ifs, _read_id);
-  ++_line;
-  _col = 0;
-  _nb_nucl = _nb_valid_nucl = 0;
-}
-
-bool FastqFileReader::_parseSequenceHeader() {
-  int c = _nextVisibleCharacter();
-  if (c) {
-    if (_col == 1) {
-      switch (c) {
-      case '@':
-        _processSequenceHeader();
-        break;
-      case 0:
-        ERROR_MSG("Badly formatted file. End of file found while expecting '@'.");
-      default:
-        ERROR_MSG("Badly formatted file. Character '" << (char) c << "' found while expecting '@'.");
-      }
-    } else {
-      ERROR_MSG("Badly formatted file. Unexpected character '" << (char) c << "'.");
-    }
-  }
-  return c;
-}
 
 void FastqFileReader::_parseQualitySeparator() {
   // End of the sequence, let's skip the quality
-  string header;
-  std::getline(_ifs, header);
+  string description;
+  std::getline(_ifs, description);
   ++_line;
   _col = 0;
-  if (!header.empty() && (header != _read_id)) {
-    WARNING_MSG("Badly formatted file. The header following the '+' sign (" << header << ") is not the expected one (" << _read_id << ").");
+  if (!description.empty() && (description != _current_sequence_description)) {
+    WARNING_MSG("Badly formatted file. The description following the '+' sign (" << description << ") is not the expected one (" << _current_sequence_description << ").");
   }
 }
 
 void FastqFileReader::_parseQualitySequence() {
   int c = -1;
-  while (c && _nb_nucl--) {
+  size_t nb = _nb_nucl;
+  while (c && nb--) {
     c = _nextVisibleCharacter();
   }
   if (!c) {
-    ERROR_MSG("Badly formatted file. End of file found while " << _nb_nucl << " quality symbols were still expected.");
+    ERROR_MSG("Badly formatted file. End of file found while " << nb << " quality symbols were still expected.");
   }
   _start_sequence_state = true;
 }
 
 void FastqFileReader::_parse() {
   bool ok;
-  do {
-    ok = true;
-    if (_start_sequence_state) {
-      ok = !_parseSequenceHeader();
-    } else {
+  if (_start_sequence_state) {
+    ok = _parseSequenceDescription();
+  } else {
+    do {
       int c = _nextVisibleCharacter();
       if (c) {
-        uint8_t nucl = getIUPACNucleotide(c);
+        IUPAC nucl = _toIUPAC(c);
         switch (nucl) {
         case IUPAC_A:
         case IUPAC_C:
@@ -248,6 +173,7 @@ void FastqFileReader::_parse() {
           }
           ++_nb_nucl;
           ++_nb_valid_nucl;
+          ok = (_nb_valid_nucl >= _settings.k());
           break;
         case IUPAC_GAP:
           // ignore gaps
@@ -257,10 +183,11 @@ void FastqFileReader::_parse() {
           if ((_col == 1) && (c == '+')) {
             _parseQualitySeparator();
             _parseQualitySequence();
+            _nb_valid_nucl = 0;
+            ok = true;
           } else {
             WARNING_MSG("Badly formatted file. Unexpected character '" << (char) c << "'.");
           }
-          ok = false;
           break;
         default:
           // This is a degeneracy symbol
@@ -268,65 +195,13 @@ void FastqFileReader::_parse() {
           _nb_valid_nucl = 0;
         }
       } else {
+        assert(!*this);
+        ok = false;
         _nb_nucl = _nb_valid_nucl = 0;
       }
-    }
-  } while (*this && !ok);
-}
-
-const string &FastqFileReader::getNextKmer() {
-  do {
-    _parse();
-  } while (*this && (_nb_valid_nucl < _settings.k()));
-  return getCurrentKmer();
-}
-
-const string &FastqFileReader::getCurrentKmer() const {
-  static const string empty_string;
-  return (*this && (_nb_valid_nucl >= _settings.k()) ? _kmer : empty_string);
-}
-
-bool FastqFileReader::gotoNextSequence(bool check_consistency) {
-  bool found = false;
-  if (check_consistency) {
-    while (*this && !_start_sequence_state) {
-      int c = _nextVisibleCharacter();
-      if (c) {
-        uint8_t nucl = getIUPACNucleotide(c);
-        switch (nucl) {
-        case IUPAC_GAP:
-          // cout << "=> A gap" << endl;
-          // ignore gaps
-          break;
-        case IUPAC_UNDEFINED:
-          if ((_col == 1) && (c == '+')) {
-            _parseQualitySeparator();
-            _parseQualitySequence();
-          } else {
-            WARNING_MSG("Badly formatted file. Unexpected character '" << (char) c << "'.");
-          }
-          break;
-        default:
-          // This is a nucleotide symbol (degeneracy or not)
-          ++_nb_nucl;
-        }
-      }
-    }
-    if (*this) {
-      found = _parseSequenceHeader();
-    }
-  } else {
-    while (*this && !found) {
-      int c = _nextVisibleCharacter();
-      if ((_col == 1) and (c == '@')) {
-        _processSequenceHeader();
-        found = true;
-      } else {
-        ++_col;
-      }
-    }
+    } while (*this && !ok);
   }
-  return found;
+  assert(ok xor !*this);
 }
 
 END_KIM_NAMESPACE

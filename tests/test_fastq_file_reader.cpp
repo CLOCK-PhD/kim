@@ -116,7 +116,7 @@ int main() {
   string fname = "test-reads.fastq";
 
   cout << "Trying to open file '" << fname << "' which is not in the current working directory." << endl;
-  FastqFileReader reader(fname, settings);
+  FastqFileReader reader(settings, fname);
   cout << "Current opened filename should be empty: '" << reader.getFilename() << "'" << endl;
   assert(reader.getFilename().empty());
 
@@ -145,7 +145,7 @@ int main() {
   cout << "Counting the number of sequences using no checking (thus will be wrong)" << endl;
   while (reader && (cpt < 25)) {
     if (reader.gotoNextSequence(false)) {
-      cout << "New sequence: '" << reader.getCurrentRead() << "'" << endl;
+      cout << "New sequence: '" << reader.getCurrentSequenceDescription() << "'" << endl;
       ++cpt;
     } else {
       cout << "No new sequence found." << endl;
@@ -176,11 +176,11 @@ int main() {
         cout << "The sequence 15 has a longer quality and should throw an exception." << endl;
       }
       if (reader.gotoNextSequence(true)) {
-        cout << "New sequence: '" << reader.getCurrentRead() << "'" << endl;
+        cout << "New sequence: '" << reader.getCurrentSequenceDescription() << "'" << endl;
         // All sequence of the test file have the same pattern:
         regex pattern("Sequence ([0-9]+) of length ([0-9]+) \\(from line ([0-9]+) to line ([0-9]+)\\)(.*)");
         smatch matches;
-        assert(regex_match(reader.getCurrentRead(), matches, pattern));
+        assert(regex_match(reader.getCurrentSequenceDescription(), matches, pattern));
         assert(matches.size() == 6);
         int v = stoi(matches[1]);
         cout << "- Sequence ID is " << v << " (expecting " << cpt << ")" << endl;
@@ -217,8 +217,8 @@ int main() {
   for (string kmer = reader.getNextKmer(); !kmer.empty(); kmer = reader.getNextKmer()) {
 
     size_t p = reader.getCurrentKmerRelativePosition();
-    if (last_header != reader.getCurrentRead()) {
-      last_header = reader.getCurrentRead();
+    if (last_header != reader.getCurrentSequenceDescription()) {
+      last_header = reader.getCurrentSequenceDescription();
       cout << "Starting a new sequence: '" << last_header << "'" << endl;
       ++cpt;
     }

@@ -126,8 +126,11 @@ FileReaderParseError::FileReaderParseError(FileReader &reader):
     throw error;                                \
   } while (0)
 
-FileReader::FileReader(const Settings &settings): _settings(settings) {
+FileReader::FileReader(const Settings &settings, const string &filename): _settings(settings) {
   assert(settings.valid());
+  if (!filename.empty()){
+    open(filename);
+  }
 }
 
 FileReader::~FileReader() {

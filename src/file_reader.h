@@ -198,8 +198,11 @@ namespace kim {
      *
      * \param settings The k-mer identification metric program
      * settings.
+     *
+     * \param filename The name of the file to read (calls open()
+     * method except if filename is empty).
      */
-    FileReader(const Settings &settings);
+    FileReader(const Settings &settings, const std::string &filename = "");
 
     /**
      * Closes the file stream before destruction.

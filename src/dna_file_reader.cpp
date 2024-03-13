@@ -87,78 +87,156 @@
 *                                                                             *
 ******************************************************************************/
 
-#ifndef __FASTQ_FILE_READER_H__
-#define __FASTQ_FILE_READER_H__
+#include "dna_file_reader.h"
 
-#include <string>
+#include "config.h"
+#include "kim_exception.h"
 
-#include <kim_settings.h>
-#include <dna_file_reader.h>
+#include <cassert>
+#include <iostream>
 
-namespace kim {
+using namespace std;
 
-  /**
-   * Fastq file reader which allows to extract k-mers from reads.
-   */
-  class FastqFileReader: public DNAFileReader {
+BEGIN_KIM_NAMESPACE
 
-  private:
+#define WARNING_MSG(msg)          \
+  if (_settings.warn()) {         \
+    cerr << "Warning:"            \
+         << _filename << ":"      \
+         << (_line + 1) << ":"    \
+         << _col << ": "          \
+         << msg << endl;          \
+  }                               \
+  (void) 0
 
-    /**
-     * Get the available start symbols for a new fastq sequence
-     * (a.k.a., only '@' is used as a new sequence symbol).
-     *
-     * \return Returns the available start symbols for a new sequence.
-     */
-    virtual const std::string &_sequenceStartSymbols() const override;
+#define ERROR_MSG(msg)                          \
+  do {                                          \
+    FileReaderParseError error(*this);          \
+    error << msg;                               \
+    throw error;                                \
+  } while (0)
 
-    /**
-     * Parse the quality separator string and verify its conformity
-     * (otherwise a warning is emitted).
-     */
-    void _parseQualitySeparator();
+DNAFileReader::DNAFileReader(const Settings &settings, const string &filename):
+  FileReader(settings, filename)
+{}
 
-    /**
-     * Simply skip the quality sequence.
-     *
-     * After this method, either a new sequence is expected or the end
-     * of file.
-     */
-    void _parseQualitySequence();
-
-    /**
-     * Parse the file according to its current state.
-     *
-     * If some new sequence is expected, then process the new sequence
-     * header (see _parseSequenceHeader() method). If the quality
-     * separator is encountered, the separator is analyzed for
-     * conformity (see _parseQualitySeparator() method) then the
-     * quality sequence is parsed (see _parseQualitySequence()
-     * method). In all other case, the next visible character is
-     * expected to be a nucleotide and thus it is processed to update
-     * the current k-mer if it is valid and not degenerated.
-     */
-    virtual void _parse() override;
-
-  public:
-
-    /**
-     * Creates a Fastq file reader.
-     *
-     * This internally calls the open method.
-     *
-     * \param settings The k-mer identification metric program
-     * settings.
-     *
-     * \param filename The name of the fastq file to read.
-     */
-    FastqFileReader(const Settings &settings, const std::string &filename = "");
-
-  };
-
+void DNAFileReader::_onReset() {
+  _start_sequence_state = true;
+  _nb_nucl = _nb_valid_nucl = 0;
+  _current_sequence_description = "";
+  _kmer = string(_settings.k(), '?');
 }
 
-#endif
-// Local Variables:
-// mode:c++
-// End:
+DNAFileReader::IUPAC DNAFileReader::_toIUPAC(char c) {
+  if ((c >= 'a') && (c <= 'z')) {
+    c += 'A' - 'a'; // Upcase
+  }
+  switch (c) {
+  case 'A': return IUPAC_A;
+  case 'C': return IUPAC_C;
+  case 'G': return IUPAC_G;
+  case 'T': return IUPAC_T;
+  case 'U': return IUPAC_U;
+  case 'R': return IUPAC_R;
+  case 'Y': return IUPAC_Y;
+  case 'K': return IUPAC_K;
+  case 'M': return IUPAC_M;
+  case 'S': return IUPAC_S;
+  case 'W': return IUPAC_W;
+  case 'B': return IUPAC_B;
+  case 'D': return IUPAC_D;
+  case 'H': return IUPAC_H;
+  case 'V': return IUPAC_V;
+  case 'N': return IUPAC_N;
+  case '.':
+  case '-': return IUPAC_GAP; // Gap is valid in IUPAC even if it's
+                              // not a nucleotide
+  default:
+    return IUPAC_UNDEFINED;
+  }
+}
+
+void DNAFileReader::_processSequenceDescription() {
+  _start_sequence_state = false;
+  std::getline(_ifs, _current_sequence_description);
+  ++_line;
+  _col = 0;
+  _nb_nucl = _nb_valid_nucl = 0;
+}
+
+bool DNAFileReader::_parseSequenceDescription() {
+  int c = _nextVisibleCharacter();
+  if (c) {
+    if (_col == 1) {
+      const string &opening_chars = _sequenceStartSymbols();
+      if (c != 0) {
+        if (opening_chars.find(c) != string::npos) {
+          _processSequenceDescription();
+        } else {
+          ERROR_MSG("Badly formatted file. Character '" << (char) c << "'" << " found while expecting "
+                    << ((opening_chars.size() == 1) ? "'" : "one of '") << opening_chars << "'.");
+        }
+      } else {
+        ERROR_MSG("Badly formatted file. End of file found while expecting "
+                    << ((opening_chars.size() == 1) ? "'" : "one of '") << opening_chars << "'.");
+      }
+    } else {
+      ERROR_MSG("Badly formatted file. Unexpected character '" << (char) c << "'.");
+    }
+  }
+  return c; // (c != '\0') => Correct Header
+}
+
+const string &DNAFileReader::getCurrentKmer() const {
+  static const string empty_string;
+  return (*this && (_nb_valid_nucl >= _settings.k()) ? _kmer : empty_string);
+}
+
+const string &DNAFileReader::getNextKmer() {
+  do {
+    _parse();
+  } while (*this && (_nb_valid_nucl < _settings.k()));
+  return getCurrentKmer();
+}
+
+const string &DNAFileReader::getForwardKmer(size_t p, bool check_consistency) {
+  assert(p >= getCurrentKmerRelativePosition());
+  if (check_consistency || (_nb_valid_nucl > p)) {
+    while (*this && !_start_sequence_state && (getCurrentKmerRelativePosition() < p)) {
+      _parse();
+    }
+  } else {
+    assert(p >= _nb_valid_nucl);
+    while (*this && ((_nb_valid_nucl + 1) < p)) {
+      _nextVisibleCharacter();
+    }
+    if (*this) {
+      assert((_nb_valid_nucl + 1) == p);
+      _parse();
+    }
+  }
+  return getCurrentKmer();
+}
+
+bool DNAFileReader::gotoNextSequence(bool check_consistency) {
+  bool found = false;
+  if (check_consistency) {
+    while (*this && !_start_sequence_state) {
+      _parse();
+    }
+    if (*this) {
+      found = _parseSequenceDescription();
+    }
+  } else {
+    while (*this && !found) {
+      int c = _nextVisibleCharacter();
+      if ((_col == 1) and (_sequenceStartSymbols().find(c) != string::npos)) {
+        _processSequenceDescription();
+        found = true;
+      }
+    }
+  }
+  return found;
+}
+
+END_KIM_NAMESPACE

@@ -500,18 +500,18 @@ int main(int argc, char **argv) {
         if (settings.warn()) {
           cerr << "Processing file '" << opts.parse.nonOption(i) << "'" << endl;
         }
-        FastqFileReader reader(opts.parse.nonOption(i), settings);
+        FastqFileReader reader(settings, opts.parse.nonOption(i));
         // Process each k-mer from the current input file
         for (string kmer = reader.getNextKmer(); !kmer.empty(); kmer = reader.getNextKmer()) {
           //cout << "K-mer : " << kmer << endl;
           list<KmerVariantEdgesSubindex::KmerVariantAssociation> assoc_variant = kim_index.search(kmer);
           for (list<KmerVariantEdgesSubindex::KmerVariantAssociation>::const_iterator it = assoc_variant.cbegin(); it != assoc_variant.cend(); ++it) {
             // cerr << "Current variant association concerns variant '" << it->variant_node->first << "' which concerns " << it->variant_node->second << " k-mers" << endl;
-            // cerr << "This variant is potentially seen in read " << reader.getCurrentRead()
+            // cerr << "This variant is potentially seen in read " << reader.getCurrentSequenceDescription()
             //      << " by the k-mer at position " << reader.getCurrentKmerRelativePosition()
             //      << " in the read" << endl;
             VariantIdentification &v_ident = variants_map[it->variant_node.variant];
-            v_ident.add(reader.getCurrentRead(), reader.getCurrentKmerRelativePosition());
+            v_ident.add(reader.getCurrentSequenceDescription(), reader.getCurrentKmerRelativePosition());
           }
         }
       }
