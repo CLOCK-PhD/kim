@@ -107,7 +107,7 @@ of the project.
 
 ### Licensing
 
-Copyright © 2023 -- IGH / LIRMM / CNRS / UM
+Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM
 (Institut de Génétique Humaine /
 Laboratoire d'Informatique, de Robotique et de Microélectronique de Montpellier /
 Centre National de la Recherche Scientifique /

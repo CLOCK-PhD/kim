@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl Copyright © 2023      -- IGH / LIRMM / CNRS / UM
+dnl Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM
 dnl                          (Institut de Génétique Humaine /
 dnl                          Laboratoire d'Informatique, de Robotique et de
 dnl                          Microélectronique de Montpellier /
@@ -107,7 +107,7 @@ AC_DEFINE_UNQUOTED([END_KIM_NAMESPACE], [}], [Ends the kim namespace.])
 AC_COPYRIGHT([
 ###############################################################################
 #                                                                             #
-#  Copyright © 2023      -- IGH / LIRMM / CNRS / UM                           #
+#  Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM                           #
 #                           (Institut de Génétique Humaine /                  #
 #                           Laboratoire d'Informatique, de Robotique et de    #
 #                           Microélectronique de Montpellier /                #
@@ -221,7 +221,7 @@ AC_CONFIG_HEADERS([config/config.h])
 AH_TOP([
 /******************************************************************************
 *                                                                             *
-*  Copyright © 2023      -- IGH / LIRMM / CNRS / UM                           *
+*  Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM                           *
 *                           (Institut de Génétique Humaine /                  *
 *                           Laboratoire d'Informatique, de Robotique et de    *
 *                           Microélectronique de Montpellier /                *
