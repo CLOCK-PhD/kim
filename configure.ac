@@ -339,6 +339,7 @@ AC_REVISION([m4_esyscmd_s([./config/git-version-gen --timestamp --force-update c
 
 ARCH=`uname -m | sed s/i.86/i386/ | sed s/x86_64/amd64/`
 AC_SUBST(ARCH)
+
 AC_PATH_PROG([CLOC], [cloc])
 AM_CONDITIONAL([CLOC], [test -n "${CLOC}"])
 AC_PATH_PROG([OHCOUNT], [ohcount])
@@ -379,10 +380,13 @@ DX_INIT_DOXYGEN([${PACKAGE_NAME}], [doxygen.cfg], [docs])
 AS_IF([test -z "${DX_DOXYGEN}"],
       [BUILD_DOC=false
        AC_MSG_WARN([The 'doxygen' program cound not be found. This isn't critical, but it means that you won't be able to create the documentation and thus to make releases.])],
-      [BUILD_DOC=true
-      DX_DOXYGEN_VERSION=`${DX_DOXYGEN} --version | cut -d' ' -f1`
-      AX_COMPARE_VERSION([${DX_DOXYGEN_VERSION}],[lt],[${DX_MIN_VERSION}],
-                         [AC_MSG_WARN([Your version of the 'doxygen' program is quite old (v. ${DX_DOXYGEN_VERSION}) and the generation of the documentation may fail or the result mays look bad. This isn't critical, but it means that you won't be able to create a proper API documentation and thus to make correct releases.])])])
+      [AS_IF([test "${DX_FLAG_doc}" -ne 1],
+             [BUILD_DOC=false
+              AC_MSG_WARN([The documentation generation is disabled, so is the ability to make releases.])],
+             [BUILD_DOC=true
+              DX_DOXYGEN_VERSION=`${DX_DOXYGEN} --version | cut -d' ' -f1`
+              AX_COMPARE_VERSION([${DX_DOXYGEN_VERSION}],[lt],[${DX_MIN_VERSION}],
+                                 [AC_MSG_WARN([Your version of the 'doxygen' program is quite old (v. ${DX_DOXYGEN_VERSION}) and the generation of the documentation may fail or the result mays look bad. This isn't critical, but it means that you won't be able to create a proper API documentation and thus to make correct releases.])])])])
 
 AM_CONDITIONAL([BUILD_DOC], [${BUILD_DOC}])
 AM_COND_IF([BUILD_DOC], [AC_CONFIG_FILES([doc/doxygen.cfg doc/Makefile])])
@@ -413,7 +417,6 @@ LIBS="${LIBS} ${CODE_COVERAGE_LIBS}"
 
 AC_ARG_VAR([GCOVR], [Wrapper around gcov program to generate simple reports (default: gcovr).])
 AC_PATH_PROG([GCOVR], [${GCOVR:-gcovr}])
-
 
 dnl Add option --enable-debug (default to --disable-debug)
 AC_ARG_ENABLE([debug],

@@ -18080,6 +18080,7 @@ $as_echo "$ac_cv_path_SED" >&6; }
 
 ARCH=`uname -m | sed s/i.86/i386/ | sed s/x86_64/amd64/`
 
+
 # Extract the first word of "cloc", so it can be a program name with args.
 set dummy cloc; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -20261,8 +20262,13 @@ if test -z "${DX_DOXYGEN}"; then :
        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: The 'doxygen' program cound not be found. This isn't critical, but it means that you won't be able to create the documentation and thus to make releases." >&5
 $as_echo "$as_me: WARNING: The 'doxygen' program cound not be found. This isn't critical, but it means that you won't be able to create the documentation and thus to make releases." >&2;}
 else
+  if test "${DX_FLAG_doc}" -ne 1; then :
+  BUILD_DOC=false
+              { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: The documentation generation is disabled, so is the ability to make releases." >&5
+$as_echo "$as_me: WARNING: The documentation generation is disabled, so is the ability to make releases." >&2;}
+else
   BUILD_DOC=true
-      DX_DOXYGEN_VERSION=`${DX_DOXYGEN} --version | cut -d' ' -f1`
+              DX_DOXYGEN_VERSION=`${DX_DOXYGEN} --version | cut -d' ' -f1`
 
 
 
@@ -20299,6 +20305,7 @@ x$ax_compare_version_B" | sed 's/^ *//' | sort -r | sed "s/x${ax_compare_version
 $as_echo "$as_me: WARNING: Your version of the 'doxygen' program is quite old (v. ${DX_DOXYGEN_VERSION}) and the generation of the documentation may fail or the result mays look bad. This isn't critical, but it means that you won't be able to create a proper API documentation and thus to make correct releases." >&2;}
       fi
 
+fi
 fi
 
  if ${BUILD_DOC}; then
@@ -20841,7 +20848,6 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
-
 
 
 
