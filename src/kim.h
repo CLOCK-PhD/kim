@@ -94,7 +94,8 @@
 #  include <config.h>
 #endif
 #include <bounded_size_string.h>
-#include <fastq_file_reader.h>
+#include <dna_file_reader.h>
+#include <file_reader.h>
 #include <kim_exception.h>
 #include <kim_settings.h>
 #include <kmer_nodes_subindex.h>

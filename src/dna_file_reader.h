@@ -102,7 +102,39 @@ namespace kim {
    */
   class DNAFileReader: public FileReader {
 
+  public:
+
+    /**
+     * Available DNA sequence file formats.
+     */
+    enum Format {
+
+                 /** The Fasta file format defined by Pearson for its eponym software. */
+                 FASTA_FORMAT,
+
+                 /** The Fastq file format initially developer by the
+                     Wellcome Trust Sanger Institute and as fully
+                     describer in the Cock & al article entitled "The
+                     Sanger FASTQ file format for sequences with
+                     quality scores, and the Solexa/Illumina FASTQ
+                     variants", published in Nucleic Acids Res. 2010
+                     Apr. 38(6):1767-71 (doi: 10.1093/nar/gkp1137) */
+                 FASTQ_FORMAT,
+
+                 /**
+                  * The undefined format (an undefined formatted file
+                  * is either closed or doesn't allow to extract
+                  * k-mers).
+                  */
+                 UNDEFINED_FORMAT,
+    };
+
   protected:
+
+    /**
+     * The format of the handled file.
+     */
+    Format _format;
 
     /**
      * Flag to distinguish when some new sequence is to be started or
@@ -134,20 +166,30 @@ namespace kim {
     std::string _kmer;
 
     /**
+     * The hook method called at the end of open().
+     *
+     * This method check if the first visible character of the file is
+     * a sequence starting symbol. On failure, a FileReaderParseError
+     * exception is thrown with an explicit message. Be aware that the
+     * open() method is called in the base constructor but that in
+     * such case, the overriden methods are not known yet thus are not
+     * called.
+     */
+    virtual void _onOpen() override;
+
+    /**
+     * The hook method called at the end of close().
+     *
+     * This method simply set the format to undefined.
+     */
+    virtual void _onClose() override;
+
+    /**
      * The hook method called at the end of reset().
      *
      * This method overrides the base class one.
      */
     virtual void _onReset() override;
-
-    /**
-     * Get the available start symbols for a new sequence.
-     *
-     * Any derived class must override this method.
-     *
-     * \return Returns the available start symbols for a new sequence.
-     */
-    virtual const std::string &_sequenceStartSymbols() const = 0;
 
     /**
      * Process the sequence description.
@@ -161,7 +203,7 @@ namespace kim {
      * description (as the original fasta format allows), then some
      * derived class must be defined that overrides this method.
      */
-    virtual void _processSequenceDescription();
+    void _processSequenceDescription();
 
     /**
      * This method must be called whenever a new sequence is expected.
@@ -174,48 +216,52 @@ namespace kim {
      * \return Returns true if the header has been correctly parsed
      * (i.e., end of file is not reached).
      */
-    virtual bool _parseSequenceDescription();
+    template<Format>
+    bool _parseSequenceDescription();
+
+    /**
+     * This method simply properly end the nucleotide sequence reading
+     * according to the format (i.e., make the cursor ready to start a
+     * new sequence).
+     */
+    template <Format>
+    void _parseEndOfNucleotideSequence();
 
     /**
      * Parse the file until some new k-mer is available (positioning
      * the cursor at the end of the current k-mer) or some new
      * sequence is started (positioning the cursor at the beginning of
      * the nucleotide sequence.
-     *
-     * Any derived class must override this method.
      */
-    virtual void _parse() = 0;
-
-    enum IUPAC {
-                IUPAC_UNDEFINED = 0,
-                IUPAC_A = 1,
-                IUPAC_C = 2,
-                IUPAC_G = 4,
-                IUPAC_T = 8,
-                IUPAC_U = 8,
-                IUPAC_GAP = 16,
-                IUPAC_R = IUPAC_A | IUPAC_G, // Purine
-                IUPAC_Y = IUPAC_C | IUPAC_T, // Pyrimidine
-                IUPAC_K = IUPAC_G | IUPAC_T, // Ketones
-                IUPAC_M = IUPAC_A | IUPAC_C, // Amino groups
-                IUPAC_S = IUPAC_C | IUPAC_G, // Strong
-                IUPAC_W = IUPAC_A | IUPAC_T, // Weak
-                IUPAC_B = IUPAC_C | IUPAC_G | IUPAC_T, // Not A
-                IUPAC_D = IUPAC_A | IUPAC_G | IUPAC_T, // Not C
-                IUPAC_H = IUPAC_A | IUPAC_C | IUPAC_T, // Not G
-                IUPAC_V = IUPAC_A | IUPAC_C | IUPAC_G, // Not T neither U
-                IUPAC_N = IUPAC_A | IUPAC_C | IUPAC_G | IUPAC_T // Any
-    };
-
+    template<Format>
+    void _parse();
 
     /**
-     * Get the IUPAC constant associated to the given nucleotide.
-     *
-     * \param c The nucleotide character (case insensitive).
-     *
-     * \return Returns the IUPAC constant corresponding to c.
+     * The parse function to use according to the file format.
      */
-    static IUPAC _toIUPAC(char c);
+    void (DNAFileReader::*_parse_mth)();
+
+    /**
+     * Format specific version that set the reading cursor to the
+     * start of the next available sequence (the first non blank
+     * character following the sequence header).
+     *
+     * Calling this method on a newly file opened file position the
+     * cursor to the beginning of the first sequence.
+     *
+     * \param check_consistency When set to false, just goes to the
+     * next "new sequence character" starting a newline without
+     * ensuring the validity of the current processed sequence (if
+     * any), then read the line as the description and consider the
+     * first next non-empty position as the beginning of the
+     * sequence. This performs faster but may lead to bad positioning.
+     *
+     * \return This method returns true if the cursor is correctly
+     * positioned to the start of a new sequence and false if no new
+     * sequence has been found.
+     */
+    template <Format>
+    bool _gotoNextSequence(bool check_consistency);
 
   public:
 
@@ -231,6 +277,13 @@ namespace kim {
      * (calls open() method except if filename is empty).
      */
     DNAFileReader(const Settings &settings, const std::string &filename = "");
+
+    /**
+     * Get the detected file format.
+     */
+    inline Format getFormat() const {
+      return _format;
+    }
 
     /**
      * Get the current k-mer extracted by this file reader object.
@@ -261,8 +314,8 @@ namespace kim {
      * reached. This goes slower but can detect inconstant calls by
      * returning an empty k-mer.
      *
-     * \return Returns the k-mer located at the given position or an
-     * empty string.
+     * \return Returns the first valid k-mer located **after** or at
+     * the given position or an empty string.
      */
     const std::string &getForwardKmer(size_t p, bool check_consistency = true);
 
@@ -319,6 +372,8 @@ namespace kim {
     bool gotoNextSequence(bool check_consistency = true);
 
   };
+
+  std::ostream &operator<<(std::ostream &os, DNAFileReader::Format fmt);
 
 }
 

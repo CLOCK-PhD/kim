@@ -142,7 +142,7 @@ size_t encode(char c) {
                  ? 1
                  : ((c == 'G')
                     ? 2
-                    : ((c == 'T')
+                    : (((c == 'T') || (c == 'U'))
                        ? 3
                        : -1))));
   if (v == size_t(-1)) {
@@ -464,7 +464,7 @@ void KmerVariantGraph::load(const string &path) {
   }
   _settings.unfreeze();
   _settings.setKmerLength(size_t(-1));
-  _settings.freeze();
+  // It is not possible to freeze this settings since it is not valid yet.
   while ((entry = readdir(dir))) {
     string fname(entry->d_name);
     if (!fname.empty() && (fname[0] != '.')) {

@@ -242,7 +242,6 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 libkim_debug_la_LIBADD =
 am__objects_1 = libkim_debug_la-bounded_size_string.lo \
 	libkim_debug_la-dna_file_reader.lo \
-	libkim_debug_la-fastq_file_reader.lo \
 	libkim_debug_la-file_reader.lo libkim_debug_la-kim_settings.lo \
 	libkim_debug_la-kmer_nodes_subindex.lo \
 	libkim_debug_la-kmer_variant_edges_subindex.lo \
@@ -262,9 +261,9 @@ libkim_debug_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(LDFLAGS) -o $@
 libkim_la_LIBADD =
 am_libkim_la_OBJECTS = bounded_size_string.lo dna_file_reader.lo \
-	fastq_file_reader.lo file_reader.lo kim_settings.lo \
-	kmer_nodes_subindex.lo kmer_variant_edges_subindex.lo \
-	kmer_variant_graph.lo sort_helper.lo variant_identification.lo \
+	file_reader.lo kim_settings.lo kmer_nodes_subindex.lo \
+	kmer_variant_edges_subindex.lo kmer_variant_graph.lo \
+	sort_helper.lo variant_identification.lo \
 	variant_nodes_index.lo
 libkim_la_OBJECTS = $(am_libkim_la_OBJECTS)
 libkim_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -289,15 +288,13 @@ DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/bounded_size_string.Plo \
-	./$(DEPDIR)/dna_file_reader.Plo \
-	./$(DEPDIR)/fastq_file_reader.Plo ./$(DEPDIR)/file_reader.Plo \
+	./$(DEPDIR)/dna_file_reader.Plo ./$(DEPDIR)/file_reader.Plo \
 	./$(DEPDIR)/kim.Po ./$(DEPDIR)/kim_settings.Plo \
 	./$(DEPDIR)/kmer_nodes_subindex.Plo \
 	./$(DEPDIR)/kmer_variant_edges_subindex.Plo \
 	./$(DEPDIR)/kmer_variant_graph.Plo \
 	./$(DEPDIR)/libkim_debug_la-bounded_size_string.Plo \
 	./$(DEPDIR)/libkim_debug_la-dna_file_reader.Plo \
-	./$(DEPDIR)/libkim_debug_la-fastq_file_reader.Plo \
 	./$(DEPDIR)/libkim_debug_la-file_reader.Plo \
 	./$(DEPDIR)/libkim_debug_la-kim_settings.Plo \
 	./$(DEPDIR)/libkim_debug_la-kmer_nodes_subindex.Plo \
@@ -558,7 +555,7 @@ AM_CXXFLAGS = \
 library_includedir = @includedir@/@PACKAGE@-@VERSION@
 library_include_HEADERS = \
   bounded_size_string.h		\
-  fastq_file_reader.h		\
+  dna_file_reader.h		\
   file_reader.h			\
   kim.h				\
   kim_exception.h		\
@@ -577,7 +574,6 @@ libkim_ladir = @abs_srcdir@
 libkim_la_SOURCES = \
   bounded_size_string.h bounded_size_string.cpp			\
   dna_file_reader.h dna_file_reader.cpp				\
-  fastq_file_reader.h fastq_file_reader.cpp			\
   file_reader.h file_reader.cpp					\
   kim_exception.h						\
   kim_settings.h kim_settings.cpp				\
@@ -750,7 +746,6 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bounded_size_string.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dna_file_reader.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fastq_file_reader.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/file_reader.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kim_settings.Plo@am__quote@ # am--include-marker
@@ -759,7 +754,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kmer_variant_graph.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-bounded_size_string.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-dna_file_reader.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-fastq_file_reader.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-file_reader.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-kim_settings.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-kmer_nodes_subindex.Plo@am__quote@ # am--include-marker
@@ -812,13 +806,6 @@ libkim_debug_la-dna_file_reader.lo: dna_file_reader.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='dna_file_reader.cpp' object='libkim_debug_la-dna_file_reader.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-dna_file_reader.lo `test -f 'dna_file_reader.cpp' || echo '$(srcdir)/'`dna_file_reader.cpp
-
-libkim_debug_la-fastq_file_reader.lo: fastq_file_reader.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-fastq_file_reader.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-fastq_file_reader.Tpo -c -o libkim_debug_la-fastq_file_reader.lo `test -f 'fastq_file_reader.cpp' || echo '$(srcdir)/'`fastq_file_reader.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_debug_la-fastq_file_reader.Tpo $(DEPDIR)/libkim_debug_la-fastq_file_reader.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='fastq_file_reader.cpp' object='libkim_debug_la-fastq_file_reader.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-fastq_file_reader.lo `test -f 'fastq_file_reader.cpp' || echo '$(srcdir)/'`fastq_file_reader.cpp
 
 libkim_debug_la-file_reader.lo: file_reader.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-file_reader.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-file_reader.Tpo -c -o libkim_debug_la-file_reader.lo `test -f 'file_reader.cpp' || echo '$(srcdir)/'`file_reader.cpp
@@ -1061,7 +1048,6 @@ clean-am: clean-binPROGRAMS clean-checkLTLIBRARIES clean-generic \
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/bounded_size_string.Plo
 	-rm -f ./$(DEPDIR)/dna_file_reader.Plo
-	-rm -f ./$(DEPDIR)/fastq_file_reader.Plo
 	-rm -f ./$(DEPDIR)/file_reader.Plo
 	-rm -f ./$(DEPDIR)/kim.Po
 	-rm -f ./$(DEPDIR)/kim_settings.Plo
@@ -1070,7 +1056,6 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/kmer_variant_graph.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-bounded_size_string.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-dna_file_reader.Plo
-	-rm -f ./$(DEPDIR)/libkim_debug_la-fastq_file_reader.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-file_reader.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kim_settings.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kmer_nodes_subindex.Plo
@@ -1131,7 +1116,6 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/bounded_size_string.Plo
 	-rm -f ./$(DEPDIR)/dna_file_reader.Plo
-	-rm -f ./$(DEPDIR)/fastq_file_reader.Plo
 	-rm -f ./$(DEPDIR)/file_reader.Plo
 	-rm -f ./$(DEPDIR)/kim.Po
 	-rm -f ./$(DEPDIR)/kim_settings.Plo
@@ -1140,7 +1124,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/kmer_variant_graph.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-bounded_size_string.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-dna_file_reader.Plo
-	-rm -f ./$(DEPDIR)/libkim_debug_la-fastq_file_reader.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-file_reader.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kim_settings.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kmer_nodes_subindex.Plo

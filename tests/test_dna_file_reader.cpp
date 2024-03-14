@@ -88,7 +88,7 @@
 ******************************************************************************/
 
 #include <kim_settings.h>
-#include <fastq_file_reader.h>
+#include <dna_file_reader.h>
 
 #include <cstdlib>
 #include <iostream>
@@ -108,7 +108,7 @@ int main() {
   assert(settings.valid());
   settings.freeze();
   assert(settings.frozen());
-  cout << "Testing FastqFileReader"
+  cout << "Testing DNAFileReader"
        << " with k = " << settings.getKmerLength()
        << " and p = " << settings.getKmerPrefixLength()
        << endl;
@@ -116,9 +116,11 @@ int main() {
   string fname = "test-reads.fastq";
 
   cout << "Trying to open file '" << fname << "' which is not in the current working directory." << endl;
-  FastqFileReader reader(settings, fname);
+  DNAFileReader reader(settings, fname);
   cout << "Current opened filename should be empty: '" << reader.getFilename() << "'" << endl;
   assert(reader.getFilename().empty());
+  cout << "Current file format should be Undefined: '" << reader.getFormat() << "'" << endl;
+  assert(reader.getFormat() == DNAFileReader::UNDEFINED_FORMAT);
 
   cout << "Looking for file '" << fname << "' in the package directories." << endl;
   const char *dirs[] = {
@@ -140,6 +142,8 @@ int main() {
 
   cout << "The current filename is '" << reader.getFilename() << "'" << endl;
   assert(reader.getFilename() == fname);
+  cout << "Current file format should be Fastq: '" << reader.getFormat() << "'" << endl;
+  assert(reader.getFormat() == DNAFileReader::FASTQ_FORMAT);
 
   int cpt = 0;
   cout << "Counting the number of sequences using no checking (thus will be wrong)" << endl;
@@ -163,10 +167,14 @@ int main() {
 
   cout << "The current reader associated filename is '" << reader.getFilename() << "' (expecting the empty string)" << endl;
   assert(reader.getFilename().empty());
+  cout << "Current file format should be Undefined: '" << reader.getFormat() << "'" << endl;
+  assert(reader.getFormat() == DNAFileReader::UNDEFINED_FORMAT);
   cout << "Opening the reader with file '" << fname << "'" << endl;
   reader.open(fname);
   cout << "The current reader associated filename is '" << reader.getFilename() << "' (expecting '" << fname << "')" << endl;
   assert(reader.getFilename() == fname);
+  cout << "Current file format should be Fastq: '" << reader.getFormat() << "'" << endl;
+  assert(reader.getFormat() == DNAFileReader::FASTQ_FORMAT);
 
   cpt = 0;
   cout << "Counting the number of sequences checking for validity" << endl;
@@ -210,6 +218,8 @@ int main() {
   cout << "Resetting the reader" << endl;
   reader.reset();
   assert(reader);
+  cout << "Current file format should be Fastq: '" << reader.getFormat() << "'" << endl;
+  assert(reader.getFormat() == DNAFileReader::FASTQ_FORMAT);
 
   cpt = 0;
   string last_header = "";
@@ -277,6 +287,174 @@ int main() {
       return 1;
     }
   }
+
+
+  //// Test on fasta file
+  fname = "test-sequences.fasta";
+  cout << "Looking for file '" << fname << "' in the package directories." << endl;
+  fname = FileReader::findFile(fname, dirs);
+  cout << "File path should not be empty: '" << fname << "'" << endl;
+  assert(!fname.empty());
+
+  reader.open(fname);
+
+  cout << "The current filename is '" << reader.getFilename() << "'" << endl;
+  assert(reader.getFilename() == fname);
+  cout << "Current file format should be Fasta: '" << reader.getFormat() << "'" << endl;
+  assert(reader.getFormat() == DNAFileReader::FASTA_FORMAT);
+
+  cpt = 0;
+  cout << "Counting the number of sequences using no checking (may be correct here)" << endl;
+  while (reader && (cpt < 25)) {
+    if (reader.gotoNextSequence(false)) {
+      cout << "New sequence: '" << reader.getCurrentSequenceDescription() << "'" << endl;
+      ++cpt;
+    } else {
+      cout << "No new sequence found." << endl;
+    }
+  }
+  cout << "There is " << cpt << " lines (expecting 6) seen as sequences in '" << reader.getFilename() << "'" << endl;
+  assert(cpt == 6);
+
+  cout << "Closing the reader" << endl;
+  reader.close();
+  assert(!reader);
+
+  sequence_length.clear();
+  sequence_length.reserve(cpt);
+
+  cout << "The current reader associated filename is '" << reader.getFilename() << "' (expecting the empty string)" << endl;
+  assert(reader.getFilename().empty());
+  cout << "Current file format should be Undefined: '" << reader.getFormat() << "'" << endl;
+  assert(reader.getFormat() == DNAFileReader::UNDEFINED_FORMAT);
+  cout << "Opening the reader with file '" << fname << "'" << endl;
+  reader.open(fname);
+  cout << "The current reader associated filename is '" << reader.getFilename() << "' (expecting '" << fname << "')" << endl;
+  assert(reader.getFilename() == fname);
+  cout << "Current file format should be Fasta: '" << reader.getFormat() << "'" << endl;
+  assert(reader.getFormat() == DNAFileReader::FASTA_FORMAT);
+
+  cpt = 0;
+  cout << "Counting the number of sequences checking for validity" << endl;
+  while (reader) {
+    if (reader.gotoNextSequence(true)) {
+      ++cpt;
+      cout << "New sequence: '" << reader.getCurrentSequenceDescription() << "'" << endl;
+      // All sequence of the test file have the same pattern:
+      regex pattern("[ ]*Sequence ([0-9]+) of length ([0-9]+) \\(from line ([0-9]+) to line ([0-9]+)\\)(.*)");
+      smatch matches;
+      assert(regex_match(reader.getCurrentSequenceDescription(), matches, pattern));
+      assert(matches.size() == 6);
+      int v = stoi(matches[1]);
+      cout << "- Sequence ID is " << v << " (expecting " << cpt << ")" << endl;
+      assert(v == cpt);
+      v = stoi(matches[2]);
+      cout << "- Sequence length is " << v << endl;
+      sequence_length.push_back(v);
+      v = stoi(matches[3]);
+      cout << "- Starting line is " << v << " (expecting " << (reader.getFileLineNumber() - 1) << ")" << endl;
+      assert(size_t(v) == (reader.getFileLineNumber() - 1));
+    } else {
+      cout << "No new sequence found." << endl;
+    }
+  }
+  cout << "There is " << cpt << " sequences (expecting 6) in '" << reader.getFilename() << "'" << endl;
+  assert(cpt == 6);
+
+  cout << "Resetting the reader" << endl;
+  reader.reset();
+  assert(reader);
+  cout << "Current file format should be Fasta: '" << reader.getFormat() << "'" << endl;
+  assert(reader.getFormat() == DNAFileReader::FASTA_FORMAT);
+
+  cpt = 0;
+  last_header = "";
+  for (string kmer = reader.getNextKmer(); !kmer.empty(); kmer = reader.getNextKmer()) {
+
+    size_t p = reader.getCurrentKmerRelativePosition();
+    if (last_header != reader.getCurrentSequenceDescription()) {
+      last_header = reader.getCurrentSequenceDescription();
+      cout << "Starting a new sequence: '" << last_header << "'" << endl;
+      ++cpt;
+    }
+    cout << "Current " << k << "-mer '" << kmer << "'  is at position " << p << endl;
+    cout << "(reader.getCurrentKmer() = '" << reader.getCurrentKmer() << "' and sequence length is " << sequence_length[cpt - 1] << ")" << endl;
+    assert(kmer == reader.getCurrentKmer());
+    assert(p + k <= sequence_length[cpt - 1]);
+    switch (cpt) {
+    case 1:
+    case 2:
+      break;
+    case 3:
+      if ((p < 19) || ((p > 20) && (p < 25))) {
+        cout << "There is degeneracy symbols in " << k << "-mer at position " << p << "."
+             << " This must not happens." << endl;
+        return 1;
+      }
+      break;
+    case 4:
+      if (((p > 15) && (p < 38)) || ((p > 43) && (p < 50))) {
+        cout << "There is degeneracy symbols in " << k << "-mer at position " << p << "."
+             << " This must not happens." << endl;
+        return 1;
+      }
+      break;
+    case 5:
+    case 6:
+        cout << "There is degeneracy symbols in " << k << "-mer at position " << p << "."
+             << " This must not happens." << endl;
+      return 1;
+    default:
+      cout << "This situation (cpt == " << cpt << ") should not occur" << endl;
+      return 1;
+    }
+  }
+
+  reader.reset();
+  assert(reader);
+  cout << "Current file format should be Fasta: '" << reader.getFormat() << "'" << endl;
+  assert(reader.getFormat() == DNAFileReader::FASTA_FORMAT);
+  for (size_t i = 0; i < 4; ++i) {
+      reader.gotoNextSequence();
+  }
+  // The current sequence is the one with TuX
+
+  reader.getForwardKmer(10);
+  cout << "The " << k << "-mer at least at position " << 10 << " in the fourth sequence is " << reader.getCurrentKmer() << " (expecting 'ACTAC')." << endl;
+  assert(reader.getCurrentKmer() == "ACTAC");
+  cout << "It is located at position " << reader.getCurrentKmerRelativePosition() << " (expecting 10)" << endl;
+  assert(reader.getCurrentKmerRelativePosition() == 10);
+
+  reader.getForwardKmer(10);
+  cout << "The " << k << "-mer at least at position " << 10 << " in the fourth sequence is " << reader.getCurrentKmer() << " (expecting 'ACTAC')." << endl;
+  assert(reader.getCurrentKmer() == "ACTAC");
+  cout << "It is located at position " << reader.getCurrentKmerRelativePosition() << " (expecting 10)" << endl;
+  assert(reader.getCurrentKmerRelativePosition() == 10);
+
+  reader.getForwardKmer(11);
+  cout << "The " << k << "-mer at least at position " << 11 << " in the fourth sequence is " << reader.getCurrentKmer() << " (expecting 'CTACT')." << endl;
+  assert(reader.getCurrentKmer() == "CTACT");
+  cout << "It is located at position " << reader.getCurrentKmerRelativePosition() << " (expecting 11)" << endl;
+  assert(reader.getCurrentKmerRelativePosition() == 11);
+
+  reader.getForwardKmer(38);
+  cout << "The " << k << "-mer at least at position " << 38 << " in the fourth sequence is " << reader.getCurrentKmer() << " (expecting 'TCGAT')." << endl;
+  assert(reader.getCurrentKmer() == "TCGAT");
+  cout << "It is located at position " << reader.getCurrentKmerRelativePosition() << " (expecting 38)" << endl;
+  assert(reader.getCurrentKmerRelativePosition() == 38);
+
+  reader.getForwardKmer(45);
+  cout << "The " << k << "-mer at least at position " << 45 << " in the fourth sequence is " << reader.getCurrentKmer() << " (expecting 'AACUG')." << endl;
+  assert(reader.getCurrentKmer() == "AACUG");
+  cout << "It is located at position " << reader.getCurrentKmerRelativePosition() << " (expecting 50)" << endl;
+  assert(reader.getCurrentKmerRelativePosition() == 50);
+
+  reader.getForwardKmer(1000);
+  cout << "The " << k << "-mer at least at position " << 1000 << " in the fourth sequence is " << reader.getCurrentKmer() << " (expecting '')." << endl;
+  assert(reader.getCurrentKmer().empty());
+  cout << "It is located at position " << reader.getCurrentKmerRelativePosition() << " (expecting " << size_t(-1) << ")" << endl;
+  assert(reader.getCurrentKmerRelativePosition() == size_t(-1));
+
 
   cout << "That's All, Folk!!!" << endl;
   return 0;

@@ -389,7 +389,7 @@ size_t KmerVariantEdgesSubindex::_selectKmerFirstEdgePosition(size_t pos) const 
   if (!_first_kmer_edges.select(pos + 1, p, _rank_select_helper)) {
     p = -1;
   }
-  return p;
+  return (p == bvector<>::size_type(-1)) ? size_t(-1) : p;
 }
 
 END_KIM_NAMESPACE

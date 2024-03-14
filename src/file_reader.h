@@ -151,7 +151,10 @@ namespace kim {
     /**
      * The hook method called at the end of open().
      *
-     * This method may be overriden by derived class if required.
+     * This method may be overriden by derived class if required (be
+     * aware that the open() method is called in the base constructor
+     * but that in such case, the overriden methods are not known yet
+     * thus are not called)
      */
     inline virtual void _onOpen() {}
 

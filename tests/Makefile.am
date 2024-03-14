@@ -100,7 +100,7 @@ LDADD = ../src/libkim-debug.la
 
 check_PROGRAMS =			\
   test_bounded_size_string		\
-  test_fastq_file_reader		\
+  test_dna_file_reader			\
   test_kim_exception			\
   test_kim_settings			\
   test_kmer_nodes_subindex		\
@@ -111,7 +111,7 @@ check_PROGRAMS =			\
 
 test_bounded_size_string_SOURCES = test_bounded_size_string.cpp
 
-test_fastq_file_reader_SOURCES = test_fastq_file_reader.cpp
+test_dna_file_reader_SOURCES = test_dna_file_reader.cpp
 
 test_kim_settings_SOURCES = test_kim_settings.cpp
 

@@ -116,18 +116,30 @@ BEGIN_KIM_NAMESPACE
     throw error;                                \
   } while (0)
 
-DNAFileReader::DNAFileReader(const Settings &settings, const string &filename):
-  FileReader(settings, filename)
-{}
 
-void DNAFileReader::_onReset() {
-  _start_sequence_state = true;
-  _nb_nucl = _nb_valid_nucl = 0;
-  _current_sequence_description = "";
-  _kmer = string(_settings.k(), '?');
-}
 
-DNAFileReader::IUPAC DNAFileReader::_toIUPAC(char c) {
+enum IUPAC {
+            IUPAC_UNDEFINED = 0, // Undefined
+            IUPAC_A = 1, // Adenine
+            IUPAC_C = 2, // Cytosine
+            IUPAC_G = 4, // Guanine
+            IUPAC_T = 8, // Thymine
+            IUPAC_U = 8, // Uracil
+            IUPAC_GAP = 16, // A gap symbol (no nucleotide)
+            IUPAC_R = IUPAC_A | IUPAC_G, // Purines
+            IUPAC_Y = IUPAC_C | IUPAC_T, // Pyrimidines
+            IUPAC_K = IUPAC_G | IUPAC_T, // Ketones
+            IUPAC_M = IUPAC_A | IUPAC_C, // Amino groups
+            IUPAC_S = IUPAC_C | IUPAC_G, // Strong interactions
+            IUPAC_W = IUPAC_A | IUPAC_T, // Weak interactions
+            IUPAC_B = IUPAC_C | IUPAC_G | IUPAC_T, // All but Adenine
+            IUPAC_D = IUPAC_A | IUPAC_G | IUPAC_T, // All but Cytosine
+            IUPAC_H = IUPAC_A | IUPAC_C | IUPAC_T, // All but Guanine
+            IUPAC_V = IUPAC_A | IUPAC_C | IUPAC_G, // All but Thymine nor Uracil
+            IUPAC_N = IUPAC_A | IUPAC_C | IUPAC_G | IUPAC_T // Any
+};
+
+static IUPAC toIUPAC(char c) {
   if ((c >= 'a') && (c <= 'z')) {
     c += 'A' - 'a'; // Upcase
   }
@@ -156,35 +168,224 @@ DNAFileReader::IUPAC DNAFileReader::_toIUPAC(char c) {
   }
 }
 
-void DNAFileReader::_processSequenceDescription() {
-  _start_sequence_state = false;
-  std::getline(_ifs, _current_sequence_description);
-  ++_line;
-  _col = 0;
-  _nb_nucl = _nb_valid_nucl = 0;
+
+// Template instanciations (must be instantiated before being used...)
+
+template <DNAFileReader::Format>
+bool _isStartSymbol(char c);
+
+template <>
+bool _isStartSymbol<DNAFileReader::FASTA_FORMAT>(char c) {
+  return ((c == '>') || (c == ';'));
 }
 
+template <>
+bool _isStartSymbol<DNAFileReader::FASTQ_FORMAT>(char c) {
+  return (c == '@');
+}
+
+#ifndef __UNUSED__
+#  define __UNUSED__(x)
+#endif
+
+template <DNAFileReader::Format>
+bool _isStartComment(char __UNUSED__(c)) {
+  return false;
+}
+
+template <>
+bool _isStartComment<DNAFileReader::FASTA_FORMAT>(char c) {
+  return (c == ';');
+}
+
+template<DNAFileReader::Format fmt>
+string start_symbols;
+
+template<>
+string start_symbols<DNAFileReader::FASTA_FORMAT> = ">'";
+
+template<>
+string start_symbols<DNAFileReader::FASTQ_FORMAT> = "@";
+
+template <DNAFileReader::Format>
+bool _isEndOfNucleotideSequence(size_t col, char c);
+
+template <>
+bool _isEndOfNucleotideSequence<DNAFileReader::FASTA_FORMAT>(size_t col, char c) {
+  return ((col == 1) && _isStartSymbol<DNAFileReader::FASTA_FORMAT>(c));
+}
+
+template <>
+bool _isEndOfNucleotideSequence<DNAFileReader::FASTQ_FORMAT>(size_t col, char c) {
+  return ((col == 1) && (c == '+'));
+}
+
+template<DNAFileReader::Format fmt>
 bool DNAFileReader::_parseSequenceDescription() {
   int c = _nextVisibleCharacter();
   if (c) {
     if (_col == 1) {
-      const string &opening_chars = _sequenceStartSymbols();
       if (c != 0) {
-        if (opening_chars.find(c) != string::npos) {
+        if (_isStartSymbol<fmt>(c)) {
           _processSequenceDescription();
         } else {
           ERROR_MSG("Badly formatted file. Character '" << (char) c << "'" << " found while expecting "
-                    << ((opening_chars.size() == 1) ? "'" : "one of '") << opening_chars << "'.");
+                    << ((start_symbols<fmt>.size() == 1) ? "'" : "one of '")
+                    << start_symbols<fmt> << "'.");
         }
       } else {
         ERROR_MSG("Badly formatted file. End of file found while expecting "
-                    << ((opening_chars.size() == 1) ? "'" : "one of '") << opening_chars << "'.");
+                  << ((start_symbols<fmt>.size() == 1) ? "'" : "one of '")
+                  << start_symbols<fmt> << "'.");
       }
     } else {
       ERROR_MSG("Badly formatted file. Unexpected character '" << (char) c << "'.");
     }
   }
   return c; // (c != '\0') => Correct Header
+}
+
+template <>
+void DNAFileReader::_parseEndOfNucleotideSequence<DNAFileReader::FASTA_FORMAT>() {
+  _ifs.unget();
+  assert(_col > 0);
+  --_col;
+}
+
+template <>
+void DNAFileReader::_parseEndOfNucleotideSequence<DNAFileReader::FASTQ_FORMAT>() {
+  // Handle the separator line between nucleotides and quality
+  // symbols.
+  string description;
+  getline(_ifs, description);
+  ++_line;
+  _col = 0;
+  if (!description.empty() && (description != _current_sequence_description)) {
+    WARNING_MSG("Badly formatted file. The description following the '+' sign (" << description << ") is not the expected one (" << _current_sequence_description << ").");
+  }
+
+  // Now gobble the quality
+  int c = -1;
+  size_t nb = _nb_nucl;
+  while (c && nb--) {
+    c = _nextVisibleCharacter();
+  }
+  if (!c) {
+    ERROR_MSG("Badly formatted file. End of file found while " << nb << " quality symbols were still expected.");
+  }
+}
+
+template <DNAFileReader::Format fmt>
+void DNAFileReader::_parse() {
+  bool ok;
+
+  if (_start_sequence_state) {
+    ok = _parseSequenceDescription<fmt>();
+  } else {
+    do {
+      int c = _nextVisibleCharacter();
+      if (c) {
+        IUPAC nucl = toIUPAC(c);
+        switch (nucl) {
+        case IUPAC_A:
+        case IUPAC_C:
+        case IUPAC_G:
+        case IUPAC_T:
+          c = toupper(c);
+          if (_nb_valid_nucl >= _settings.k()) {
+            for (size_t i = 1; i < _settings.k(); ++i) {
+              _kmer[i - 1] = _kmer[i];
+            }
+            _kmer[_settings.k() - 1] = c;
+          } else {
+            _kmer[_nb_valid_nucl] = c;
+          }
+          ++_nb_nucl;
+          ++_nb_valid_nucl;
+          ok = (_nb_valid_nucl >= _settings.k());
+          break;
+        case IUPAC_GAP:
+          // ignore gaps
+          ok = false;
+          break;
+        case IUPAC_UNDEFINED:
+          if (_isEndOfNucleotideSequence<fmt>(_col, c)) {
+            _parseEndOfNucleotideSequence<fmt>();
+            _start_sequence_state = true;
+            _nb_valid_nucl = 0;
+            ok = true;
+          } else {
+            if (_isStartComment<fmt>(c)) {
+              _ifs.ignore(numeric_limits<streamsize>::max(), '\n');
+              ++_line;
+              _col = 0;
+            } else {
+              WARNING_MSG("Badly formatted file. Unexpected character '" << (char) c << "'.");
+            }
+          }
+          break;
+        default:
+          // This is a degeneracy symbol
+          ++_nb_nucl;
+          _nb_valid_nucl = 0;
+          }
+      } else {
+        assert(!*this);
+        ok = false;
+        _nb_nucl = _nb_valid_nucl = 0;
+      }
+    } while (*this && !ok);
+  }
+  assert(ok xor !*this);
+}
+
+
+
+DNAFileReader::DNAFileReader(const Settings &settings, const string &filename):
+  FileReader(settings)
+{
+  open(filename);
+}
+
+void DNAFileReader::_onOpen() {
+  _format = UNDEFINED_FORMAT;
+  _parse_mth = NULL;
+  if (!_ifs) return;
+  char c = _nextVisibleCharacter();
+  if (_isStartSymbol<FASTA_FORMAT>(c)) {
+    _format = FASTA_FORMAT;
+    _parse_mth = &DNAFileReader::_parse<FASTA_FORMAT>;
+  } else if (_isStartSymbol<FASTQ_FORMAT>(c)) {
+    _format = FASTQ_FORMAT;
+    _parse_mth = &DNAFileReader::_parse<FASTQ_FORMAT>;
+  }
+  if (_format != UNDEFINED_FORMAT) {
+    _ifs.unget();
+    assert(_col > 0);
+    --_col;
+  } else {
+    ERROR_MSG("Unable to detect the file format. Character '" << (char) c << "'"
+              << " found while expecting either a '@' for fastq file or one of '>' or ';' for fasta file.");
+  }
+}
+
+void DNAFileReader::_onClose() {
+  _format = UNDEFINED_FORMAT;
+}
+
+void DNAFileReader::_onReset() {
+  _start_sequence_state = true;
+  _nb_nucl = _nb_valid_nucl = 0;
+  _current_sequence_description = "";
+  _kmer = string(_settings.k(), '?');
+}
+
+void DNAFileReader::_processSequenceDescription() {
+  _start_sequence_state = false;
+  getline(_ifs, _current_sequence_description);
+  ++_line;
+  _col = 0;
+  _nb_nucl = _nb_valid_nucl = 0;
 }
 
 const string &DNAFileReader::getCurrentKmer() const {
@@ -194,16 +395,24 @@ const string &DNAFileReader::getCurrentKmer() const {
 
 const string &DNAFileReader::getNextKmer() {
   do {
-    _parse();
+    (this->*_parse_mth)();
   } while (*this && (_nb_valid_nucl < _settings.k()));
   return getCurrentKmer();
 }
 
 const string &DNAFileReader::getForwardKmer(size_t p, bool check_consistency) {
+  if (!*this) return getCurrentKmer();
+  if (getCurrentKmerRelativePosition() == (size_t) -1) {
+    assert(_nb_nucl == 0);
+    assert(_nb_valid_nucl == 0);
+    // The sequence description war already processed, but no k-mer is
+    // currently loaded.
+    (this->*_parse_mth)();
+  }
   assert(p >= getCurrentKmerRelativePosition());
   if (check_consistency || (_nb_valid_nucl > p)) {
     while (*this && !_start_sequence_state && (getCurrentKmerRelativePosition() < p)) {
-      _parse();
+      (this->*_parse_mth)();
     }
   } else {
     assert(p >= _nb_valid_nucl);
@@ -212,31 +421,55 @@ const string &DNAFileReader::getForwardKmer(size_t p, bool check_consistency) {
     }
     if (*this) {
       assert((_nb_valid_nucl + 1) == p);
-      _parse();
+      (this->*_parse_mth)();
     }
   }
   return getCurrentKmer();
 }
 
-bool DNAFileReader::gotoNextSequence(bool check_consistency) {
+template <DNAFileReader::Format fmt>
+bool DNAFileReader::_gotoNextSequence(bool check_consistency) {
   bool found = false;
   if (check_consistency) {
     while (*this && !_start_sequence_state) {
-      _parse();
+      _parse<fmt>();
     }
     if (*this) {
-      found = _parseSequenceDescription();
+      found = _parseSequenceDescription<fmt>();
     }
   } else {
     while (*this && !found) {
       int c = _nextVisibleCharacter();
-      if ((_col == 1) and (_sequenceStartSymbols().find(c) != string::npos)) {
+      if ((_col == 1) and _isStartSymbol<fmt>(c)) {
         _processSequenceDescription();
         found = true;
       }
     }
   }
   return found;
+}
+
+bool DNAFileReader::gotoNextSequence(bool check_consistency) {
+  switch (_format) {
+  case FASTA_FORMAT: return _gotoNextSequence<FASTA_FORMAT>(check_consistency);
+  case FASTQ_FORMAT: return _gotoNextSequence<FASTQ_FORMAT>(check_consistency);
+  default: return false;
+  }
+}
+
+ostream &operator<<(ostream &os, DNAFileReader::Format fmt) {
+  switch (fmt) {
+  case DNAFileReader::FASTA_FORMAT:
+    os << "Fasta";
+    break;
+  case DNAFileReader::FASTQ_FORMAT:
+    os << "Fastq";
+    break;
+  default:
+    os << "Undefined";
+    break;
+  }
+  return os;
 }
 
 END_KIM_NAMESPACE
