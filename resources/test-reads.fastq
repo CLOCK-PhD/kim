@@ -10,10 +10,10 @@ BB@BAA>ABBBB&B@@BB90
 CCAGTcagcatcagcAGCAT
 +
 BB@BAA>ABBBB&B@@BB90
-@Sequence 4 of length 118 (from line 13 to line 16), nucleotide sequence contains some 'N' symbols (at position 10 and from position 41 to 50, one line for nucleotide sequence and 1 line for quality sequence
-ACCAGTTAANAAATTATAAGACTTTAGCGGCATCGATTACANNNNNNNNNNAGGCCGAAGCACTGTTACGCGTTCTCGATCGGGCCTTACCTTTACGGCTGAACTGGGCGGATTACGT
+@Sequence 4 of length 117 (from line 13 to line 16), nucleotide sequence contains some 'N' symbols (at position 10 and from position 41 to 50, one line for nucleotide sequence and 1 line for quality sequence
+ACCAGTTAANAAATTATAAGACTTTGCGGCATCGATTACANNNNNNNNNNAGGCCGAAGCACTGTTACGCGTTCTCGATCGGGCCTTACCTTTACGGCTGAACTGGGCGGATTACGT
 +
-BB@BAA>ABBBB&B@@BB9==AAA2@BBB@B<<7777766*0000%0...444444444<;888888882226444002///%-&,&,0000'0----------***))))*******
+BB@BAA>ABBBB&B@@BB9==AAA2@BB@B<<7777766*0000%0...444444444<;888888882226444002///%-&,&,0000'0----------***))))*******
 @Sequence 5 of length 80 (from line 17 to line 20), nucleotide sequence contains all degeneracy symbols: puRines (A or G), pYrimidines (C or T/U), Ketones (G or T/U), Amino groups (A or C), Strong interactions (C or G), Weak interactions (A or T/U), all but A (B comes after A), all but C (D comes after C), all but G (H comes after G), all but T/U (V comes after T and U), aNy (A or C or G or T/U). They are located at positions 20-25, 40-43 and 60.
 ATTTGTCTTCACAAAGGAGRYKMSWGCAACCAGCGGATTBDHVGGCGTGGGGAATCTCTNCGGCTGATGCGCGGCTATGC
 +
