@@ -121,17 +121,53 @@ namespace kim {
    */
   class FileReader {
 
+  public:
+
+    /**
+     * A simple structure that stores essential informations to save a
+     * file state on some position and allows to restore the file
+     * reader to the correct state.
+     *
+     * \remark Any change in the file may invalidate the informations
+     * stored in a FileState variable.
+     */
+    struct FileState {
+
+      /**
+       * The name of the current processed file.
+       */
+      std::string filename;
+
+      /**
+       * The line number corresponding to the pos file offset.
+       */
+      size_t line;
+
+      /**
+       * The column number corresponding to the pos file offset.
+       */
+      size_t column;
+
+      /**
+       * The input stream offset (from the beginning).
+       */
+      std::ifstream::pos_type pos;
+
+    };
+
+    /**
+     * Emit warnings (or not) while reading file.
+     */
+    bool warn;
+
+  private:
+
+    /**
+     * The current file state.
+     */
+    FileState _state;
+
   protected:
-
-    /**
-     * k-mer identification metric program settings.
-     */
-    const Settings &_settings;
-
-    /**
-     * The name of the current processed file.
-     */
-    std::string _filename;
 
     /**
      * Thus current input stream associated to the current processed
@@ -140,13 +176,15 @@ namespace kim {
     std::ifstream _ifs;
 
     /**
-     * Current line number of the current processed file.
+     * Since some derived class may want to extend the file state
+     * properties, the current file state is only accessible through a
+     * protected member that can be overriden f necessary.
+     *
+     * \return Return the current file reader state.
      */
-    size_t _line;
-    /**
-     * Current column number of the current processed file.
-     */
-    size_t _col;
+    inline virtual FileState &_getState() {
+      return _state;
+    }
 
     /**
      * The hook method called at the end of open().
@@ -199,13 +237,13 @@ namespace kim {
     /**
      * Creates a file reader with no associated file.
      *
-     * \param settings The k-mer identification metric program
-     * settings.
-     *
      * \param filename The name of the file to read (calls open()
      * method except if filename is empty).
+     *
+     * \param warn Emit warnings (or not) while reading the file
+     * (default is to emit warnings).
      */
-    FileReader(const Settings &settings, const std::string &filename = "");
+    FileReader(const std::string &filename = "", bool warn = true);
 
     /**
      * Closes the file stream before destruction.
@@ -218,7 +256,7 @@ namespace kim {
      * \return Returns the associated filename.
      */
     inline const std::string &getFilename() const {
-      return _filename;
+      return getState().filename;
     }
 
     /**
@@ -253,7 +291,7 @@ namespace kim {
      * 0 if no file is opened.
      */
     inline size_t getFileLineNumber() const {
-      return _ifs.is_open() ? _line + 1 : 0;
+      return _ifs.is_open() ? getState().line + 1 : 0;
     }
 
     /**
@@ -263,7 +301,30 @@ namespace kim {
      * or 0 if no file is opened.
      */
     inline size_t getFileColumnNumber() const {
-      return _ifs.is_open() ? _col + 1 : 0;
+      return _ifs.is_open() ? getState().column + 1 : 0;
+    }
+
+    /**
+     * Restore this file reader to the given state.
+     *
+     * If the current file differs from the file defined in the state
+     * parameter, then the current file is closed and the file defined
+     * in the state parameter is opened.
+     *
+     * \param s State of the file reader to restore.
+     *
+     * \return Returns true if the file reader state is correctly
+     * restored and false otherwise.
+     */
+    virtual bool setState(const FileState &s);
+
+    /**
+     * Get the current file reader state.
+     *
+     * \return Returns the current state if the file reader.
+     */
+    inline virtual const FileState &getState() const {
+      return _state;
     }
 
     /**

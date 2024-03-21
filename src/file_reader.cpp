@@ -109,14 +109,14 @@ FileReaderParseError::FileReaderParseError(FileReader &reader):
           << ": ";
 }
 
-#define WARNING_MSG(msg)          \
-  if (_settings.warn()) {         \
-    cerr << "Warning:"            \
-         << _filename << ":"      \
-         << (_line + 1) << ":"    \
-         << _col << ": "          \
-         << msg << endl;          \
-  }                               \
+#define WARNING_MSG(msg)                        \
+  if (warn) {                                   \
+    cerr << "Warning:"                          \
+         << getFilename() << ":"                \
+         << getFileLineNumber() << ":"          \
+         << getFileColumnNumber() << ": "       \
+         << msg << endl;                        \
+  }                                             \
   (void) 0
 
 #define ERROR_MSG(msg)                          \
@@ -126,8 +126,7 @@ FileReaderParseError::FileReaderParseError(FileReader &reader):
     throw error;                                \
   } while (0)
 
-FileReader::FileReader(const Settings &settings, const string &filename): _settings(settings) {
-  assert(settings.valid());
+FileReader::FileReader(const string &filename, bool warn): warn(warn) {
   if (!filename.empty()){
     open(filename);
   }
@@ -139,11 +138,12 @@ FileReader::~FileReader() {
 
 void FileReader::open(const string &filename) {
   close();
-  _filename = filename;
-  _ifs.open(_filename.c_str());
+  FileState &current_state = _getState();
+  current_state.filename = filename;
+  _ifs.open(current_state.filename.c_str());
   if (!*this) {
-    _filename = "";
-    if (_settings.warn()) {
+    current_state.filename = "";
+    if (warn) {
       cerr << "Unable to open file '" << filename << "'." << endl;
     }
   }
@@ -154,7 +154,7 @@ void FileReader::close() {
   if (_ifs.is_open()) {
     _ifs.close();
   }
-  _filename = "";
+  _getState().filename = "";
   reset();
   _onClose();
 }
@@ -164,21 +164,44 @@ void FileReader::reset() {
   if (_ifs) {
     _ifs.seekg(0);
   }
-  _line = _col = 0;
+  FileState &current_state = _getState();
+  current_state.pos = _ifs.tellg();
+  current_state.line = current_state.column = 0;
   _onReset();
+}
+
+bool FileReader::setState(const FileState &s) {
+  bool ok = true;
+  FileState &current_state = _getState();
+  if (s.filename != current_state.filename) {
+    close();
+    if (!s.filename.empty()) {
+      open(s.filename);
+    }
+  }
+  ok = (s.filename == current_state.filename);
+  if (ok) {
+    _ifs.clear();
+    current_state.line = s.line;
+    current_state.column = s.column;
+    _ifs.seekg(s.pos);
+    current_state.pos = _ifs.tellg();
+  }
+  return ok;
 }
 
 char FileReader::_nextVisibleCharacter() {
   int c = -1;
+  FileState &current_state = _getState();
   while (*this && ((c = _ifs.get()) <= 32)) {
     switch (c) {
     case '\t':
     case ' ':
-      ++_col;
+      ++current_state.column;
       break;
     case '\n':
-      ++_line;
-      _col = 0;
+      ++current_state.line;
+      current_state.column = 0;
       break;
     default:
       if (*this) {
@@ -186,19 +209,19 @@ char FileReader::_nextVisibleCharacter() {
       }
     }
   }
-  ++_col;
+  ++current_state.column;
   return ((c != -1) ? c : 0);
 }
 
 const char *FileReader::_search_directories[] = {
-                                                      "./",
-                                                      PACKAGE_DATADIR "/",
-                                                      /* The following directories are mostly for development purpose */
-                                                      "resources/",
-                                                      "../resources/",
-                                                      "../",
-                                                      /* The last array entry must be NULL */
-                                                      NULL
+                                                 "./",
+                                                 PACKAGE_DATADIR "/",
+                                                 /* The following directories are mostly for development purpose */
+                                                 "resources/",
+                                                 "../resources/",
+                                                 "../",
+                                                 /* The last array entry must be NULL */
+                                                 NULL
 };
 
 string FileReader::findFile(const string &filename, const char **directories) {

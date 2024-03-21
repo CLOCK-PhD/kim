@@ -500,10 +500,10 @@ int main(int argc, char **argv) {
         if (settings.warn()) {
           cerr << "Processing file '" << opts.parse.nonOption(i) << "'" << endl;
         }
-        DNAFileReader reader(settings, opts.parse.nonOption(i));
+        DNAFileReader reader(settings.k(), opts.parse.nonOption(i), settings.warn());
 
         // Process each k-mer from the current input file
-        for (string kmer = reader.getNextKmer(); !kmer.empty(); kmer = reader.getNextKmer()) {
+        for (string kmer = reader.getNextKmer(true /* skip degenerate */); !kmer.empty(); kmer = reader.getNextKmer(true /* skip degenerate */)) {
           // cerr << "K-mer : '" << kmer << "'" << endl;
           list<KmerVariantEdgesSubindex::KmerVariantAssociation> assoc_variant = kim_index.search(kmer);
           // cerr << "assoc_variant size is " << assoc_variant.size() << endl;
