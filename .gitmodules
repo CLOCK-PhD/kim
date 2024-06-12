@@ -1,3 +1,9 @@
 [submodule "BitMagic"]
-	path = BitMagic
+	path = external/BitMagic
 	url = https://github.com/tlk00/BitMagic.git
+[submodule "external/htslib"]
+	path = external/htslib
+	url = https://github.com/samtools/htslib.git
+[submodule "external/vcfpp"]
+	path = external/vcfpp
+	url = https://github.com/Zilong-Li/vcfpp.git

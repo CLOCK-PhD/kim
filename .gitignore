@@ -14,7 +14,7 @@ doc/doxygen.cfg
 packaging/control
 packaging/postinst
 packaging/prerm
-packaging/libkim*.pc
+packaging/kim*.pc
 
 src/.deps
 src/kim
@@ -52,4 +52,4 @@ Makefile
 *.gcda
 *.gcno
 
-
+.bash_history

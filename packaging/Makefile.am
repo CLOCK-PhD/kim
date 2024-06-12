@@ -87,22 +87,37 @@
 #                                                                             #
 ###############################################################################
 
-#EXTRA_DIST= control.in @LIBNAME@-@PACKAGE_VERSION@.pc.in
+
+########################
+# Global configuration #
+########################
+
+#EXTRA_DIST= control.in @PACKAGE@-@PACKAGE_VERSION@.pc.in
+
+
+######################
+# pkgconfig handling #
+######################
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = @LIBNAME@-@PACKAGE_VERSION@.pc
+pkgconfig_DATA = @PACKAGE@-@PACKAGE_VERSION@.pc
 
-@LIBNAME@-@PACKAGE_VERSION@.pc: @LIBNAME@.pc
+@PACKAGE@-@PACKAGE_VERSION@.pc: @PACKAGE@.pc
 	$(AM_V_at)cp "$^" "$@"
 
 install-data-hook:
-	$(LN_S) -f @LIBNAME@-@VERSION@.pc "$(DESTDIR)$(pkgconfigdir)/@LIBNAME@.pc"
+	$(LN_S) -f @PACKAGE@-@VERSION@.pc "$(DESTDIR)$(pkgconfigdir)/@PACKAGE@.pc"
 
 uninstall-hook:
-	$(AM_V_at)test "`readlink "$(DESTDIR)$(pkgconfigdir)/@LIBNAME@.pc"`" != @LIBNAME@-@VERSION@.pc \
-        || $(RM) "$(DESTDIR)$(pkgconfigdir)/@LIBNAME@.pc"
+	$(AM_V_at)test "`readlink "$(DESTDIR)$(pkgconfigdir)/@PACKAGE@.pc"`" != @PACKAGE@-@VERSION@.pc \
+        || $(RM) "$(DESTDIR)$(pkgconfigdir)/@PACKAGE@.pc"
+
+
+####################
+# Cleaning targets #
+####################
 
 MOSTLYCLEANFILES=*~
 CLEANFILES=*~
-DISTCLEANFILES=*~ control @LIBNAME@-@PACKAGE_VERSION@.pc
+DISTCLEANFILES=*~ control @PACKAGE@-@PACKAGE_VERSION@.pc
 MAINTAINERCLEANFILES=*~

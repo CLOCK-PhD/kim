@@ -1,36 +1,28 @@
+#!/bin/sh
 ###############################################################################
 #                                                                             #
-#  Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM                           #
-#                           (Institut de Génétique Humaine /                  #
-#                           Laboratoire d'Informatique, de Robotique et de    #
+#  Copyright © 2024      -- LIRMM/CNRS/UM                                     #
+#                           (Laboratoire d'Informatique, de Robotique et de   #
 #                           Microélectronique de Montpellier /                #
 #                           Centre National de la Recherche Scientifique /    #
 #                           Université de Montpellier)                        #
 #                                                                             #
-#                                                                             #
-#  Auteurs/Authors:                                                           #
-#    - Rémy COSTA       <remy.costa@igh.cnrs.fr>                              #
-#    - William RITCHIE  <william.ritchie@igh.cnrs.fr>                         #
-#    - Alban MANCHERON  <alban.mancheron@lirmm.fr>                            #
-#                                                                             #
+#  Auteurs/Authors: Alban MANCHERON  <alban.mancheron@lirmm.fr>               #
 #                                                                             #
 #  Programmeurs/Programmers:                                                  #
-#    - Rémy COSTA       <remy.costa@igh.cnrs.fr>                              #
-#    - Alban MANCHERON  <alban.mancheron@lirmm.fr>                            #
-#                                                                             #
-#                                                                             #
-#  Contact:                                                                   #
-#    - KIM list         <kim@lirmm.fr>                                        #
+#                   Alban MANCHERON  <alban.mancheron@lirmm.fr>               #
 #                                                                             #
 #  -------------------------------------------------------------------------  #
 #                                                                             #
-#  Ce logiciel  est un  programme informatique  permettant  d'identifier des  #
-#  variations génomiques à partir de données brutes de séquençage.            #
+#  Ce fichier fait partie de la librairie Sphinx++.                           #
 #                                                                             #
-#  Ce logiciel est régi par la  licence CeCILL  soumise au droit français et  #
+#  La librairie  Sphinx++  permet de faciliter la gestion de plugins dans un  #
+#  programme écrit en C++.                                                    #
+#                                                                             #
+#  Ce logiciel est régi par la licence CeCILL-C soumise au droit français et  #
 #  respectant les principes  de diffusion des logiciels libres.  Vous pouvez  #
 #  utiliser, modifier et/ou redistribuer ce programme sous les conditions de  #
-#  la licence CeCILL telle que diffusée par  le CEA,  le CNRS et l'INRIA sur  #
+#  la licence CeCILL-C telle que diffusée par le CEA, le CNRS et l'INRIA sur  #
 #  le site "http://www.cecill.info".                                          #
 #                                                                             #
 #  En contrepartie de l'accessibilité au code source et des droits de copie,  #
@@ -40,28 +32,30 @@
 #  titulaire des droits patrimoniaux et les concédants successifs.            #
 #                                                                             #
 #  À  cet égard  l'attention de  l'utilisateur est  attirée sur  les risques  #
-#  associés au   chargement, à   l'utilisation, à  la modification  et/ou au  #
-#  développement et   à la reproduction du  logiciel par l'utilisateur étant  #
+#  associés  au chargement,  à  l'utilisation,  à  la modification  et/ou au  #
+#  développement  et à la reproduction du  logiciel par  l'utilisateur étant  #
 #  donné  sa spécificité  de logiciel libre,  qui peut le rendre  complexe à  #
 #  manipuler et qui le réserve donc à des développeurs et des professionnels  #
 #  avertis  possédant  des  connaissances  informatiques  approfondies.  Les  #
-#  utilisateurs sont   donc invités   à charger   et tester  l'adéquation du  #
-#  logiciel à   leurs besoins  dans des  conditions permettant  d'assurer la  #
-#  sécurité de leurs systèmes et ou de leurs données et, plus  généralement,  #
+#  utilisateurs  sont donc  invités  à  charger  et  tester  l'adéquation du  #
+#  logiciel  à leurs besoins  dans des conditions  permettant  d'assurer  la  #
+#  sécurité de leurs systêmes et ou de leurs données et,  plus généralement,  #
 #  à l'utiliser et l'exploiter dans les mêmes conditions de sécurité.         #
 #                                                                             #
-#  Le fait que   vous puissiez accéder à cet  en-tête signifie que vous avez  #
-#  pris connaissance de la licence CeCILL,   et que vous en avez accepté les  #
+#  Le fait  que vous puissiez accéder  à cet en-tête signifie  que vous avez  #
+#  pris connaissance de la licence CeCILL-C, et que vous en avez accepté les  #
 #  termes.                                                                    #
 #                                                                             #
 #  -------------------------------------------------------------------------  #
 #                                                                             #
-#  This software is a computer program whose purpose is to indentify genomic  #
-#  from raw sequencing data.                                                  #
+#  This file is part of the Sphinx++ library.                                 #
 #                                                                             #
-#  This software is governed by the CeCILL license under French law and       #
+#  The Sphinx++ library makes easy the handling of plugins in C++ writen      #
+#  programs.                                                                  #
+#                                                                             #
+#  This software is governed by the CeCILL-C license under French law and     #
 #  abiding by the rules of distribution of free software. You can use,        #
-#  modify and/ or redistribute the software under the terms of the CeCILL     #
+#  modify and/ or redistribute the software under the terms of the CeCILL-C   #
 #  license as circulated by CEA, CNRS and INRIA at the following URL          #
 #  "http://www.cecill.info".                                                  #
 #                                                                             #
@@ -83,91 +77,83 @@
 #  conditions as regards security.                                            #
 #                                                                             #
 #  The fact that you are presently reading this means that you have had       #
-#  knowledge of the CeCILL license and that you accept its terms.             #
+#  knowledge of the CeCILL-C license and that you accept its terms.           #
 #                                                                             #
 ###############################################################################
 
+set -eup
 
-########################
-# Global configuration #
-########################
+PROG_NAME=$(basename $0)
+CURRENT_DIR=$(dirname $0)
+TOP_SRCDIR=$(dirname ${CURRENT_DIR})
 
-@DX_RULES@
+cd "${TOP_SRCDIR}"
 
-EXTRA_DATA = \
-	$(DX_CLEAN_HTML) \
-	$(DX_CLEAN_CHM) \
-	$(DX_CLEAN_CHI) \
-	$(DX_CLEAN_RTF) \
-	$(DX_CLEAN_XML) \
-	$(DX_CLEAN_PS) \
-	$(DX_CLEAN_PDF)
-
-doxygen-doc:
-
-all-local: doxygen-doc
-
-#############
-# Man pages #
-#############
-
-if BUILD_DOC_MAN
-
-man3_MANS = @DX_DOCDIR@/man/man3/kim_*
-
-$(man3_MANS): doxygen-doc
-
-endif
+# fix-timestamp.sh: prevents useless rebuilds after "cvs update", "git
+# clone", ...
+#
+# The script is merely inspired by
+# https://www.gnu.org/software/automake/manual/html_node/CVS.html
+#
+# It has been adapted to accept other autoconf managed projects
+# included in subdirectories (like libraries).
 
 
-########
-# HTML #
-########
+# The timestamps must be set according the following dependy graph:
+# [source: https://www.gnu.org/savannah-checkouts/gnu/autoconf/manual/autoconf-2.71/html_node/Making-configure-Scripts.html]
+#
+#   configure.ac --.
+#                  +--> automake* --> Makefile.in
+#   Makefile.am ---'
+#
+#
+#   [acinclude.m4] -------.
+#                         |
+#   [local macros] -------+--> aclocal* --> aclocal.m4
+#                         |
+#   configure.{ac,in] ----'
+#
+#
+#   configure.{ac,in] --.
+#                       |   .------> autoconf* -----> configure
+#   [aclocal.m4] -------+---+
+#                       |   `-----> [autoheader*] --> [config.h.in]
+#   [acsite.m4] --------'
+#
 
-install-data-hook: $(EXTRA_DATA)
-	@$(NORMAL_INSTALL)
-	$(AM_V_at)test -n "$(docdir)" || exit 1
-	$(AM_V_at)for p in $(EXTRA_DATA); do \
-	  if test -f "$$p"; then \
-	    dirname "$$p"; \
-	  else \
-	    find "$$p" -type d -print; \
-	  fi; \
-	done | $(SED) 's,^$(DX_DOCDIR),,' | \
-	while read dest; do \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(docdir)/$$dest'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(docdir)/$$dest" || exit 1; \
-	done
-	$(AM_V_at)list='$(EXTRA_DATA)'; \
-	for p in $$list; do \
-	  if test -f "$$p"; then \
-	    echo "$$p"; \
-	  else \
-	    find "$$p" -type f -print; \
-	  fi; \
-	done | \
-	while read file; do \
-	  dest="$(DESTDIR)$(docdir)/$$(dirname "$${file#$(DX_DOCDIR)/}")"; \
-	  echo " $(INSTALL_DATA) '$$file' '$$dest'"; \
-	  $(INSTALL_DATA) "$$file" "$$dest" || exit $$?; \
-	done
+# Everything starts with the configure.{ac,in} script(s), the
+# (auto)makefile template(s) and the acinclude.m4 and local macros
+# (expected to be stored in a m4/ directory)
+find . \( \
+     -iname "configure.ac" \
+     -o -name "configure.in" \
+     -o -iname "makefile.am" \
+     -o -iname "acinclude.m4" \
+     -o -ipath "*/m4/*.m4" \
+     \) \
+     -exec touch "{}" \;
 
-uninstall-hook:
-	@$(NORMAL_UNINSTALL)
-	$(AM_V_at)list='$(EXTRA_DATA)'; test -n "$(docdir)" || list=; \
-	files=`for p in $$list; do echo "$$p"; done | sed -e 's|^.*/||'`; \
-	dir='$(DESTDIR)$(docdir)'; \
-	test -z "$$files" \
-	|| { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
-	|| { echo " ( cd '$$dir' && rm -rf" $$files ")"; \
-	         $(am__cd) "$$dir" && rm -rf $$files; }
+sleep 1 # To be sure that the next touched files have a posterior
+        # timestamp.
 
+# aclocal-generated aclocal.m4 depends on locally-installed '.m4'
+# macro files, the acinclude.m4 file as well as on 'configure.{ac,in}'
+find . -iname "aclocal.m4" -exec touch "{}" \;
 
-####################
-# Cleaning targets #
-####################
+sleep 1 # To be sure that the next touched files have a posterior
+        # timestamp.
 
-MOSTLYCLEANFILES=*~ $(DX_CLEANFILES)
-CLEANFILES=*~
-DISTCLEANFILES=*~
-MAINTAINERCLEANFILES=*~
+# autoconf-generated configure depends on aclocal.m4 and on
+# configure.{ac,in}
+find . -iname "configure" -exec touch "{}" \;
+
+# so does autoheader-generated config.h.in
+find . -iname "config.h.in" -exec touch "{}" \;
+
+# and all the automake-generated Makefile.in files
+find . -iname "makefile.in" -exec touch "{}" \;
+
+# Finally, the makeinfo-generated '.info' files depend on the
+# corresponding '.texi' files (if any).
+find . -ipath "*/doc/*.info" -exec touch "{}" \;
+

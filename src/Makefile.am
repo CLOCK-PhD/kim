@@ -144,7 +144,7 @@ libkim_la_config_DATA = $(CONFIG_HEADER)
 libkim_la_LDFLAGS     = -version-info "@LIB_VERSION@" $(AM_LDFLAGS)
 
 bin_PROGRAMS = kim
-kim_SOURCES  = kim.h kim.cpp optionparser.h
+kim_SOURCES  = kim.h kim.cpp
 kim_LDADD    = libkim.la
 
 install-data-hook:

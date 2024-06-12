@@ -85,7 +85,15 @@ dnl
 dnl The fact that you are presently reading this means that you have had
 dnl knowledge of the CeCILL license and that you accept its terms.
 
-AC_PREREQ([2.69])
+AC_PREREQ([2.70])
+
+
+dnl ###########################################################################
+dnl #                           Project Informations                          #
+dnl ###########################################################################
+
+
+dnl ============================ Project Settings =============================
 
 m4_define([VERSION_MAJOR], [m4_esyscmd_s([./config/git-version-gen | sed 's,^[^0-9]*\([0-9]*\)\.\([0-9]*\)\.\(.*\)$,\1,'])])
 m4_define([VERSION_MINOR], [m4_esyscmd_s([./config/git-version-gen | sed 's,^[^0-9]*\([0-9]*\)\.\([0-9]*\)\.\(.*\)$,\2,'])])
@@ -97,12 +105,32 @@ AC_INIT([kim],
         [kim],
         [https://github.com/CLOCK-PhD/kim])
 
+PACKAGE_PRETTY_NAME="k-mer Identification Metric."
+AC_SUBST([PACKAGE_PRETTY_NAME])
+AC_DEFINE_UNQUOTED([PACKAGE_PRETTY_NAME], ["${PACKAGE_PRETTY_NAME}"], [Define to this package "pretty" name.])
+
 PACKAGE_DESCRIPTION="Kim is a k-mer identification metric program."
 AC_SUBST([PACKAGE_DESCRIPTION])
-AC_DEFINE_UNQUOTED([PACKAGE_DESCRIPTION], ["${PACKAGE_DESCRIPTION}"], [Description of this package.])
+AC_DEFINE_UNQUOTED([PACKAGE_DESCRIPTION], ["${PACKAGE_DESCRIPTION}"], [Define to this package description.])
+
+PACKAGE_AUTHORS="Remy COSTA <remy.costa@igh.cnrs.fr>, William RITCHIE <william.ritchie@igh.cnrs.fr> and Alban MANCHERON  <alban.mancheron@lirmm.fr>"
+AC_SUBST([PACKAGE_AUTHORS])
+AC_DEFINE_UNQUOTED([PACKAGE_AUTHORS], ["${PACKAGE_AUTHORS}"], [Define to this package author(s).])
+
+PACKAGE_LICENCE="CeCILL Licence"
+AC_SUBST([PACKAGE_LICENCE])
+AC_DEFINE_UNQUOTED([PACKAGE_LICENCE], ["${PACKAGE_LICENCE}"], [Define to this package licence.])
+
+PACKAGE_COPYRIGHT_DATE="2023-2024"
+AC_SUBST([PACKAGE_COPYRIGHT_DATE])
+AC_DEFINE_UNQUOTED([PACKAGE_COPYRIGHT_DATE], ["${PACKAGE_COPYRIGHT_DATE}"], [Define to this package copyright date.])
+
+PACKAGE_LOGO=""
+AC_SUBST([PACKAGE_LOGO])
+AC_DEFINE_UNQUOTED([PACKAGE_LOGO], ["${PACKAGE_LOGO}"], [Define to this package logo filename.])
+
 AC_DEFINE_UNQUOTED([BEGIN_KIM_NAMESPACE], [namespace kim {], [Starts the kim namespace.])
 AC_DEFINE_UNQUOTED([END_KIM_NAMESPACE], [}], [Ends the kim namespace.])
-
 
 AC_COPYRIGHT([
 ###############################################################################
@@ -197,25 +225,8 @@ AC_COPYRIGHT([
 
 AC_CONFIG_SRCDIR([src/kim.cpp])
 
-m4_define([lib_version], [m4_esyscmd_s([cat ./config/version | grep "^[ ]*LIB_VERSION[ ]*:" | sed 's,^[^:]*:[ ]*\(.*\)$,\1,'])])
-
-LIB_VERSION=lib_version
-
-m4_define([lib_version_ext], [m4_esyscmd_s([cat ./config/version | grep "^[ ]*LIB_VERSION[ ]*:" | sed 's,^[^:]*:[ ]*\(.*\)$,\1,' | tr ':' '.'])])
-
-LIB_VERSION_EXT=lib_version_ext
-
-dnl LIB_VERSION is not the release number.
-dnl Please read libtool documentation about versionning
-
-LIBNAME=lib${PACKAGE_NAME}
-AC_SUBST([LIBNAME])
-AC_SUBST([VERSION])
-AC_SUBST([LIB_VERSION])
-AC_SUBST([LIB_VERSION_EXT])
-AC_DEFINE_UNQUOTED([LIB_VERSION],["${LIB_VERSION_EXT}"],[Libtool version string])
-
 AC_CONFIG_AUX_DIR([config])
+
 dnl create a config.h file (Automake will add -DHAVE_CONFIG_H)
 AC_CONFIG_HEADERS([config/config.h])
 AH_TOP([
@@ -315,48 +326,120 @@ AH_BOTTOM([
 #endif
 ])
 
-
 dnl Every other copy of the package version number gets its value from here
 AM_INIT_AUTOMAKE([foreign no-texinfo.tex])
 AM_SILENT_RULES([yes])
 
-dnl Using libtool
-AC_PROG_LIBTOOL
-
 AC_CONFIG_MACRO_DIR([config/m4])
+
+dnl ========================= End of Project Settings =========================
+
+
+dnl ###########################################################################
+dnl #                Checking System and Configuration Options                #
+dnl ###########################################################################
+
+
+dnl ============================== System check ===============================
 
 AC_CANONICAL_HOST
 
 dnl Checks for programs.
 AC_PROG_INSTALL
+AC_PROG_CPP
 AC_PROG_CC
 AC_PROG_CXX
-AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
-
+AC_PROG_MAKE_SET
+AC_PROG_AWK
+AC_PROG_LN_S
+AC_PROG_EGREP
 AC_PROG_SED
+PKG_PROG_PKG_CONFIG([0.25])
 
 AC_REVISION([m4_esyscmd_s([./config/git-version-gen --timestamp --force-update configure.ac])])
 
-ARCH=`uname -m | sed s/i.86/i386/ | sed s/x86_64/amd64/`
-AC_SUBST(ARCH)
+ARCH=$(uname -m | sed s/i.86/i386/ | sed s/x86_64/amd64/)
+AC_SUBST([ARCH])
 
 AC_PATH_PROG([CLOC], [cloc])
 AM_CONDITIONAL([CLOC], [test -n "${CLOC}"])
 AC_PATH_PROG([OHCOUNT], [ohcount])
 AM_CONDITIONAL([OHCOUNT], [test -n "${OHCOUNT}"])
 AC_PATH_PROG([DEB_BUILDER], [dpkg])
+
+ISODATE=$(date +%Y-%m-%d)
+AC_SUBST([ISODATE])
+
+AC_LANG([C++])
+
+
+dnl Ensure compiler is C++17 compatible
+AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
+
+dnl Force some extra flags if not already present
+AX_APPEND_COMPILE_FLAGS([-Wall -Wextra -pedantic -funroll-loops], [CXXFLAGS])
+
+dnl Using libtool
+LT_INIT
+LT_LANG([C++])
+LT_PATH_LD
+AX_COMPILER_FLAGS_LDFLAGS([EXTRA_LDFLAGS])
+AX_APPEND_LINK_FLAGS([${EXTRA_LDFLAGS}], [LDFLAGS])
+
+dnl =========================== End of System check ===========================
+
+
+
+
+dnl ============================= Library Settings ============================
+
+m4_define([lib_version], [m4_esyscmd_s([cat ./config/version | grep "^[ ]*LIB_VERSION[ ]*:" | sed 's,^[^:]*:[ ]*\(.*\)$,\1,'])])
+
+LIB_VERSION=lib_version
+
+m4_define([lib_version_ext], [m4_esyscmd_s([cat ./config/version | grep "^[ ]*LIB_VERSION[ ]*:" | sed 's,^[^:]*:[ ]*\(.*\)$,\1,' | tr ':' '.'])])
+
+LIB_VERSION_EXT=lib_version_ext
+
+dnl LIB_VERSION is not the release number.
+dnl Please read libtool documentation about versionning
+
+LIBNAME=${PACKAGE_NAME#lib}
+AC_SUBST([LIBNAME])
+AC_SUBST([VERSION])
+AC_SUBST([LIB_VERSION])
+AC_SUBST([LIB_VERSION_EXT])
+AC_DEFINE_UNQUOTED([LIB_VERSION],["${LIB_VERSION_EXT}"],[Libtool version string])
+
+dnl ========================= End of Library Settings =========================
+
+
+
+
+dnl ========================= Release enabled checking ========================
+
 MAKE_RELEASE=true
+
 AS_IF([test -z "${DEB_BUILDER}"],
       [MAKE_RELEASE=false
-       AC_MSG_WARN([The 'dpkg' program could not be found. This isn't critical, but it means that you won't be able to build releases.])])
-AS_IF([test ${MAKE_RELEASE} = "true" -a "x${enable_code_coverage}=xyes"],
-      [MAKE_RELEASE=false
-       AC_MSG_WARN([The --enable-code-coverage option has been provided. If you want to produce some release, re-run the configure script without this option."])])
-AM_CONDITIONAL([MAKE_RELEASE], [${MAKE_RELEASE}])
+       AC_MSG_WARN([
+   The 'dpkg' program could not be found.
+   This isn't critical, but it means that you won't be able to build releases.
+])])
+
+dnl Defer conditional at the end of the configure script snce it can
+dnl be overwritten by some late options
+AC_CONFIG_COMMANDS_PRE([AM_CONDITIONAL([MAKE_RELEASE], [${MAKE_RELEASE}])])
+
 hacked_prefix="${HACKED_PREFIX:-${prefix}}"
 AS_IF([test "x${hacked_prefix}" = "xNONE"],
       [hacked_prefix=\"${ac_default_prefix}\"])
 AC_SUBST([hacked_prefix])
+
+dnl ===================== End of Release enabled checking =====================
+
+
+
 
 dnl ================================= Doxygen =================================
 
@@ -375,140 +458,478 @@ DX_RTF_FEATURE(OFF)
 DX_XML_FEATURE(OFF)
 DX_PDF_FEATURE(ON)
 DX_PS_FEATURE(OFF)
-DX_INIT_DOXYGEN([${PACKAGE_NAME}], [doxygen.cfg], [docs])
+DX_INIT_DOXYGEN([${PACKAGE_PRETTY_NAME}], [doxygen.cfg], [docs])
 
 AS_IF([test -z "${DX_DOXYGEN}"],
       [BUILD_DOC=false
-       AC_MSG_WARN([The 'doxygen' program cound not be found. This isn't critical, but it means that you won't be able to create the documentation and thus to make releases.])],
+       AC_MSG_WARN([
+   The 'doxygen' program cound not be found.
+   This isn't critical, but it means that you won't be able to create the
+   documentation and thus to make releases.
+])],
       [AS_IF([test "${DX_FLAG_doc}" -ne 1],
              [BUILD_DOC=false
-              AC_MSG_WARN([The documentation generation is disabled, so is the ability to make releases.])],
+              AC_MSG_WARN([
+   The documentation generation is disabled, so is the ability to make releases.
+])],
              [BUILD_DOC=true
               DX_DOXYGEN_VERSION=`${DX_DOXYGEN} --version | cut -d' ' -f1`
               AX_COMPARE_VERSION([${DX_DOXYGEN_VERSION}],[lt],[${DX_MIN_VERSION}],
-                                 [AC_MSG_WARN([Your version of the 'doxygen' program is quite old (v. ${DX_DOXYGEN_VERSION}) and the generation of the documentation may fail or the result mays look bad. This isn't critical, but it means that you won't be able to create a proper API documentation and thus to make correct releases.])])])])
+                                 [AC_MSG_WARN([
+   Your version of the 'doxygen' program is quite old (v. ${DX_DOXYGEN_VERSION}).
+   The generation of the documentation may fail or the result may look bad.
+   This isn't critical, but it means that you won't be able to create a proper
+   API documentation and thus to make correct releases.
+])])])])
 
 AM_CONDITIONAL([BUILD_DOC], [${BUILD_DOC}])
-AM_COND_IF([BUILD_DOC], [AC_CONFIG_FILES([doc/doxygen.cfg doc/Makefile])])
+dnl Whatever the value of BUILD_DOC, the doc subdirectory need to be
+dnl added to the configuration files see
+dnl https://www.gnu.org/software/automake/manual/html_node/Unconfigured-Subdirectories.html
+dnl for more details
 AM_CONDITIONAL([BUILD_DOC_MAN], [test ${DX_FLAG_man} = 1])
 
 dnl ============================= End of Doxygen ==============================
 
-LT_INIT
-LT_LANG([C++])
-LT_PATH_LD
 
-ISODATE=`date +%Y-%m-%d`
-AC_SUBST([ISODATE])
 
-AC_LANG([C++])
 
-CXXFLAGS=regexp([CXXFLAGS],[-g],[])
-CXXFLAGS=regexp([${CXXFLAGS}],[-O.],[])
-CXXFLAGS="${CXXFLAGS} -Wall -Wextra -pedantic"
-
+dnl ============================== Code Coverage ==============================
 
 dnl Add option --enable-code-coverage (default to --disable-code-coverage)
 AX_CODE_COVERAGE()
-CFLAGS="${CFLAGS} ${CODE_COVERAGE_CFLAGS}"
-CPPFLAGS="${CPPFLAGS} ${CODE_COVERAGE_CPPFLAGS}"
-CXXFLAGS="${CXXFLAGS} ${CODE_COVERAGE_CXXFLAGS}"
-LIBS="${LIBS} ${CODE_COVERAGE_LIBS}"
+AX_APPEND_COMPILE_FLAGS([${CODE_COVERAGE_CFLAGS}], [CFLAGS])
+AX_APPEND_COMPILE_FLAGS([${CODE_COVERAGE_CPPFLAGS}], [CPPFLAGS])
+AX_APPEND_COMPILE_FLAGS([${CODE_COVERAGE_CXXFLAGS}], [CXXFLAGS])
+AX_APPEND_LINK_FLAGS([${CODE_COVERAGE_LIBS}], [LIBS])
+AS_IF([test ${MAKE_RELEASE} = "true" -a "x${enable_code_coverage}" = "xyes"],
+      [MAKE_RELEASE=false
+       AC_MSG_WARN([
+    The '--enable-code-coverage' option has been provided.
+    If you want to produce some release, re-run the configure script without
+    this option.
+])])
 
-AC_ARG_VAR([GCOVR], [Wrapper around gcov program to generate simple reports (default: gcovr).])
+AC_ARG_VAR([GCOVR],
+           [Wrapper around gcov program to generate simple reports (default: gcovr).
+            This option is used only in conjunction with '--enable-code-coverage' option.])
+
 AC_PATH_PROG([GCOVR], [${GCOVR:-gcovr}])
+
+GCOVR_ENABLED=false
+GCOVR_TXT_ENABLED=false        # Available from any version of gcovr
+GCOVR_XML_ENABLED=false        # Available from any version of gcovr
+GCOVR_HTML_ENABLED=false       # Available from gcovr v3.0 but is buggy until version 6.0
+GCOVR_JSON_ENABLED=false       # Available from gcovr v4.2
+GCOVR_SONARQUBE_ENABLED=false  # Available from gcovr v4.2
+GCOVR_COBERTURA_ENABLED=false  # Available from gcovr v4.2 (XML was already Cobertura format, v4.2 introduce explicit Cobertura format)
+GCOVR_COVERALLS_ENABLED=false  # Available from gcovr v5.0
+GCOVR_CSV_ENABLED=false        # Available from gcovr v5.0
+
+AS_IF([test "x${enable_code_coverage}" = "xyes"],
+      [AS_IF([test -z "${GCOVR}"],
+             [AC_MSG_WARN([
+    The 'gcovr' program could not be found.
+    This isn't critical, but it means that you won't be able to create all code
+    coverage reports.
+])],
+             [GCOVR_ENABLED=true
+              GCOVR_TXT_ENABLED=true
+              GCOVR_XML_ENABLED=true
+              GCOVR_VERSION=$(${GCOVR} --version | head -n 1 | cut -d' ' -f2)
+              AX_COMPARE_VERSION([${GCOVR_VERSION}], [ge], [4.2],
+                                 [GCOVR_JSON_ENABLED=true
+                                  GCOVR_SONARQUBE_ENABLED=true])
+              AX_COMPARE_VERSION([${GCOVR_VERSION}], [ge], [5.0],
+                                 [GCOVR_COVERALLS_ENABLED=true
+                                  GCOVR_CSV_ENABLED=true])
+              AX_COMPARE_VERSION([${GCOVR_VERSION}], [ge], [5.1],
+                                 [GCOVR_COBERTURA_ENABLED=true])
+              AX_COMPARE_VERSION([${GCOVR_VERSION}], [ge], [6.0],
+                                 [GCOVR_HTML_ENABLED=true],
+                                 [AC_MSG_WARN([
+    Your version of the 'gcovr' program (v. ${GCOVR_VERSION}) is not up-to-date
+    and the generation of the code coverage reports may fail or the result may
+    look bad.
+    This isn't critical, but it means that you won't be able to create proper
+    code coverage reports.
+])])])])
+
+AM_CONDITIONAL([GCOVR_ENABLED], [${GCOVR_ENABLED}])
+AM_CONDITIONAL([GCOVR_TXT_ENABLED], [${GCOVR_TXT_ENABLED}])
+AM_CONDITIONAL([GCOVR_XML_ENABLED], [${GCOVR_XML_ENABLED}])
+AM_CONDITIONAL([GCOVR_HTML_ENABLED], [${GCOVR_HTML_ENABLED}])
+AM_CONDITIONAL([GCOVR_JSON_ENABLED], [${GCOVR_JSON_ENABLED}])
+AM_CONDITIONAL([GCOVR_SONARQUBE_ENABLED], [${GCOVR_SONARQUBE_ENABLED}])
+AM_CONDITIONAL([GCOVR_COBERTURA_ENABLED], [${GCOVR_COBERTURA_ENABLED}])
+AM_CONDITIONAL([GCOVR_COVERALLS_ENABLED], [${GCOVR_COVERALLS_ENABLED}])
+AM_CONDITIONAL([GCOVR_CSV_ENABLED], [${GCOVR_CSV_ENABLED}])
+
+dnl ========================== End of Code Coverage ===========================
+
+
+
+
+dnl ================================== Debug ==================================
 
 dnl Add option --enable-debug (default to --disable-debug)
 AC_ARG_ENABLE([debug],
               [AS_HELP_STRING([--enable-debug@<:@=ARG@:>@],
-                              [Compiles without code optimization and with debug flag (and enables assertion too). This option is implied by --enable-code-coverage])])
+                              [Without argument or passing argument 'yes', compiles without
+                               code optimization and with debug flag (and enables assertion too).
+                               Passing argument 'print' does the same thing than 'yes' and
+                               enables printing debugging informations on output too.
+                               This option is implied by '--enable-code-coverage'])])
+
+dnl remove '-UNDEBUG' or '-DNDEBUG' option from CFLAGS, CPPFLAGS and CXXFLAGS (if any)
+CFLAGS=$(AS_ECHO(["${CFLAGS}"]) | sed 's,-@<:@DU@:>@NDEBUG\b,,g')
+CPPFLAGS=$(AS_ECHO(["${CPPFLAGS}"]) | sed 's,-@<:@DU@:>@NDEBUG\b,,g')
+CXXFLAGS=$(AS_ECHO(["${CXXFLAGS}"]) | sed 's,-@<:@DU@:>@NDEBUG\b,,g')
+
+dnl remove '-g' option from CFLAGS, CPPFLAGS and CXXFLAGS (if any)
+CFLAGS=$(AS_ECHO(["${CFLAGS}"]) | sed 's,-g\b,,g')
+CPPFLAGS=$(AS_ECHO(["${CPPFLAGS}"]) | sed 's,-g\b,,g')
+CXXFLAGS=$(AS_ECHO(["${CXXFLAGS}"]) | sed 's,-g\b,,g')
+
+dnl remove and '-O.' option from CFLAGS, CPPFLAGS and CXXFLAGS (if any)
+CFLAGS=$(AS_ECHO(["${CFLAGS}"]) | sed 's,-O@<:@^ @:>@*\b,,g')
+CPPFLAGS=$(AS_ECHO(["${CPPFLAGS}"]) | sed 's,-O@<:@^ @:>@*\b,,g')
+CXXFLAGS=$(AS_ECHO(["${CXXFLAGS}"]) | sed 's,-O@<:@^ @:>@*\b,,g')
+
+dnl remove spurious spaces from CFLAGS, CPPFLAGS and CXXFLAGS (if any)
+CFLAGS=$(AS_ECHO(["${CFLAGS}"]) | sed 's,\(^\|@<:@ @:>@\)@<:@ @:>@*,\1,g')
+CPPFLAGS=$(AS_ECHO(["${CPPFLAGS}"]) | sed 's,\(^\|@<:@ @:>@\)@<:@ @:>@*,\1,g')
+CXXFLAGS=$(AS_ECHO(["${CXXFLAGS}"]) | sed 's,\(^\|@<:@ @:>@\)@<:@ @:>@*,\1,g')
 
 AS_IF([test "x${enable_code_coverage}" = "xyes"],
-      [CXXFLAGS="${CXXFLAGS} -fno-inline"],
-      [AS_IF([test "x${enable_debug}" = "xyes"],
-             [CXXFLAGS="${CXXFLAGS} -g -O0 -fno-inline"],
-             [CPPFLAGS="${CPPFLAGS} -DNDEBUG"
-              CXXFLAGS="${CXXFLAGS} -O3"])])
+      [AS_IF([test -z "${enable_debug}" -o "x${enable_debug}" = "xno"],
+             [enable_debug="yes"])])
 
-dnl Checks for libraries.
+AS_IF([test -n "${enable_debug}" -a "x${enable_debug}" != "xno"],
+      [AX_APPEND_COMPILE_FLAGS([-UNDEBUG], [CPPFLAGS])
+       AX_APPEND_COMPILE_FLAGS([-g -O0 -fno-inline], [CXXFLAGS])
+       AS_IF([test "x${enable_debug}" == "xprint" -o  "x${enable_debug}" == "xfull"],
+             [AC_DEFINE([DEBUG],[],[Output (lots of) debugging informations])])],
+      [AX_APPEND_COMPILE_FLAGS([-DNDEBUG], [CPPFLAGS])
+       AX_APPEND_COMPILE_FLAGS([-O3], [CXXFLAGS])])
+
+dnl ============================== End of Debug ===============================
+
+
+dnl ###########################################################################
+dnl #                          Checking for libraries                         #
+dnl ###########################################################################
+
+
+dnl =================================== HTSlib ==================================
+
+HTSlib_MIN_VERSION=1.17
+AC_SUBST(HTSlib_MIN_VERSION)
+
+AX_EXTERNAL_INCLUDED_CXX_LIBRARY_DETECTION([HTSlib],
+                                           [[external/htslib],
+                                            [],
+                                            [-L${ac_pwd}/external/htslib/lib -lhts]],
+                                           [htslib],
+                                           [htslib > ${HTSlib_MIN_VERSION}],
+                                           [bcf_strerror],
+                                           [hts],
+                                           [
+
+Unable to find required HTSlib library (>= ${HTSlib_MIN_VERSION}).
+
+You can re-run the configure script by allowing the use of the
+included HTSlib library.
+
+Alternatively, you can install this library using your package manager
+(if up-to-date version is available):
+# apt install libhts-dev # on Debian/Ubuntu-like distributions
+# yum install htslib-devel # on Fedora/RedHat-like distributions
+
+You can follow the instructions from
+https://github.com/samtools/htslib/blob/master/INSTALL (see "System
+Specific Details" section) if you prefer a custom installation and/or
+a more recent version.
+
+After installing this library, you have to run the configure script again.
+])
+
+dnl Don't use neither AX_APPEND_COMPILE_FLAGS() nor
+dnl AX_APPEND_LINK_FLAGS() since:
+dnl
+dnl   1. The AX_EXTERNAL_INCLUDED_CPP_HEADER_DETECTION(), the
+dnl      AX_EXTERNAL_INCLUDED_C_LIBRARY_DETECTION() and the
+dnl      AX_EXTERNAL_INCLUDED_CXX_LIBRARY_DETECTION() macros already
+dnl      check for validity when using already installed
+dnl      library/headers.
+dnl
+dnl   2. If using the included library/headers, the
+dnl      (pre)compiler/linker flags may not be correctly appended
+dnl      since the library/header is most probably not already
+dnl      available
+dnl
+dnl An acceptable option is to update the (pre)compiler/linker by
+dnl appending the computed flags if no more test involving compilation
+dnl is executed hereafter.
+dnl
+dnl A more secure (and recommended) strategy is to defer the
+dnl compiler/linker flag updates at the end of the configure script,
+dnl before generating the Makefiles using AC_CONFIG_COMMANDS_PRE()
+AC_CONFIG_COMMANDS_PRE([CXXFLAGS="${CXXFLAGS} ${HTSlib_CXXFLAGS}"
+                        LDFLAGS="${LDFLAGS} ${HTSlib_LDFLAGS}"])
+
+dnl Disable releases if using the included HTSlib library.
+AS_IF([test "x${with_included_HTSlib}" = "xyes"],
+      [MAKE_RELEASE=false
+       AC_MSG_WARN([
+   You are using the included HTSlib library.
+   This is fine for us, but it means that you won't be able to build releases.
+])])
+
+dnl =============================== End of HTSlib ===============================
+
+
+
+
+dnl =================================== vcfpp ===================================
+
+AX_EXTERNAL_INCLUDED_CPP_HEADER_DETECTION([vcfpp], [external/vcfpp], [vcfpp.h])
+
+dnl Don't use neither AX_APPEND_COMPILE_FLAGS() nor
+dnl AX_APPEND_LINK_FLAGS() since:
+dnl
+dnl   1. The AX_EXTERNAL_INCLUDED_CPP_HEADER_DETECTION(), the
+dnl      AX_EXTERNAL_INCLUDED_C_LIBRARY_DETECTION() and the
+dnl      AX_EXTERNAL_INCLUDED_CXX_LIBRARY_DETECTION() macros already
+dnl      check for validity when using already installed
+dnl      library/headers.
+dnl
+dnl   2. If using the included library/headers, the
+dnl      (pre)compiler/linker flags may not be correctly appended
+dnl      since the library/header is most probably not already
+dnl      available
+dnl
+dnl An acceptable option is to update the (pre)compiler/linker by
+dnl appending the computed flags if no more test involving compilation
+dnl is executed hereafter.
+dnl
+dnl A more secure (and recommended) strategy is to defer the
+dnl compiler/linker flag updates at the end of the configure script,
+dnl before generating the Makefiles using AC_CONFIG_COMMANDS_PRE()
+AC_CONFIG_COMMANDS_PRE([CPPFLAGS="${CPPFLAGS} ${vcfpp_CPPFLAGS}"])
+
+dnl =============================== End of vcfpp ================================
+
+
+
 
 dnl ================================ BitMagic =================================
 
-dnl Add option --without-included-BitMagic (default --with-included-BitMagic=check)
-AC_ARG_WITH([included-BitMagic],
-            [AS_HELP_STRING([--without-included-BitMagic],
-                            [don't use the BitMagic library included here])],
-            [],
-            [with_included_BitMagic="check"])
+AX_EXTERNAL_INCLUDED_CPP_HEADER_DETECTION([BitMagic], [external/BitMagic/src], [bm.h])
 
-dnl Add option --with-BitMagic-path=PATH (default --without-BitMagic-path)
-AC_ARG_WITH([BitMagic-path],
-            [AS_HELP_STRING([--with-BitMagic-path=DIR],
-                            [search for BitMagic headers in DIR])],
-            [BitMagic_CFLAGS="-I\"${with_BitMagic_path}\""],
-            [with_BitMagic_path=""])
-
-dnl Check if we need included BitMagic library.
-BM_OK=0
-AS_IF([test "x${with_included_BitMagic}" = "xcheck"],
-      [AS_IF([test "x${with_BitMagic_path}" != "x"],
-             [with_included_BitMagic="no"],
-             [with_included_BitMagic="yes"])])
-
-AS_IF([test "x${with_included_BitMagic}" = "xyes"],
-      [AS_IF([test "x${with_BitMagic_path}" != "x"],
-             [AC_MSG_FAILURE([You can't use both --with-included-BitMagic and --with-BitMagic-path options])],
-             [BM_OK=1
-              BitMagic_CXXFLAGS="${BitMagic_CXXFLAGS} -I\"\$(abs_top_srcdir)/BitMagic/src/\""])],
-      [AS_IF([test "x${with_BitMagic_path}" != "x"],
-             [BM_OK=1
-              BitMagic_CXXFLAGS="${BitMagic_CXXFLAGS} -I\"${with_BitMagic_path}\""],
-             [AC_CHECK_HEADER([bm.h],
-                              [BM_OK=1],
-                              [AC_MSG_FAILURE([The kim program requires the BitMagic library. You should use the included library using --with-included-BitMagic configure option])],
-                              )])])
-
-AS_IF([test "${BM_OK}" = "1"],
-      [AC_DEFINE([HAVE_BITMAGIC], [1], [Define to 1 in order to Use BitMagic library])],
-      [AC_MSG_FAILURE([
-Unable to find a preinstalled BitMagic library.
-You should run the configure script again with
-'--with-included-BitMagic' option.
-])])
-
-CXXFLAGS="${CXXFLAGS} ${BitMagic_CXXFLAGS}"
+dnl Don't use neither AX_APPEND_COMPILE_FLAGS() nor
+dnl AX_APPEND_LINK_FLAGS() since:
+dnl
+dnl   1. The AX_EXTERNAL_INCLUDED_CPP_HEADER_DETECTION(), the
+dnl      AX_EXTERNAL_INCLUDED_C_LIBRARY_DETECTION() and the
+dnl      AX_EXTERNAL_INCLUDED_CXX_LIBRARY_DETECTION() macros already
+dnl      check for validity when using already installed
+dnl      library/headers.
+dnl
+dnl   2. If using the included library/headers, the
+dnl      (pre)compiler/linker flags may not be correctly appended
+dnl      since the library/header is most probably not already
+dnl      available
+dnl
+dnl An acceptable option is to update the (pre)compiler/linker by
+dnl appending the computed flags if no more test involving compilation
+dnl is executed hereafter.
+dnl
+dnl A more secure (and recommended) strategy is to defer the
+dnl compiler/linker flag updates at the end of the configure script,
+dnl before generating the Makefiles using AC_CONFIG_COMMANDS_PRE()
+AC_CONFIG_COMMANDS_PRE([CPPFLAGS="${CPPFLAGS} ${BitMagic_CPPFLAGS}"])
 
 dnl ============================ End of BitMagic ==============================
 
 
-dnl Checks for header files.
-AC_HEADER_STDC
+
+
+dnl ============================== optionparser ===============================
+
+AX_EXTERNAL_INCLUDED_CPP_HEADER_DETECTION([optionparser], [external/optionparser/], [optionparser.h])
+
+dnl Don't use neither AX_APPEND_COMPILE_FLAGS() nor
+dnl AX_APPEND_LINK_FLAGS() since:
+dnl
+dnl   1. The AX_EXTERNAL_INCLUDED_CPP_HEADER_DETECTION(), the
+dnl      AX_EXTERNAL_INCLUDED_C_LIBRARY_DETECTION() and the
+dnl      AX_EXTERNAL_INCLUDED_CXX_LIBRARY_DETECTION() macros already
+dnl      check for validity when using already installed
+dnl      library/headers.
+dnl
+dnl   2. If using the included library/headers, the
+dnl      (pre)compiler/linker flags may not be correctly appended
+dnl      since the library/header is most probably not already
+dnl      available
+dnl
+dnl An acceptable option is to update the (pre)compiler/linker by
+dnl appending the computed flags if no more test involving compilation
+dnl is executed hereafter.
+dnl
+dnl A more secure (and recommended) strategy is to defer the
+dnl compiler/linker flag updates at the end of the configure script,
+dnl before generating the Makefiles using AC_CONFIG_COMMANDS_PRE()
+AC_CONFIG_COMMANDS_PRE([CPPFLAGS="${CPPFLAGS} ${optionparser_CPPFLAGS}"])
+
+dnl =========================== End of optionparser ===========================
+
+
+dnl ###########################################################################
+dnl #                         Checking for header files                       #
+dnl ###########################################################################
+
+
+AC_CHECK_INCLUDES_DEFAULT
+AC_HEADER_DIRENT
 AC_HEADER_MAJOR
-AC_FUNC_ALLOCA
-AC_STRUCT_TM
-AC_STRUCT_ST_BLOCKS
 AC_FUNC_CLOSEDIR_VOID
-AC_CHECK_FUNCS(mkfifo)
-AC_CHECK_FUNC(mknod)
 AC_CHECK_HEADERS([\
-  unistd.h \
-  sys/param.h sys/time.h \
-  time.h \
-  sys/mkdev.h sys/sysmacros.h \
-  string.h memory.h fcntl.h dirent.h \
-  sys/ndir.h \
-  ndir.h alloca.h locale.h])
+ libgen.h \
+ sys/stat.h sys/types.h \
+ unistd.h \
+  ], [], [AC_MSG_ERROR([Header file '${ac_header}' not found.])])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
+AC_CHECK_HEADER_STDBOOL
+AC_C_CONST
+AC_C_INLINE
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
+AC_TYPE_UINT8_T
+AC_TYPE_INT8_T
+AC_TYPE_UINT16_T
+AC_TYPE_INT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_INT32_T
+AC_TYPE_UINT64_T
+AC_TYPE_INT64_T
 
 dnl Checks for library functions.
+AC_FUNC_ERROR_AT_LINE
+AC_CHECK_FUNCS([\
+  memset mkdir rmdir \
+  strerror strtol \
+])
+
+
+dnl ###########################################################################
+dnl #               Producing files according to configuration                #
+dnl ###########################################################################
+
+AC_CONFIG_COMMANDS([fix-htslib],
+                   [dnl
+                    FIX_TAG="Autoconf Fix Makefile Targets when used as submodule"
+                    cd ${srcdir}/external/htslib || continue
+                    if test ! -f configure; then
+                      if command -v autoreconf > /dev/null; then
+                        AC_MSG_NOTICE([Generating HTSlib configuration script and install missing tools])
+                        autoreconf -i
+                      else
+                        AC_MSG_ERROR([
+
+In order to use the included HTSlib library, you need to install the 'autoreconf'
+program on your system.
+])
+                      fi
+                    fi
+                    AC_MSG_NOTICE([Library HTSlib configuration script ready])
+                    FILE_TOPATCH=Makefile
+                    if test -f "${FILE_TOPATCH}"; then
+                      if grep -q "${FIX_TAG}" "${FILE_TOPATCH}"; then
+                        AC_MSG_NOTICE([File '${FILE_TOPATCH}' from HTSlib already patched])
+                      else
+                        cp "${FILE_TOPATCH}" "${FILE_TOPATCH}.orig"
+                        sed -i 's,^check test:,check-disabled test:,' "${FILE_TOPATCH}"
+                        sed -i 's,\btar -c\b,\$\${TAR-tar} chof -,' "${FILE_TOPATCH}"
+                        sed -i 's,\btar -x\b,\$\${TAR-tar} xo,' "${FILE_TOPATCH}"
+                        sed -i 's,^\(\t+cd \$(distdir) && \$(MAKE)\),\1 srcdir="\$(CURDIR)/\$(srcdir)",' "${FILE_TOPATCH}"
+                        tab="$(echo $'\t')"
+                        cat >> "${FILE_TOPATCH}" << FIX_TAG_EOF
+
+### ${FIX_TAG} ###
+
+MISSING_AUTOMAKE_TARGETS = dvi check installcheck
+
+.PHONY: \$(MISSING_AUTOMAKE_TARGETS)
+
+\$(MISSING_AUTOMAKE_TARGETS):
+$(echo $'\t')@echo "Fake target for '\$[]@' added by the kim configure script"
+
+uninstall: uninstall-\$(SHLIB_FLAVOUR)
+${tab}@echo "Target for '\$[]@' added by the kim configure script"
+${tab}for f in \$(BUILT_PROGRAMS); do \\
+${tab}  rm -f "\$(DESTDIR)\$(bindir)/\$\$[]f"; \\
+${tab}done
+${tab}if test -n "\$(BUILT_PLUGINS)"; then \\
+${tab}  for f in \$(BUILT_PLUGINS); do \\
+${tab}    rm -f "\$(DESTDIR)\$(plugindir)/\$\$[]f"; \\
+${tab}  done; \\
+${tab}fi
+${tab}for f in "\$(DESTDIR)\$(includedir)/htslib"/*.h; do \\
+${tab}  rm -f "\$\$[]f"; \\
+${tab}done
+${tab}rm -f "\$(DESTDIR)\$(libdir)/libhts.a"
+${tab}for f in annot-tsv.1 bgzip.1 htsfile.1 tabix.1; do \\
+${tab}  rm -f "\$(DESTDIR)\$(man1dir)/\$\$[]f"; \\
+${tab}done
+${tab}for f in faidx.5 sam.5 vcf.5; do \\
+${tab}  rm -f "\$(DESTDIR)\$(man5dir)/\$\$[]f"; \\
+${tab}done
+${tab}rm -f "\$(DESTDIR)\$(man7dir)/htslib-s3-plugin.7"
+${tab}rm -f "\$(DESTDIR)\$(pkgconfigdir)/htslib.pc"
+${tab}rm -f external/htslib/htscodecs/htscodecs/version.h
+
+uninstall-so:
+${tab}@echo "Target for '\$[]@' added by the kim configure script"
+${tab}rm -f "\$(DESTDIR)\$(libdir)/libhts.so.\$(PACKAGE_VERSION)"
+${tab}rm -f "\$(DESTDIR)\$(libdir)/libhts.so"
+${tab}rm -f "\$(DESTDIR)\$(libdir)/libhts.so.\$(LIBHTS_SOVERSION)"
+
+uninstall-cygdll:
+${tab}@echo "Target for '\$[]@' added by the kim configure script"
+${tab}rm -f "\$(DESTDIR)\$(bindir)/cyghts-\$(LIBHTS_SOVERSION).dll"
+${tab}rm -f "\$(DESTDIR)\$(libdir)/libhts.dll.a"
+
+uninstall-dll:
+${tab}@echo "Target for '\$[]@' added by the kim configure script"
+${tab}rm -f "\$(DESTDIR)\$(bindir)/hts-\$(LIBHTS_SOVERSION).dll"
+${tab}rm -f "\$(DESTDIR)\$(libdir)/hts.dll.a"
+
+uninstall-dylib:
+${tab}@echo "Target for '\$[]@' added by the kim configure script"
+${tab}rm -f "\$(DESTDIR)\$(libdir)/libhts.\$(PACKAGE_VERSION).dylib"
+${tab}rm -f "\$(DESTDIR)\$(libdir)/libhts.dylib"
+${tab}rm -f "\$(DESTDIR)\$(libdir)/libhts.\$(LIBHTS_SOVERSION).dylib"
+
+### End of ${FIX_TAG} ###
+FIX_TAG_EOF
+                      AC_MSG_NOTICE([File '${FILE_TOPATCH}' from HTSlib patched])
+                      fi
+                    else
+                      AC_MSG_WARN([Unable to apply fix on HTSlib, some make targets may fail])
+                    fi
+                    cd - > /dev/null
+                   ])
 
 AC_CONFIG_FILES([
-  Makefile src/Makefile
-  tests/Makefile
-  resources/Makefile
+  Makefile
+  doc/doxygen.cfg doc/mainpage.dox doc/Makefile
+  packaging/control packaging/kim.pc
   packaging/Makefile
   packaging/postinst packaging/prerm
-  packaging/control packaging/libkim.pc
+  resources/Makefile
+  src/Makefile
+  tests/Makefile
 ])
 AC_OUTPUT

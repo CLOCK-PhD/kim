@@ -96,6 +96,7 @@ STATS_FILE = $(STATS_FILE_BASENAME).stats
 dist_pkgdata_DATA =	\
   kim.bash_completion	\
   test-reads.fastq	\
+  test-sequences.fasta	\
   $(STATS_FILE)
 
 $(LIST_FILE):

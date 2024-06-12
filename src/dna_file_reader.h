@@ -94,7 +94,6 @@
 #include <list>
 #include <algorithm>
 
-#include <kim_settings.h>
 #include <file_reader.h>
 
 namespace kim {

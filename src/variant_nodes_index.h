@@ -90,7 +90,7 @@
 #ifndef __VARIANT_NODES_INDEX_H__
 #define __VARIANT_NODES_INDEX_H__
 
-#include <cstdlib>
+#include <cstdint>
 #include <map>
 #include <string>
 
