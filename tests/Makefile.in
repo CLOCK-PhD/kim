@@ -102,6 +102,10 @@
 #  knowledge of the CeCILL license and that you accept its terms.             #
 #                                                                             #
 ###############################################################################
+
+########################
+# Global configuration #
+########################
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -176,7 +180,14 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+target_triplet = @target@
 check_PROGRAMS = test_bounded_size_string$(EXEEXT) \
+	test_dna_file_reader$(EXEEXT) test_kim_exception$(EXEEXT) \
+	test_kim_settings$(EXEEXT) test_kmer_nodes_subindex$(EXEEXT) \
+	test_kmer_variant_edges_subindex$(EXEEXT) \
+	test_kmer_variant_graph$(EXEEXT) test_sort_helper$(EXEEXT) \
+	test_variant_nodes_index$(EXEEXT)
+TESTS = test_bounded_size_string$(EXEEXT) \
 	test_dna_file_reader$(EXEEXT) test_kim_exception$(EXEEXT) \
 	test_kim_settings$(EXEEXT) test_kmer_nodes_subindex$(EXEEXT) \
 	test_kmer_variant_edges_subindex$(EXEEXT) \
@@ -191,18 +202,25 @@ am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_ac_append_to_file.m4 \
 	$(top_srcdir)/config/m4/ax_append_compile_flags.m4 \
 	$(top_srcdir)/config/m4/ax_append_flag.m4 \
 	$(top_srcdir)/config/m4/ax_append_link_flags.m4 \
+	$(top_srcdir)/config/m4/ax_c_cxx_enable_debug_option.m4 \
 	$(top_srcdir)/config/m4/ax_check_compile_flag.m4 \
 	$(top_srcdir)/config/m4/ax_check_gnu_make.m4 \
 	$(top_srcdir)/config/m4/ax_check_link_flag.m4 \
 	$(top_srcdir)/config/m4/ax_code_coverage.m4 \
+	$(top_srcdir)/config/m4/ax_code_statistics.m4 \
 	$(top_srcdir)/config/m4/ax_compare_version.m4 \
 	$(top_srcdir)/config/m4/ax_compiler_flags_ldflags.m4 \
 	$(top_srcdir)/config/m4/ax_cxx_compile_stdcxx.m4 \
+	$(top_srcdir)/config/m4/ax_debian_package.m4 \
+	$(top_srcdir)/config/m4/ax_define_macro_with_key_value_args.m4 \
 	$(top_srcdir)/config/m4/ax_external_included_cpp_header_detection.m4 \
 	$(top_srcdir)/config/m4/ax_external_included_cxx_library_detection.m4 \
 	$(top_srcdir)/config/m4/ax_external_included_generic_library_check.m4 \
 	$(top_srcdir)/config/m4/ax_external_included_library_declare_options.m4 \
 	$(top_srcdir)/config/m4/ax_file_escapes.m4 \
+	$(top_srcdir)/config/m4/ax_gcovr_code_coverage.m4 \
+	$(top_srcdir)/config/m4/ax_git_versioning.m4 \
+	$(top_srcdir)/config/m4/ax_package_infos.m4 \
 	$(top_srcdir)/config/m4/ax_prog_doxygen.m4 \
 	$(top_srcdir)/config/m4/ax_require_defined.m4 \
 	$(top_srcdir)/config/m4/libtool.m4 \
@@ -210,7 +228,8 @@ am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_ac_append_to_file.m4 \
 	$(top_srcdir)/config/m4/ltsugar.m4 \
 	$(top_srcdir)/config/m4/ltversion.m4 \
 	$(top_srcdir)/config/m4/lt~obsolete.m4 \
-	$(top_srcdir)/config/m4/pkg.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/config/m4/pkg.m4 $(top_srcdir)/config/version \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
@@ -560,7 +579,6 @@ ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
-ARCH = @ARCH@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -583,11 +601,13 @@ CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
-DEB_BUILDER = @DEB_BUILDER@
+DEBIAN_PACKAGE_ARCH = @DEBIAN_PACKAGE_ARCH@
+DEBIAN_PACKAGE_PREFIX = @DEBIAN_PACKAGE_PREFIX@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
 DOXYGEN_PAPER_SIZE = @DOXYGEN_PAPER_SIZE@
+DPKG = @DPKG@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
 DX_CONFIG = @DX_CONFIG@
@@ -621,6 +641,7 @@ ETAGS = @ETAGS@
 EXEEXT = @EXEEXT@
 EXTRA_LDFLAGS = @EXTRA_LDFLAGS@
 FGREP = @FGREP@
+FILECMD = @FILECMD@
 GCOV = @GCOV@
 GCOVR = @GCOVR@
 GENHTML = @GENHTML@
@@ -634,7 +655,6 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
-ISODATE = @ISODATE@
 LCOV = @LCOV@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
@@ -662,11 +682,11 @@ PACKAGE = @PACKAGE@
 PACKAGE_AUTHORS = @PACKAGE_AUTHORS@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_COPYRIGHT_DATE = @PACKAGE_COPYRIGHT_DATE@
-PACKAGE_DESCRIPTION = @PACKAGE_DESCRIPTION@
-PACKAGE_LICENCE = @PACKAGE_LICENCE@
-PACKAGE_LOGO = @PACKAGE_LOGO@
+PACKAGE_FULL_DESCRIPTION = @PACKAGE_FULL_DESCRIPTION@
+PACKAGE_LICENSE = @PACKAGE_LICENSE@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_PRETTY_NAME = @PACKAGE_PRETTY_NAME@
+PACKAGE_SHORT_DESCRIPTION = @PACKAGE_SHORT_DESCRIPTION@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
@@ -706,7 +726,6 @@ datarootdir = @datarootdir@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
-hacked_prefix = @hacked_prefix@
 host = @host@
 host_alias = @host_alias@
 host_cpu = @host_cpu@
@@ -735,13 +754,16 @@ sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
 subdirs = @subdirs@
 sysconfdir = @sysconfdir@
+target = @target@
 target_alias = @target_alias@
+target_cpu = @target_cpu@
+target_os = @target_os@
+target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CXXFLAGS = \
-  -I@top_srcdir@			\
-  -I@top_srcdir@/src			\
+  -I$(top_srcdir)/src			\
   -DCXX="\"$(CXX)\""			\
   -DARCH="\"$(build_cpu)\""		\
   -DOS="\"$(build_os)\""		\
@@ -751,16 +773,26 @@ AM_CXXFLAGS = \
 LDADD = ../src/libkim-debug.la
 test_bounded_size_string_SOURCES = test_bounded_size_string.cpp
 test_dna_file_reader_SOURCES = test_dna_file_reader.cpp
-test_kim_settings_SOURCES = test_kim_settings.cpp
 test_kim_exception_SOURCES = test_kim_exception.cpp
+test_kim_settings_SOURCES = test_kim_settings.cpp
 test_kmer_nodes_subindex_SOURCES = test_kmer_nodes_subindex.cpp
 test_kmer_variant_edges_subindex_SOURCES = test_kmer_variant_edges_subindex.cpp
 test_kmer_variant_graph_SOURCES = test_kmer_variant_graph.cpp
 test_sort_helper_SOURCES = test_sort_helper.cpp
 test_variant_nodes_index_SOURCES = test_variant_nodes_index.cpp
-TESTS = $(check_PROGRAMS)
+
+#################
+# Code Coverage #
+#################
+GCDA_FILES = $(patsubst %.cpp,%.gcda,$(filter %.cpp %.c,$(SOURCES)))
+GCNO_FILES = $(GCDA_FILES:.gcda=.gcno)
+GCOV_FILES = $(GCDA_FILES:.gcda=.gcov)
+
+####################
+# Cleaning targets #
+####################
 MOSTLYCLEANFILES = *~
-CLEANFILES = *~
+CLEANFILES = *~ $(GCDA_FILES) $(GCNO_FILES) $(GCOV_FILES)
 DISTCLEANFILES = *~
 MAINTAINERCLEANFILES = *~
 all: all-am
@@ -1343,10 +1375,18 @@ uninstall-am:
 .PRECIOUS: Makefile
 
 
-force_check_libkim-debug.la:
+#########################
+# Dependencies handling #
+#########################
 
-../src/libkim-debug.la: force_check_libkim-debug.la
-	$(MAKE) $(AM_MAKEFLAGS) libkim-debug.la -C ../src/
+# named target
+.PHONY: force-rebuild
+
+# rule
+force-rebuild:
+
+$(top_builddir)/src/%: force-rebuild
+	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) "$(@F)" -C "$(@D)"
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

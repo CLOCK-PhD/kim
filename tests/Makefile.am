@@ -87,9 +87,13 @@
 #                                                                             #
 ###############################################################################
 
+
+########################
+# Global configuration #
+########################
+
 AM_CXXFLAGS =				\
-  -I@top_srcdir@			\
-  -I@top_srcdir@/src			\
+  -I$(top_srcdir)/src			\
   -DCXX="\"$(CXX)\""			\
   -DARCH="\"$(build_cpu)\""		\
   -DOS="\"$(build_os)\""		\
@@ -98,43 +102,126 @@ AM_CXXFLAGS =				\
 
 LDADD = ../src/libkim-debug.la
 
-check_PROGRAMS =			\
-  test_bounded_size_string		\
-  test_dna_file_reader			\
-  test_kim_exception			\
-  test_kim_settings			\
-  test_kmer_nodes_subindex		\
-  test_kmer_variant_edges_subindex	\
-  test_kmer_variant_graph		\
-  test_sort_helper			\
-  test_variant_nodes_index
+check_PROGRAMS =
+TESTS =
+
+#############################################
+# kim::BoundedSizeString class test program #
+#############################################
+
+check_PROGRAMS += test_bounded_size_string
+TESTS          += test_bounded_size_string
 
 test_bounded_size_string_SOURCES = test_bounded_size_string.cpp
 
+
+#########################################
+# kim::DnaFileReader class test program #
+#########################################
+
+check_PROGRAMS += test_dna_file_reader
+TESTS          += test_dna_file_reader
+
 test_dna_file_reader_SOURCES = test_dna_file_reader.cpp
 
-test_kim_settings_SOURCES = test_kim_settings.cpp
+
+#####################################
+# kim::Exception class test program #
+#####################################
+
+check_PROGRAMS += test_kim_exception
+TESTS          += test_kim_exception
 
 test_kim_exception_SOURCES = test_kim_exception.cpp
 
+
+####################################
+# kim::Settings class test program #
+####################################
+
+check_PROGRAMS += test_kim_settings
+TESTS          += test_kim_settings
+
+test_kim_settings_SOURCES = test_kim_settings.cpp
+
+
+#############################################
+# kim::KmerNodesSubindex class test program #
+#############################################
+
+check_PROGRAMS += test_kmer_nodes_subindex
+TESTS          += test_kmer_nodes_subindex
+
 test_kmer_nodes_subindex_SOURCES = test_kmer_nodes_subindex.cpp
+
+
+####################################################
+# kim::KmerVariantEdgesSubindex class test program #
+####################################################
+
+check_PROGRAMS += test_kmer_variant_edges_subindex
+TESTS          += test_kmer_variant_edges_subindex
 
 test_kmer_variant_edges_subindex_SOURCES = test_kmer_variant_edges_subindex.cpp
 
+
+############################################
+# kim::KmerVariantGraph class test program #
+############################################
+
+check_PROGRAMS += test_kmer_variant_graph
+TESTS          += test_kmer_variant_graph
+
 test_kmer_variant_graph_SOURCES = test_kmer_variant_graph.cpp
+
+
+######################################
+# kim::SortHelper class test program #
+######################################
+
+check_PROGRAMS += test_sort_helper
+TESTS          += test_sort_helper
 
 test_sort_helper_SOURCES = test_sort_helper.cpp
 
+#############################################
+# kim::VariantNodesIndex class test program #
+#############################################
+
+check_PROGRAMS += test_variant_nodes_index
+TESTS          += test_variant_nodes_index
+
 test_variant_nodes_index_SOURCES = test_variant_nodes_index.cpp
 
-force_check_libkim-debug.la:
 
-../src/libkim-debug.la: force_check_libkim-debug.la
-	$(MAKE) $(AM_MAKEFLAGS) libkim-debug.la -C ../src/
+#########################
+# Dependencies handling #
+#########################
 
-TESTS = $(check_PROGRAMS)
+# named target
+.PHONY: force-rebuild
 
-MOSTLYCLEANFILES=*~
-CLEANFILES=*~
-DISTCLEANFILES=*~
-MAINTAINERCLEANFILES=*~
+# rule
+force-rebuild:
+
+$(top_builddir)/src/%: force-rebuild
+	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) "$(@F)" -C "$(@D)"
+
+
+#################
+# Code Coverage #
+#################
+
+GCDA_FILES = $(patsubst %.cpp,%.gcda,$(filter %.cpp %.c,$(SOURCES)))
+GCNO_FILES = $(GCDA_FILES:.gcda=.gcno)
+GCOV_FILES = $(GCDA_FILES:.gcda=.gcov)
+
+
+####################
+# Cleaning targets #
+####################
+
+MOSTLYCLEANFILES = *~
+CLEANFILES = *~ $(GCDA_FILES) $(GCNO_FILES) $(GCOV_FILES)
+DISTCLEANFILES = *~
+MAINTAINERCLEANFILES = *~

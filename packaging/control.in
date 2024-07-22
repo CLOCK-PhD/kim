@@ -2,16 +2,16 @@ Package:	@PACKAGE@
 Version:	@PACKAGE_VERSION@
 Section:        science
 Priority:	optional
-Architecture:	@ARCH@
+Architecture:	@DEBIAN_PACKAGE_ARCH@
 Essential:	no
-Depends:	libhts-dev (>= @HTSlib_MIN_VERSION@)
+Depends:	libc6, libc6-dev, libstdc++6, libhts-dev (>= @HTSlib_MIN_VERSION@)
 Recommends:	
 Suggests:	
 Conflicts:
-Installed-Size: @INSTALLED_SIZE@
+Installed-Size: 0
 Maintainer:	DoccY <@PACKAGE_BUGREPORT@>
 Provides:	@PACKAGE@
-Description:	Kim is a k-mer identification metric program.
+Description:	@PACKAGE_SHORT_DESCRIPTION@
  .
  More detailed description will be coming later.
  .

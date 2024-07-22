@@ -103,6 +103,10 @@
 #                                                                             #
 ###############################################################################
 
+########################
+# Global configuration #
+########################
+
 
 
 
@@ -163,7 +167,6 @@ am__make_running_with_option = \
 am__make_dryrun = (target_option=n; $(am__make_running_with_option))
 am__make_keepgoing = (target_option=k; $(am__make_running_with_option))
 pkgdatadir = $(datadir)/@PACKAGE@
-pkgincludedir = $(includedir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
@@ -180,7 +183,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = kim$(EXEEXT) tmp_vcf$(EXEEXT)
+target_triplet = @target@
+bin_PROGRAMS = kim$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_ac_append_to_file.m4 \
@@ -190,18 +194,25 @@ am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_ac_append_to_file.m4 \
 	$(top_srcdir)/config/m4/ax_append_compile_flags.m4 \
 	$(top_srcdir)/config/m4/ax_append_flag.m4 \
 	$(top_srcdir)/config/m4/ax_append_link_flags.m4 \
+	$(top_srcdir)/config/m4/ax_c_cxx_enable_debug_option.m4 \
 	$(top_srcdir)/config/m4/ax_check_compile_flag.m4 \
 	$(top_srcdir)/config/m4/ax_check_gnu_make.m4 \
 	$(top_srcdir)/config/m4/ax_check_link_flag.m4 \
 	$(top_srcdir)/config/m4/ax_code_coverage.m4 \
+	$(top_srcdir)/config/m4/ax_code_statistics.m4 \
 	$(top_srcdir)/config/m4/ax_compare_version.m4 \
 	$(top_srcdir)/config/m4/ax_compiler_flags_ldflags.m4 \
 	$(top_srcdir)/config/m4/ax_cxx_compile_stdcxx.m4 \
+	$(top_srcdir)/config/m4/ax_debian_package.m4 \
+	$(top_srcdir)/config/m4/ax_define_macro_with_key_value_args.m4 \
 	$(top_srcdir)/config/m4/ax_external_included_cpp_header_detection.m4 \
 	$(top_srcdir)/config/m4/ax_external_included_cxx_library_detection.m4 \
 	$(top_srcdir)/config/m4/ax_external_included_generic_library_check.m4 \
 	$(top_srcdir)/config/m4/ax_external_included_library_declare_options.m4 \
 	$(top_srcdir)/config/m4/ax_file_escapes.m4 \
+	$(top_srcdir)/config/m4/ax_gcovr_code_coverage.m4 \
+	$(top_srcdir)/config/m4/ax_git_versioning.m4 \
+	$(top_srcdir)/config/m4/ax_package_infos.m4 \
 	$(top_srcdir)/config/m4/ax_prog_doxygen.m4 \
 	$(top_srcdir)/config/m4/ax_require_defined.m4 \
 	$(top_srcdir)/config/m4/libtool.m4 \
@@ -209,10 +220,11 @@ am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_ac_append_to_file.m4 \
 	$(top_srcdir)/config/m4/ltsugar.m4 \
 	$(top_srcdir)/config/m4/ltversion.m4 \
 	$(top_srcdir)/config/m4/lt~obsolete.m4 \
-	$(top_srcdir)/config/m4/pkg.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/config/m4/pkg.m4 $(top_srcdir)/config/version \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
-DIST_COMMON = $(srcdir)/Makefile.am $(library_include_HEADERS) \
+DIST_COMMON = $(srcdir)/Makefile.am $(pkginclude_HEADERS) \
 	$(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config/config.h
@@ -220,7 +232,7 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" \
 	"$(DESTDIR)$(libkim_la_configdir)" \
-	"$(DESTDIR)$(library_includedir)"
+	"$(DESTDIR)$(pkgincludedir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -249,7 +261,7 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-LTLIBRARIES = $(lib_LTLIBRARIES)
+LTLIBRARIES = $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
 libkim_debug_la_LIBADD =
 am__objects_1 = libkim_debug_la-bounded_size_string.lo \
 	libkim_debug_la-dna_file_reader.lo \
@@ -268,21 +280,25 @@ am__v_lt_0 = --silent
 am__v_lt_1 = 
 libkim_debug_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+	$(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) \
+	$(libkim_debug_la_LDFLAGS) $(LDFLAGS) -o $@
 libkim_la_LIBADD =
-am_libkim_la_OBJECTS = bounded_size_string.lo dna_file_reader.lo \
-	file_reader.lo kim_settings.lo kmer_nodes_subindex.lo \
-	kmer_variant_edges_subindex.lo kmer_variant_graph.lo \
-	sort_helper.lo variant_identification.lo \
-	variant_nodes_index.lo
+am_libkim_la_OBJECTS = libkim_la-bounded_size_string.lo \
+	libkim_la-dna_file_reader.lo libkim_la-file_reader.lo \
+	libkim_la-kim_settings.lo libkim_la-kmer_nodes_subindex.lo \
+	libkim_la-kmer_variant_edges_subindex.lo \
+	libkim_la-kmer_variant_graph.lo libkim_la-sort_helper.lo \
+	libkim_la-variant_identification.lo \
+	libkim_la-variant_nodes_index.lo
 libkim_la_OBJECTS = $(am_libkim_la_OBJECTS)
 libkim_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(libkim_la_CXXFLAGS) \
 	$(CXXFLAGS) $(libkim_la_LDFLAGS) $(LDFLAGS) -o $@
-am_kim_OBJECTS = kim.$(OBJEXT)
+am_kim_OBJECTS = kim-kim.$(OBJEXT)
 kim_OBJECTS = $(am_kim_OBJECTS)
-kim_DEPENDENCIES = libkim.la
+kim_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(kim_CXXFLAGS) \
+	$(CXXFLAGS) $(kim_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -298,12 +314,7 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/config
 depcomp = $(SHELL) $(top_srcdir)/config/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/bounded_size_string.Plo \
-	./$(DEPDIR)/dna_file_reader.Plo ./$(DEPDIR)/file_reader.Plo \
-	./$(DEPDIR)/kim.Po ./$(DEPDIR)/kim_settings.Plo \
-	./$(DEPDIR)/kmer_nodes_subindex.Plo \
-	./$(DEPDIR)/kmer_variant_edges_subindex.Plo \
-	./$(DEPDIR)/kmer_variant_graph.Plo \
+am__depfiles_remade = ./$(DEPDIR)/kim-kim.Po \
 	./$(DEPDIR)/libkim_debug_la-bounded_size_string.Plo \
 	./$(DEPDIR)/libkim_debug_la-dna_file_reader.Plo \
 	./$(DEPDIR)/libkim_debug_la-file_reader.Plo \
@@ -314,9 +325,16 @@ am__depfiles_remade = ./$(DEPDIR)/bounded_size_string.Plo \
 	./$(DEPDIR)/libkim_debug_la-sort_helper.Plo \
 	./$(DEPDIR)/libkim_debug_la-variant_identification.Plo \
 	./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo \
-	./$(DEPDIR)/sort_helper.Plo \
-	./$(DEPDIR)/variant_identification.Plo \
-	./$(DEPDIR)/variant_nodes_index.Plo
+	./$(DEPDIR)/libkim_la-bounded_size_string.Plo \
+	./$(DEPDIR)/libkim_la-dna_file_reader.Plo \
+	./$(DEPDIR)/libkim_la-file_reader.Plo \
+	./$(DEPDIR)/libkim_la-kim_settings.Plo \
+	./$(DEPDIR)/libkim_la-kmer_nodes_subindex.Plo \
+	./$(DEPDIR)/libkim_la-kmer_variant_edges_subindex.Plo \
+	./$(DEPDIR)/libkim_la-kmer_variant_graph.Plo \
+	./$(DEPDIR)/libkim_la-sort_helper.Plo \
+	./$(DEPDIR)/libkim_la-variant_identification.Plo \
+	./$(DEPDIR)/libkim_la-variant_nodes_index.Plo
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -364,7 +382,7 @@ am__can_run_installinfo = \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
 DATA = $(libkim_la_config_DATA)
-HEADERS = $(library_include_HEADERS)
+HEADERS = $(pkginclude_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
 # and print each of them once, without duplicates.  Input order is
@@ -384,11 +402,11 @@ am__define_uniq_tagged_files = \
   done | $(am__uniquify_input)`
 am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/config/depcomp
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
+pkgincludedir = $(includedir)/$(install_dirname)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
-ARCH = @ARCH@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -411,11 +429,13 @@ CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
-DEB_BUILDER = @DEB_BUILDER@
+DEBIAN_PACKAGE_ARCH = @DEBIAN_PACKAGE_ARCH@
+DEBIAN_PACKAGE_PREFIX = @DEBIAN_PACKAGE_PREFIX@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
 DOXYGEN_PAPER_SIZE = @DOXYGEN_PAPER_SIZE@
+DPKG = @DPKG@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
 DX_CONFIG = @DX_CONFIG@
@@ -449,6 +469,7 @@ ETAGS = @ETAGS@
 EXEEXT = @EXEEXT@
 EXTRA_LDFLAGS = @EXTRA_LDFLAGS@
 FGREP = @FGREP@
+FILECMD = @FILECMD@
 GCOV = @GCOV@
 GCOVR = @GCOVR@
 GENHTML = @GENHTML@
@@ -462,7 +483,6 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
-ISODATE = @ISODATE@
 LCOV = @LCOV@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
@@ -490,11 +510,11 @@ PACKAGE = @PACKAGE@
 PACKAGE_AUTHORS = @PACKAGE_AUTHORS@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_COPYRIGHT_DATE = @PACKAGE_COPYRIGHT_DATE@
-PACKAGE_DESCRIPTION = @PACKAGE_DESCRIPTION@
-PACKAGE_LICENCE = @PACKAGE_LICENCE@
-PACKAGE_LOGO = @PACKAGE_LOGO@
+PACKAGE_FULL_DESCRIPTION = @PACKAGE_FULL_DESCRIPTION@
+PACKAGE_LICENSE = @PACKAGE_LICENSE@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_PRETTY_NAME = @PACKAGE_PRETTY_NAME@
+PACKAGE_SHORT_DESCRIPTION = @PACKAGE_SHORT_DESCRIPTION@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
@@ -536,7 +556,6 @@ datarootdir = @datarootdir@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
-hacked_prefix = @hacked_prefix@
 host = @host@
 host_alias = @host_alias@
 host_cpu = @host_cpu@
@@ -565,19 +584,22 @@ sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
 subdirs = @subdirs@
 sysconfdir = @sysconfdir@
+target = @target@
 target_alias = @target_alias@
+target_cpu = @target_cpu@
+target_os = @target_os@
+target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CXXFLAGS = \
-  -I@top_srcdir@			\
   -DCXX="\"$(CXX)\""			\
   -DARCH="\"$(build_cpu)\""		\
   -DOS="\"$(build_os)\""		\
   -DPACKAGE_DATADIR="\"$(pkgdatadir)\""
 
-library_includedir = @includedir@/@PACKAGE@-@VERSION@
-library_include_HEADERS = \
+install_dirname = $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+pkginclude_HEADERS = \
   bounded_size_string.h		\
   dna_file_reader.h		\
   file_reader.h			\
@@ -592,9 +614,18 @@ library_include_HEADERS = \
   variant_nodes_index.h
 
 # End of bug fix
+
+###############
+# kim library #
+###############
 lib_LTLIBRARIES = libkim.la
+noinst_LTLIBRARIES = 
+
+#####################
+# kim-debug library #
+#####################
 check_LTLIBRARIES = libkim-debug.la
-libkim_ladir = @abs_srcdir@
+libkim_ladir = $(abs_srcdir)
 libkim_la_SOURCES = \
   bounded_size_string.h bounded_size_string.cpp			\
   dna_file_reader.h dna_file_reader.cpp				\
@@ -608,17 +639,32 @@ libkim_la_SOURCES = \
   variant_identification.h variant_identification.cpp		\
   variant_nodes_index.h variant_nodes_index.cpp
 
-libkim_debug_ladir = @abs_srcdir@
-libkim_debug_la_SOURCES = $(libkim_la_SOURCES)
-libkim_debug_la_CXXFLAGS = $(AM_CXXFLAGS) -UNDEBUG
-GCDA_FILES = $(patsubst %.cpp,%.gcda,$(filter %.cpp,$(SOURCES)))
-GCNO_FILES = $(GCDA_FILES:.gcda=.gcno)
-GCOV_FILES = $(GCDA_FILES:.gcda=.gcov)
-libkim_la_configdir = @libdir@/@PACKAGE@-@VERSION@/include
+libkim_la_configdir = $(libdir)/$(install_dirname)/include
 libkim_la_config_DATA = $(CONFIG_HEADER)
-libkim_la_LDFLAGS = -version-info "@LIB_VERSION@" $(AM_LDFLAGS)
+libkim_la_LDFLAGS = -version-info "$(LIB_VERSION)" $(AM_LDFLAGS)
+libkim_la_CXXFLAGS = $(AM_CXXFLAGS)
+libkim_debug_ladir = $(libkim_ladir)
+libkim_debug_la_SOURCES = $(libkim_la_SOURCES)
+libkim_debug_la_LDFLAGS = $(libkim_la_LDFLAGS)
+libkim_debug_la_CXXFLAGS = $(libkim_la_CXXFLAGS) -UNDEBUG
 kim_SOURCES = kim.h kim.cpp
 kim_LDADD = libkim.la
+kim_LDFLAGS = -static -lkim $(AM_LDFLAGS)
+kim_CXXFLAGS = $(AM_CXXFLAGS)
+kim_DEPENDENCIES = $(kim_LDADD)
+
+#################
+# Code Coverage #
+#################
+GCDA_FILES = $(patsubst %.cpp,%.gcda,$(filter %.cpp %.c,$(SOURCES))) \
+	$(kim_OBJECTS:.o=.gcda) $(libkim_la_OBJECTS:.lo=.gcda) \
+	$(libkim_debug_la_OBJECTS:.lo=.gcda)
+GCNO_FILES = $(GCDA_FILES:.gcda=.gcno)
+GCOV_FILES = $(GCDA_FILES:.gcda=.gcov)
+
+####################
+# Cleaning targets #
+####################
 MOSTLYCLEANFILES = *~
 CLEANFILES = *~ $(GCDA_FILES) $(GCNO_FILES) $(GCOV_FILES)
 DISTCLEANFILES = *~
@@ -752,6 +798,17 @@ clean-libLTLIBRARIES:
 	  rm -f $${locs}; \
 	}
 
+clean-noinstLTLIBRARIES:
+	-test -z "$(noinst_LTLIBRARIES)" || rm -f $(noinst_LTLIBRARIES)
+	@list='$(noinst_LTLIBRARIES)'; \
+	locs=`for p in $$list; do echo $$p; done | \
+	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
+	      sort -u`; \
+	test -z "$$locs" || { \
+	  echo rm -f $${locs}; \
+	  rm -f $${locs}; \
+	}
+
 libkim-debug.la: $(libkim_debug_la_OBJECTS) $(libkim_debug_la_DEPENDENCIES) $(EXTRA_libkim_debug_la_DEPENDENCIES) 
 	$(AM_V_CXXLD)$(libkim_debug_la_LINK)  $(libkim_debug_la_OBJECTS) $(libkim_debug_la_LIBADD) $(LIBS)
 
@@ -760,7 +817,7 @@ libkim.la: $(libkim_la_OBJECTS) $(libkim_la_DEPENDENCIES) $(EXTRA_libkim_la_DEPE
 
 kim$(EXEEXT): $(kim_OBJECTS) $(kim_DEPENDENCIES) $(EXTRA_kim_DEPENDENCIES) 
 	@rm -f kim$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(kim_OBJECTS) $(kim_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(kim_LINK) $(kim_OBJECTS) $(kim_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -768,14 +825,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bounded_size_string.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dna_file_reader.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/file_reader.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kim.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kim_settings.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kmer_nodes_subindex.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kmer_variant_edges_subindex.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kmer_variant_graph.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kim-kim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-bounded_size_string.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-dna_file_reader.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-file_reader.Plo@am__quote@ # am--include-marker
@@ -786,9 +836,16 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-sort_helper.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_identification.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sort_helper.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/variant_identification.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/variant_nodes_index.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-bounded_size_string.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-dna_file_reader.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-file_reader.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-kim_settings.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-kmer_nodes_subindex.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-kmer_variant_edges_subindex.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-kmer_variant_graph.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-sort_helper.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_identification.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_nodes_index.Plo@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -887,6 +944,90 @@ libkim_debug_la-variant_nodes_index.lo: variant_nodes_index.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-variant_nodes_index.lo `test -f 'variant_nodes_index.cpp' || echo '$(srcdir)/'`variant_nodes_index.cpp
 
+libkim_la-bounded_size_string.lo: bounded_size_string.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-bounded_size_string.lo -MD -MP -MF $(DEPDIR)/libkim_la-bounded_size_string.Tpo -c -o libkim_la-bounded_size_string.lo `test -f 'bounded_size_string.cpp' || echo '$(srcdir)/'`bounded_size_string.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-bounded_size_string.Tpo $(DEPDIR)/libkim_la-bounded_size_string.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='bounded_size_string.cpp' object='libkim_la-bounded_size_string.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-bounded_size_string.lo `test -f 'bounded_size_string.cpp' || echo '$(srcdir)/'`bounded_size_string.cpp
+
+libkim_la-dna_file_reader.lo: dna_file_reader.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-dna_file_reader.lo -MD -MP -MF $(DEPDIR)/libkim_la-dna_file_reader.Tpo -c -o libkim_la-dna_file_reader.lo `test -f 'dna_file_reader.cpp' || echo '$(srcdir)/'`dna_file_reader.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-dna_file_reader.Tpo $(DEPDIR)/libkim_la-dna_file_reader.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='dna_file_reader.cpp' object='libkim_la-dna_file_reader.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-dna_file_reader.lo `test -f 'dna_file_reader.cpp' || echo '$(srcdir)/'`dna_file_reader.cpp
+
+libkim_la-file_reader.lo: file_reader.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-file_reader.lo -MD -MP -MF $(DEPDIR)/libkim_la-file_reader.Tpo -c -o libkim_la-file_reader.lo `test -f 'file_reader.cpp' || echo '$(srcdir)/'`file_reader.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-file_reader.Tpo $(DEPDIR)/libkim_la-file_reader.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='file_reader.cpp' object='libkim_la-file_reader.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-file_reader.lo `test -f 'file_reader.cpp' || echo '$(srcdir)/'`file_reader.cpp
+
+libkim_la-kim_settings.lo: kim_settings.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-kim_settings.lo -MD -MP -MF $(DEPDIR)/libkim_la-kim_settings.Tpo -c -o libkim_la-kim_settings.lo `test -f 'kim_settings.cpp' || echo '$(srcdir)/'`kim_settings.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-kim_settings.Tpo $(DEPDIR)/libkim_la-kim_settings.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='kim_settings.cpp' object='libkim_la-kim_settings.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-kim_settings.lo `test -f 'kim_settings.cpp' || echo '$(srcdir)/'`kim_settings.cpp
+
+libkim_la-kmer_nodes_subindex.lo: kmer_nodes_subindex.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-kmer_nodes_subindex.lo -MD -MP -MF $(DEPDIR)/libkim_la-kmer_nodes_subindex.Tpo -c -o libkim_la-kmer_nodes_subindex.lo `test -f 'kmer_nodes_subindex.cpp' || echo '$(srcdir)/'`kmer_nodes_subindex.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-kmer_nodes_subindex.Tpo $(DEPDIR)/libkim_la-kmer_nodes_subindex.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='kmer_nodes_subindex.cpp' object='libkim_la-kmer_nodes_subindex.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-kmer_nodes_subindex.lo `test -f 'kmer_nodes_subindex.cpp' || echo '$(srcdir)/'`kmer_nodes_subindex.cpp
+
+libkim_la-kmer_variant_edges_subindex.lo: kmer_variant_edges_subindex.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-kmer_variant_edges_subindex.lo -MD -MP -MF $(DEPDIR)/libkim_la-kmer_variant_edges_subindex.Tpo -c -o libkim_la-kmer_variant_edges_subindex.lo `test -f 'kmer_variant_edges_subindex.cpp' || echo '$(srcdir)/'`kmer_variant_edges_subindex.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-kmer_variant_edges_subindex.Tpo $(DEPDIR)/libkim_la-kmer_variant_edges_subindex.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='kmer_variant_edges_subindex.cpp' object='libkim_la-kmer_variant_edges_subindex.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-kmer_variant_edges_subindex.lo `test -f 'kmer_variant_edges_subindex.cpp' || echo '$(srcdir)/'`kmer_variant_edges_subindex.cpp
+
+libkim_la-kmer_variant_graph.lo: kmer_variant_graph.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-kmer_variant_graph.lo -MD -MP -MF $(DEPDIR)/libkim_la-kmer_variant_graph.Tpo -c -o libkim_la-kmer_variant_graph.lo `test -f 'kmer_variant_graph.cpp' || echo '$(srcdir)/'`kmer_variant_graph.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-kmer_variant_graph.Tpo $(DEPDIR)/libkim_la-kmer_variant_graph.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='kmer_variant_graph.cpp' object='libkim_la-kmer_variant_graph.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-kmer_variant_graph.lo `test -f 'kmer_variant_graph.cpp' || echo '$(srcdir)/'`kmer_variant_graph.cpp
+
+libkim_la-sort_helper.lo: sort_helper.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-sort_helper.lo -MD -MP -MF $(DEPDIR)/libkim_la-sort_helper.Tpo -c -o libkim_la-sort_helper.lo `test -f 'sort_helper.cpp' || echo '$(srcdir)/'`sort_helper.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-sort_helper.Tpo $(DEPDIR)/libkim_la-sort_helper.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='sort_helper.cpp' object='libkim_la-sort_helper.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-sort_helper.lo `test -f 'sort_helper.cpp' || echo '$(srcdir)/'`sort_helper.cpp
+
+libkim_la-variant_identification.lo: variant_identification.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-variant_identification.lo -MD -MP -MF $(DEPDIR)/libkim_la-variant_identification.Tpo -c -o libkim_la-variant_identification.lo `test -f 'variant_identification.cpp' || echo '$(srcdir)/'`variant_identification.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-variant_identification.Tpo $(DEPDIR)/libkim_la-variant_identification.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_identification.cpp' object='libkim_la-variant_identification.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-variant_identification.lo `test -f 'variant_identification.cpp' || echo '$(srcdir)/'`variant_identification.cpp
+
+libkim_la-variant_nodes_index.lo: variant_nodes_index.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-variant_nodes_index.lo -MD -MP -MF $(DEPDIR)/libkim_la-variant_nodes_index.Tpo -c -o libkim_la-variant_nodes_index.lo `test -f 'variant_nodes_index.cpp' || echo '$(srcdir)/'`variant_nodes_index.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-variant_nodes_index.Tpo $(DEPDIR)/libkim_la-variant_nodes_index.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_nodes_index.cpp' object='libkim_la-variant_nodes_index.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-variant_nodes_index.lo `test -f 'variant_nodes_index.cpp' || echo '$(srcdir)/'`variant_nodes_index.cpp
+
+kim-kim.o: kim.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(kim_CXXFLAGS) $(CXXFLAGS) -MT kim-kim.o -MD -MP -MF $(DEPDIR)/kim-kim.Tpo -c -o kim-kim.o `test -f 'kim.cpp' || echo '$(srcdir)/'`kim.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/kim-kim.Tpo $(DEPDIR)/kim-kim.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='kim.cpp' object='kim-kim.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(kim_CXXFLAGS) $(CXXFLAGS) -c -o kim-kim.o `test -f 'kim.cpp' || echo '$(srcdir)/'`kim.cpp
+
+kim-kim.obj: kim.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(kim_CXXFLAGS) $(CXXFLAGS) -MT kim-kim.obj -MD -MP -MF $(DEPDIR)/kim-kim.Tpo -c -o kim-kim.obj `if test -f 'kim.cpp'; then $(CYGPATH_W) 'kim.cpp'; else $(CYGPATH_W) '$(srcdir)/kim.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/kim-kim.Tpo $(DEPDIR)/kim-kim.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='kim.cpp' object='kim-kim.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(kim_CXXFLAGS) $(CXXFLAGS) -c -o kim-kim.obj `if test -f 'kim.cpp'; then $(CYGPATH_W) 'kim.cpp'; else $(CYGPATH_W) '$(srcdir)/kim.cpp'; fi`
+
 mostlyclean-libtool:
 	-rm -f *.lo
 
@@ -913,27 +1054,27 @@ uninstall-libkim_la_configDATA:
 	@list='$(libkim_la_config_DATA)'; test -n "$(libkim_la_configdir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
 	dir='$(DESTDIR)$(libkim_la_configdir)'; $(am__uninstall_files_from_dir)
-install-library_includeHEADERS: $(library_include_HEADERS)
+install-pkgincludeHEADERS: $(pkginclude_HEADERS)
 	@$(NORMAL_INSTALL)
-	@list='$(library_include_HEADERS)'; test -n "$(library_includedir)" || list=; \
+	@list='$(pkginclude_HEADERS)'; test -n "$(pkgincludedir)" || list=; \
 	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(library_includedir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(library_includedir)" || exit 1; \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(pkgincludedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(pkgincludedir)" || exit 1; \
 	fi; \
 	for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
 	  echo "$$d$$p"; \
 	done | $(am__base_list) | \
 	while read files; do \
-	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(library_includedir)'"; \
-	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(library_includedir)" || exit $$?; \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(pkgincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(pkgincludedir)" || exit $$?; \
 	done
 
-uninstall-library_includeHEADERS:
+uninstall-pkgincludeHEADERS:
 	@$(NORMAL_UNINSTALL)
-	@list='$(library_include_HEADERS)'; test -n "$(library_includedir)" || list=; \
+	@list='$(pkginclude_HEADERS)'; test -n "$(pkgincludedir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	dir='$(DESTDIR)$(library_includedir)'; $(am__uninstall_files_from_dir)
+	dir='$(DESTDIR)$(pkgincludedir)'; $(am__uninstall_files_from_dir)
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -1028,7 +1169,7 @@ install-binPROGRAMS: install-libLTLIBRARIES
 install-checkLTLIBRARIES: install-libLTLIBRARIES
 
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" "$(DESTDIR)$(libkim_la_configdir)" "$(DESTDIR)$(library_includedir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" "$(DESTDIR)$(libkim_la_configdir)" "$(DESTDIR)$(pkgincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -1068,17 +1209,11 @@ maintainer-clean-generic:
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-checkLTLIBRARIES clean-generic \
-	clean-libLTLIBRARIES clean-libtool mostlyclean-am
+	clean-libLTLIBRARIES clean-libtool clean-noinstLTLIBRARIES \
+	mostlyclean-am
 
 distclean: distclean-am
-		-rm -f ./$(DEPDIR)/bounded_size_string.Plo
-	-rm -f ./$(DEPDIR)/dna_file_reader.Plo
-	-rm -f ./$(DEPDIR)/file_reader.Plo
-	-rm -f ./$(DEPDIR)/kim.Po
-	-rm -f ./$(DEPDIR)/kim_settings.Plo
-	-rm -f ./$(DEPDIR)/kmer_nodes_subindex.Plo
-	-rm -f ./$(DEPDIR)/kmer_variant_edges_subindex.Plo
-	-rm -f ./$(DEPDIR)/kmer_variant_graph.Plo
+		-rm -f ./$(DEPDIR)/kim-kim.Po
 	-rm -f ./$(DEPDIR)/libkim_debug_la-bounded_size_string.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-dna_file_reader.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-file_reader.Plo
@@ -1089,9 +1224,16 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libkim_debug_la-sort_helper.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_identification.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo
-	-rm -f ./$(DEPDIR)/sort_helper.Plo
-	-rm -f ./$(DEPDIR)/variant_identification.Plo
-	-rm -f ./$(DEPDIR)/variant_nodes_index.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-bounded_size_string.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-dna_file_reader.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-file_reader.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-kim_settings.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-kmer_nodes_subindex.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-kmer_variant_edges_subindex.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-kmer_variant_graph.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-sort_helper.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-variant_identification.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-variant_nodes_index.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1109,7 +1251,7 @@ info: info-am
 info-am:
 
 install-data-am: install-libkim_la_configDATA \
-	install-library_includeHEADERS
+	install-pkgincludeHEADERS
 	@$(NORMAL_INSTALL)
 	$(MAKE) $(AM_MAKEFLAGS) install-data-hook
 install-dvi: install-dvi-am
@@ -1139,14 +1281,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-		-rm -f ./$(DEPDIR)/bounded_size_string.Plo
-	-rm -f ./$(DEPDIR)/dna_file_reader.Plo
-	-rm -f ./$(DEPDIR)/file_reader.Plo
-	-rm -f ./$(DEPDIR)/kim.Po
-	-rm -f ./$(DEPDIR)/kim_settings.Plo
-	-rm -f ./$(DEPDIR)/kmer_nodes_subindex.Plo
-	-rm -f ./$(DEPDIR)/kmer_variant_edges_subindex.Plo
-	-rm -f ./$(DEPDIR)/kmer_variant_graph.Plo
+		-rm -f ./$(DEPDIR)/kim-kim.Po
 	-rm -f ./$(DEPDIR)/libkim_debug_la-bounded_size_string.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-dna_file_reader.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-file_reader.Plo
@@ -1157,9 +1292,16 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libkim_debug_la-sort_helper.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_identification.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo
-	-rm -f ./$(DEPDIR)/sort_helper.Plo
-	-rm -f ./$(DEPDIR)/variant_identification.Plo
-	-rm -f ./$(DEPDIR)/variant_nodes_index.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-bounded_size_string.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-dna_file_reader.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-file_reader.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-kim_settings.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-kmer_nodes_subindex.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-kmer_variant_edges_subindex.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-kmer_variant_graph.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-sort_helper.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-variant_identification.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-variant_nodes_index.Plo
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -1177,46 +1319,64 @@ ps: ps-am
 ps-am:
 
 uninstall-am: uninstall-binPROGRAMS uninstall-libLTLIBRARIES \
-	uninstall-libkim_la_configDATA \
-	uninstall-library_includeHEADERS
+	uninstall-libkim_la_configDATA uninstall-pkgincludeHEADERS
 	@$(NORMAL_INSTALL)
 	$(MAKE) $(AM_MAKEFLAGS) uninstall-hook
 .MAKE: check-am install-am install-data-am install-strip uninstall-am
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles check check-am clean \
 	clean-binPROGRAMS clean-checkLTLIBRARIES clean-generic \
-	clean-libLTLIBRARIES clean-libtool cscopelist-am ctags \
-	ctags-am distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-binPROGRAMS \
-	install-data install-data-am install-data-hook install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am \
-	install-libLTLIBRARIES install-libkim_la_configDATA \
-	install-library_includeHEADERS install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-hook uninstall-libLTLIBRARIES \
-	uninstall-libkim_la_configDATA \
-	uninstall-library_includeHEADERS
+	clean-libLTLIBRARIES clean-libtool clean-noinstLTLIBRARIES \
+	cscopelist-am ctags ctags-am distclean distclean-compile \
+	distclean-generic distclean-libtool distclean-tags distdir dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-binPROGRAMS install-data install-data-am \
+	install-data-hook install-dvi install-dvi-am install-exec \
+	install-exec-am install-html install-html-am install-info \
+	install-info-am install-libLTLIBRARIES \
+	install-libkim_la_configDATA install-man install-pdf \
+	install-pdf-am install-pkgincludeHEADERS install-ps \
+	install-ps-am install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-binPROGRAMS uninstall-hook \
+	uninstall-libLTLIBRARIES uninstall-libkim_la_configDATA \
+	uninstall-pkgincludeHEADERS
 
 .PRECIOUS: Makefile
 
 
+#########################
+# Dependencies handling #
+#########################
+
+# named target
+.PHONY: force-rebuild
+
+# rule
+force-rebuild:
+
+$(top_builddir)/external/%: force-rebuild
+	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) "$(@F)" -C "$(@D)"
+
+##########################
+# install/uninstall hook #
+##########################
+
 install-data-hook:
-	$(AM_V_at)test "`readlink "$(DESTDIR)@includedir@/@PACKAGE@"`" == "@PACKAGE@-@VERSION@" \
-	|| ( cd "$(DESTDIR)@includedir@" && $(LN_S) -f -n "@PACKAGE@-@VERSION@" "@PACKAGE@" )
-	$(AM_V_at)test "`readlink "$(DESTDIR)@libdir@/@PACKAGE@"`" == "@PACKAGE@-@VERSION@" \
-	|| ( cd "$(DESTDIR)@libdir@" && $(LN_S) -f -n "@PACKAGE@-@VERSION@" "@PACKAGE@" )
+	$(AM_V_at)test "`readlink "$(DESTDIR)$(includedir)/$(LIBNAME)"`" == "$(install_dirname)"	 \
+	|| ( cd "$(DESTDIR)$(includedir)" && $(LN_S) -f -n "$(install_dirname)" "$(LIBNAME)" )
+	$(AM_V_at)test "`readlink "$(DESTDIR)$(libdir)/$(LIBNAME)"`" == "$(install_dirname)" \
+	|| ( cd "$(DESTDIR)$(libdir)" && $(LN_S) -f -n "$(install_dirname)" "$(LIBNAME)" )
 
 uninstall-hook:
-	$(AM_V_at)test "`readlink "$(DESTDIR)@includedir@/@PACKAGE@"`" != "@PACKAGE@-@VERSION@" \
-        || rm -rf "$(DESTDIR)@includedir@"/@PACKAGE@{,-@VERSION@}
-	$(AM_V_at)test "`readlink "$(DESTDIR)@libdir@/@PACKAGE@"`" != "@PACKAGE@-@VERSION@" \
-        || rm -rf "$(DESTDIR)@libdir@"/@PACKAGE@{,-@VERSION@}
+	$(AM_V_at)test "`readlink "$(DESTDIR)$(includedir)/$(LIBNAME)"`" != "$(install_dirname)" \
+	|| rm -f "$(DESTDIR)$(includedir)/$(LIBNAME)"
+	$(AM_V_at)rm -rf "$(DESTDIR)$(includedir)/$(install_dirname)"
+	$(AM_V_at)test "`readlink "$(DESTDIR)$(libdir)/$(LIBNAME)"`" != "$(install_dirname)" \
+	|| rm -f "$(DESTDIR)$(libdir)/$(LIBNAME)"
+	$(AM_V_at)rm -rf "$(DESTDIR)$(libdir)/$(install_dirname)"
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

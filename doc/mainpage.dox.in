@@ -88,21 +88,31 @@
 ******************************************************************************/
 
 /**
- * \mainpage
+ * \mainpage KIM: *k*-mer identification metric
  *
- * @PACKAGE_DESCRIPTION@
+ * @PACKAGE_SHORT_DESCRIPTION@
+ *
+ * @PACKAGE_FULL_DESCRIPTION@
  *
  * \author @PACKAGE_AUTHORS@
  *
- * \version @PACKAGE_VERSION@
+ * \version Package Version: @PACKAGE_VERSION@
+ *
+ * \version Library Version: @LIB_VERSION_EXT@
+ * (The library version is different from the package version and follows
+ * [the GNU libtool's versioning system](https://www.gnu.org/software/libtool/manual/html_node/Libtool-versioning.html))
  *
  * \date @PACKAGE_COPYRIGHT_DATE@
  *
- * \copyright @PACKAGE_LICENCE@
- *
- * \page ChangeLog
- *
- * \include{doc} ChangeLog
+ * \copyright @PACKAGE_LICENSE@
+ * <pre>
+ *    © 2023-2024 -- IGH/LIRMM/CNRS/UM
+ *                   (Institut de Génétique Humaine /
+ *                   Laboratoire d'Informatique, de Robotique et de
+ *                   Microélectronique de Montpellier /
+ *                   Centre National de la Recherche Scientifique /
+ *                   Université de Montpellier)
+ * </pre>
  */
 
 // Local Variables:

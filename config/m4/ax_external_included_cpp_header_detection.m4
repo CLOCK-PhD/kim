@@ -1,8 +1,8 @@
 # ===========================================================================
-#  https://https://gite.lirmm.fr/doccy/doccy-dev-tools/autoconf
+#  https://https://gite.lirmm.fr/doccy-dev-tools/autoconf
 # ===========================================================================
 #
-# Serial 4
+# Serial 5
 #
 # SYNOPSIS
 #
@@ -17,53 +17,68 @@
 # DESCRIPTION
 #
 #   The following configure script options are defined:
-#   - '--with-included-NAME[=yes|no|check]' (default to is 'check')
-#   - '--without-included-NAME' (alias for '--without-included-NAME=no').
-#   - '--with-NAME-path=DIR'
+#   - `--with-included-NAME[=yes|no|check]` (default to is `check`)
+#   - `--without-included-NAME` (alias for `--without-included-NAME=no`).
+#   - `--with-NAME-path=DIR`
 #
 #   TL;DR:
-#   - The NAME_CPPFLAGS variable is defined with the correct values to pass
+#   - The `NAME_CPPFLAGS` variable is defined with the correct values to pass
 #     to the compiler.
-#   - The INCLUDED_NAME automake conditional is defined to true iff the
+#   - The `INCLUDED_NAME` automake conditional is defined to true iff the
 #     included headers are used.
 #
 #   This macro checks for library FILE according to the options
-#   '--with-included-NAME' and '--with-NAME-path'.
+#   `--with-included-NAME` and `--with-NAME-path`.
 #
-#   If both options --with-NAME-path and --with-included-NAME[=yes] are
+#   If both options `--with-NAME-path` and `--with-included-NAME[=yes]` are
 #   provided, configuration stops with an explicit error message.
 #
-#   If --with-NAME-path is set, uses the specified path to look for the
+#   If `--with-NAME-path` is set, uses the specified path to look for the
 #   header.
 #
-#   If --with-included-NAME is not given or set to 'check' or 'no', then an
+#   If `--with-included-NAME` is not given or set to `check` or `no`, then an
 #   existing header is search on the system:
-#   - If not found and --with-included-NAME is set to 'no', the configuration
-#     stops with the MESSAGE-IF-NOT-FOUND (or a default one if empty).
-#   - If not found and --with-included-NAME is set to 'check', then it acts
-#     like if the --with-included-NAME was set to 'yes'.
+#   - If not found and `--with-included-NAME` is set to `no`, the
+#     configuration stops with the `MESSAGE-IF-NOT-FOUND` (or a default one
+#     if empty).
+#   - If not found and `--with-included-NAME` is set to `check`, then it acts
+#     like if the `--with-included-NAME` was set to `yes`.
 #
-#   If --with-included-NAME is set to 'yes' (default if argument value is not
-#   explcitely set), then the included header path is used (expecting that
-#   INCLUDED_PATH/FILE exists).
+#   If `--with-included-NAME` is set to `yes` (default if argument value is
+#   not explcitely set), then the included header path is used (expecting
+#   that `INCLUDED_PATH/FILE` exists).
 #
 #   The header file detection on the host system is achieved by using the
-#   AC_CHECK_HEADERS() macro.
+#   `AC_CHECK_HEADERS()` macro.
 #
 #   If some buggy situation occurs, then a message is shown that proposes to
-#   send an e-mail to the address specified in the PACKAGE_BUGREPORT shell
+#   send an e-mail to the address specified in the `PACKAGE_BUGREPORT` shell
 #   variable (or to the "package maintainers" if empty).
 #
-#   In the end, the NAME_CPPFLAGS compiler flag and the INCLUDED_NAME
+#   In the end, the `NAME_CPPFLAGS` compiler flag and the `INCLUDED_NAME`
 #   automake conditional are set according to detection.
 #
-#   Note: This macro relies on the AX_REQUIRE_DEFINED() and
-#   AX_APPEND_COMPILE_FLAGS() external macros, which are both available from
-#   the autoconf archive
+#   Notice that, accordingly to the well documented automake [Conditional
+#   Subdirectories](https://www.gnu.org/software/automake/manual/automake.html#Conditional-Subdirectories)
+#   section, the included header should be added to the subdirectories to
+#   include in the distribution, even if the `--without-included-NAME` option
+#   is given to the `configure` script. Although, you should add the included
+#   header path to the automake `EXTRA_DIST` variable in your top level
+#   `Makefile.am`:
+#
+#   ```automake
+#   EXTRA_DIST = COPYING INSTALL NEWS
+#   
+#   EXTRA_DIST += INCLUDED_PATH
+#   ```
+#
+#   Note: This macro relies on the `AX_REQUIRE_DEFINED()` and
+#   `AX_APPEND_COMPILE_FLAGS()` external macros, which are both available
+#   from the autoconf archive
 #   (https://www.gnu.org/software/autoconf-archive/ax_require_defined.html
 #   and
 #   https://www.gnu.org/software/autoconf-archive/ax_append_compile_flags.html).
-#   It also relies to the AX_EXTERNAL_INCLUDED_LIBRARY_DECLARE_OPTIONS()
+#   It also relies to the `AX_EXTERNAL_INCLUDED_LIBRARY_DECLARE_OPTIONS()`
 #   macro coming with this one.
 #
 #   Remark: Someone might legitimately wonder why we prefer to use system
@@ -151,75 +166,74 @@ AX_REQUIRE_DEFINED([AX_APPEND_COMPILE_FLAGS])dnl
 AX_REQUIRE_DEFINED([AX_EXTERNAL_INCLUDED_LIBRARY_DECLARE_OPTIONS])dnl
 
 AX_EXTERNAL_INCLUDED_LIBRARY_DECLARE_OPTIONS([$1], [true])
-_priv_valid_found="no"
+valid_$1_found="no"
 
 dnl Check if some specific path is provided for NAME or not.
-AS_IF([test "x${with_$1[]_path}" = "x"],
+AS_IF([test -z "${with_$1_path}"],
       [dnl Here, no specific path is provided to look for custom NAME header.
-       AS_IF([test "x${with_included_$1}" != "xyes"],
+       AS_IF([test "${with_included_$1}" != "yes"],
              [dnl Try to find an already existing version of NAME on system.
-              AC_CHECK_HEADERS([$3], [_priv_valid_found="yes"])
-              AS_IF([test "x${_priv_valid_found}" = "xno"],
+              AC_CHECK_HEADERS([$3], [valid_$1_found="yes"])
+              AS_IF([test "${valid_$1_found}" = "no"],
                     [dnl No valid system installed header found.
-                     AS_IF([test "x${with_included_$1}" = "xcheck"],
+                     AS_IF([test "${with_included_$1}" = "check"],
                            [dnl Fallback to the included header.
                             with_included_$1="yes"
                             AC_MSG_NOTICE([Header(s) of $1 not found on system, using the one(s) included in '$2'.])],
                            [dnl Aborting with an explicit error message
                             dnl (either the MESSAGE-IF-NOT-FOUND or the
                             dnl default error message.
-                            AC_MSG_FAILURE([ifelse([$4], [],
+                            AC_MSG_FAILURE([m4_default([$4],
                                            [
 
 Unable to find required $1 header(s).
 
 You can re-run the configure script by allowing the use of the
 included $1 header(s).
-],
-                                           [$4])])])])])],
+])])])])])],
       [dnl Here some specific path for NAME is given. First ensure that there
        dnl is no conflicting use of --with-included-NAME option.
-       AS_IF([test "x${with_included_$1}" = "xyes"],
+       AS_IF([test "${with_included_$1}" = "yes"],
              [AC_MSG_ERROR([
 
 You can't use both --with-included-$1 and --with-$1-path options
 ])])
        dnl Try to find an existing version of NAME on system using the given
        dnl path.
-       _priv_CPPFLAGS="-I${with_$1[]_path}"
-       _priv_orig_CPPFLAGS="${CPPFLAGS}"
-       AX_APPEND_COMPILE_FLAGS([${_priv_CPPFLAGS}], [CPPFLAGS])
+       CPPFLAGS_tmp="-I${with_$1_path}"
+       CPPFLAGS_orig="${CPPFLAGS}"
+       AX_APPEND_COMPILE_FLAGS([${CPPFLAGS_tmp}], [CPPFLAGS])
        AC_CHECK_HEADERS([$3],
-                        [_priv_valid_found="yes"],
+                        [valid_$1_found="yes"],
                         [AC_MSG_FAILURE([
 
 No valid $1 header found using the path specified by option
---with-$1-path='${with_$1[]_path}'.
+--with-$1-path='${with_$1_path}'.
 ])])
-       CPPFLAGS=${_priv_orig_CPPFLAGS}])dnl
+       CPPFLAGS=${CPPFLAGS_orig}])dnl
 
-AS_IF([test "x${_priv_valid_found}" = "xno"],
+AS_IF([test "${valid_$1_found}" = "no"],
       [dnl No header found on the system (either because option
        dnl --with-included-NAME[=yes] has been given or because there is no
        dnl valid installed header and --with-included-NAME was not set (or
        dnl was given the 'check' parameter).
-     AS_IF([test "x${with_included_$1}" = "xyes"],
+     AS_IF([test "${with_included_$1}" = "yes"],
              [dnl Setting the flags for using the included header.
-              _priv_CPPFLAGS="-I${ac_abs_confdir}/$2"
-              _priv_valid_found="yes"],
+              CPPFLAGS_tmp="-I${ac_abs_confdir}/$2"
+              valid_$1_found="yes"],
              [dnl This case should not occur.
-              _priv_valid_found="bug"])],
+              valid_$1_found="bug"])],
       [dnl Some valid installed header was found.
-       AS_IF([test "x${with_included_$1}" = "xyes"],
+       AS_IF([test "${with_included_$1}" = "yes"],
              [dnl This case should not occur.
-              _priv_valid_found="bug"],
+              valid_$1_found="bug"],
              [dnl Update the value of the with_included_NAME variable to
               dnl 'no'.
               with_included_$1="no"])])dnl
 
 dnl If some bug occurs, we display an explicit message then abort
 dnl configuration.
-AS_IF([test "x${_priv_valid_found}" = "xbug"],
+AS_IF([test "${valid_$1_found}" = "bug"],
       [AC_MSG_FAILURE([
 
 Something wrong occurs with the configure script and the $1 header detection.
@@ -228,10 +242,10 @@ Please send a bug report to ${PACKAGE_BUGREPORT:-package maintainers} describing
 ])])dnl
 
 dnl Set the computed flags variable.
-$1[]_CPPFLAGS=${_priv_CPPFLAGS}
+$1_CPPFLAGS=${CPPFLAGS_tmp}
 
 dnl Set INCLUDED_NAME conditional for automake.
-AM_CONDITIONAL([INCLUDED_$1], [test "x${with_included_$1}" = "xyes"])dnl
+AM_CONDITIONAL([INCLUDED_$1], [test "${with_included_$1}" = "yes"])dnl
 
 ])dnl AX_EXTERNAL_INCLUDED_CPP_HEADER_DETECTION
 dnl Local variables:

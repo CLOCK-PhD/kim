@@ -103,6 +103,10 @@
 #                                                                             #
 ###############################################################################
 
+########################
+# Global configuration #
+########################
+
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -177,6 +181,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+target_triplet = @target@
 subdir = resources
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_ac_append_to_file.m4 \
@@ -186,18 +191,25 @@ am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_ac_append_to_file.m4 \
 	$(top_srcdir)/config/m4/ax_append_compile_flags.m4 \
 	$(top_srcdir)/config/m4/ax_append_flag.m4 \
 	$(top_srcdir)/config/m4/ax_append_link_flags.m4 \
+	$(top_srcdir)/config/m4/ax_c_cxx_enable_debug_option.m4 \
 	$(top_srcdir)/config/m4/ax_check_compile_flag.m4 \
 	$(top_srcdir)/config/m4/ax_check_gnu_make.m4 \
 	$(top_srcdir)/config/m4/ax_check_link_flag.m4 \
 	$(top_srcdir)/config/m4/ax_code_coverage.m4 \
+	$(top_srcdir)/config/m4/ax_code_statistics.m4 \
 	$(top_srcdir)/config/m4/ax_compare_version.m4 \
 	$(top_srcdir)/config/m4/ax_compiler_flags_ldflags.m4 \
 	$(top_srcdir)/config/m4/ax_cxx_compile_stdcxx.m4 \
+	$(top_srcdir)/config/m4/ax_debian_package.m4 \
+	$(top_srcdir)/config/m4/ax_define_macro_with_key_value_args.m4 \
 	$(top_srcdir)/config/m4/ax_external_included_cpp_header_detection.m4 \
 	$(top_srcdir)/config/m4/ax_external_included_cxx_library_detection.m4 \
 	$(top_srcdir)/config/m4/ax_external_included_generic_library_check.m4 \
 	$(top_srcdir)/config/m4/ax_external_included_library_declare_options.m4 \
 	$(top_srcdir)/config/m4/ax_file_escapes.m4 \
+	$(top_srcdir)/config/m4/ax_gcovr_code_coverage.m4 \
+	$(top_srcdir)/config/m4/ax_git_versioning.m4 \
+	$(top_srcdir)/config/m4/ax_package_infos.m4 \
 	$(top_srcdir)/config/m4/ax_prog_doxygen.m4 \
 	$(top_srcdir)/config/m4/ax_require_defined.m4 \
 	$(top_srcdir)/config/m4/libtool.m4 \
@@ -205,7 +217,8 @@ am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_ac_append_to_file.m4 \
 	$(top_srcdir)/config/m4/ltsugar.m4 \
 	$(top_srcdir)/config/m4/ltversion.m4 \
 	$(top_srcdir)/config/m4/lt~obsolete.m4 \
-	$(top_srcdir)/config/m4/pkg.m4 $(top_srcdir)/configure.ac
+	$(top_srcdir)/config/m4/pkg.m4 $(top_srcdir)/config/version \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(dist_pkgdata_DATA) \
@@ -269,7 +282,6 @@ ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
-ARCH = @ARCH@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -292,11 +304,13 @@ CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
-DEB_BUILDER = @DEB_BUILDER@
+DEBIAN_PACKAGE_ARCH = @DEBIAN_PACKAGE_ARCH@
+DEBIAN_PACKAGE_PREFIX = @DEBIAN_PACKAGE_PREFIX@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
 DOXYGEN_PAPER_SIZE = @DOXYGEN_PAPER_SIZE@
+DPKG = @DPKG@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
 DX_CONFIG = @DX_CONFIG@
@@ -330,6 +344,7 @@ ETAGS = @ETAGS@
 EXEEXT = @EXEEXT@
 EXTRA_LDFLAGS = @EXTRA_LDFLAGS@
 FGREP = @FGREP@
+FILECMD = @FILECMD@
 GCOV = @GCOV@
 GCOVR = @GCOVR@
 GENHTML = @GENHTML@
@@ -343,7 +358,6 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
-ISODATE = @ISODATE@
 LCOV = @LCOV@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
@@ -371,11 +385,11 @@ PACKAGE = @PACKAGE@
 PACKAGE_AUTHORS = @PACKAGE_AUTHORS@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_COPYRIGHT_DATE = @PACKAGE_COPYRIGHT_DATE@
-PACKAGE_DESCRIPTION = @PACKAGE_DESCRIPTION@
-PACKAGE_LICENCE = @PACKAGE_LICENCE@
-PACKAGE_LOGO = @PACKAGE_LOGO@
+PACKAGE_FULL_DESCRIPTION = @PACKAGE_FULL_DESCRIPTION@
+PACKAGE_LICENSE = @PACKAGE_LICENSE@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_PRETTY_NAME = @PACKAGE_PRETTY_NAME@
+PACKAGE_SHORT_DESCRIPTION = @PACKAGE_SHORT_DESCRIPTION@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
@@ -415,7 +429,6 @@ datarootdir = @datarootdir@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
-hacked_prefix = @hacked_prefix@
 host = @host@
 host_alias = @host_alias@
 host_cpu = @host_cpu@
@@ -444,23 +457,26 @@ sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
 subdirs = @subdirs@
 sysconfdir = @sysconfdir@
+target = @target@
 target_alias = @target_alias@
+target_cpu = @target_cpu@
+target_os = @target_os@
+target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-STATS_FILE_BASENAME = @PACKAGE@-@PACKAGE_VERSION@
-CLOC_FILE = $(STATS_FILE_BASENAME).cloc
-OHCOUNT_FILE = $(STATS_FILE_BASENAME).ohcount
-LIST_FILE = $(STATS_FILE_BASENAME).filelist
-STATS_FILE = $(STATS_FILE_BASENAME).stats
 dist_pkgdata_DATA = \
   kim.bash_completion	\
   test-reads.fastq	\
   test-sequences.fasta	\
   $(STATS_FILE)
 
+
+####################
+# Cleaning targets #
+####################
 MOSTLYCLEANFILES = *~
-CLEANFILES = *~ $(LIST_FILE) $(CLOC_FILE) $(OHCOUNT_FILE) $(STATS_FILE)
+CLEANFILES = *~
 DISTCLEANFILES = *~
 MAINTAINERCLEANFILES = *~
 all: all-am
@@ -563,7 +579,7 @@ distdir-am: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(DATA)
+all-am: Makefile $(DATA) all-local
 installdirs:
 	for dir in "$(DESTDIR)$(pkgdatadir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
@@ -604,7 +620,7 @@ maintainer-clean-generic:
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-am
 
-clean-am: clean-generic clean-libtool mostlyclean-am
+clean-am: clean-generic clean-libtool clean-local mostlyclean-am
 
 distclean: distclean-am
 	-rm -f Makefile
@@ -670,74 +686,26 @@ uninstall-am: uninstall-dist_pkgdataDATA
 
 .MAKE: install-am install-strip
 
-.PHONY: all all-am check check-am clean clean-generic clean-libtool \
-	cscopelist-am ctags-am distclean distclean-generic \
-	distclean-libtool distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am \
-	install-dist_pkgdataDATA install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags-am uninstall \
-	uninstall-am uninstall-dist_pkgdataDATA
+.PHONY: all all-am all-local check check-am clean clean-generic \
+	clean-libtool clean-local cscopelist-am ctags-am distclean \
+	distclean-generic distclean-libtool distdir dvi dvi-am html \
+	html-am info info-am install install-am install-data \
+	install-data-am install-dist_pkgdataDATA install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags-am uninstall uninstall-am uninstall-dist_pkgdataDATA
 
 .PRECIOUS: Makefile
 
 
-$(LIST_FILE):
-	@echo "Generate package file list"
-	$(AM_V_at)git ls-tree --name-only -r  HEAD "$(abs_top_srcdir)" > "$@" || true
+@CODE_STATISTICS_RULES@
 
-@CLOC_TRUE@$(CLOC_FILE): $(LIST_FILE)
-@CLOC_TRUE@	@echo "Generate cloc summary"
-@CLOC_TRUE@	$(AM_V_at)echo "CLoC summary" | sed 'h;s/./=/g;p;x;p;x' > "$@"
-@CLOC_TRUE@	$(AM_V_at)echo >> "$@"
-@CLOC_TRUE@	$(AM_V_at)@CLOC@ --list-file="$<" --quiet | tail -n +2 >> "$@"
-
-@CLOC_FALSE@$(CLOC_FILE):
-@CLOC_FALSE@	@echo "You should install cloc (source code line counter) and reconfigure this package."
-@CLOC_FALSE@	$(AM_V_at)echo "CLoC isn't installed. No report created" > "$@"
-
-@OHCOUNT_TRUE@$(OHCOUNT_FILE): $(LIST_FILE)
-@OHCOUNT_TRUE@	@echo "Generate OhCount summary"
-@OHCOUNT_TRUE@	$(AM_V_at)echo "OhCount summary" | sed 'h;s/./=/g;p;x;p;x' > "$@"
-@OHCOUNT_TRUE@	$(AM_V_at)@OHCOUNT@ $$(cat "$<") | tail -n +2 >> "$@"
-
-@OHCOUNT_FALSE@$(OHCOUNT_FILE): $(LIST_FILE)
-@OHCOUNT_FALSE@	@echo "You should install ohcount (source code line counter) and reconfigure this package."
-@OHCOUNT_FALSE@	$(AM_V_at)echo "OhCount isn't installed. No report created" > "$@"
-
-force-renew:
-
-$(STATS_FILE): $(CLOC_FILE) $(OHCOUNT_FILE) $(LIST_FILE) force-renew
-	@echo "Backup existing code statistics (if any)"
-	$(AM_V_at)test ! -f "$(abs_srcdir)/$(STATS_FILE)" || cat "$(abs_srcdir)/$(STATS_FILE)" > "$(STATS_FILE).tmp"
-	@echo "Generate code statistics"
-	$(AM_V_at)echo "# $@ #" | sed 'h;s/./#/g;p;x;p;x' > "$@"
-	$(AM_V_at)echo >> "$@"
-	$(AM_V_at)cat $(CLOC_FILE) >> "$@"
-	$(AM_V_at)echo >> "$@"
-	$(AM_V_at)cat $(OHCOUNT_FILE) >> "$@"
-	$(AM_V_at)echo >> "$@"
-	$(AM_V_at)printf "%.78d\n" | tr 0 - >> "$@"
-	$(AM_V_at)echo >> "$@"
-	$(AM_V_at)if test ! -s "$(LIST_FILE)" -a -f "$(STATS_FILE).tmp"; then		\
-	  echo "Using existing code statistics backup file since generation failed";	\
-	  mv "$(STATS_FILE).tmp" "$(STATS_FILE)";					\
-	fi
-	@echo "Removing temporary files and backup (if any)"
-	$(AM_V_at)$(RM) "$(STATS_FILE).tmp" "$(CLOC_FILE)" "$(OHCOUNT_FILE)" "$(LIST_FILE)"
-	$(AM_V_at)cat "$(STATS_FILE)"
-
-cloc: $(CLOC_FILE)
-
-ohcount: $(OHCOUNT_FILE)
-
-filelist: $(LIST_FILE)
-
-stats: $(STATS_FILE)
+all-local: stats
+clean-local: clean-stats
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

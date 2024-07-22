@@ -107,6 +107,8 @@
 # Global configuration #
 ########################
 
+# aminclude_static.am generated automatically by Autoconf
+# from AX_AM_MACROS_STATIC on Mon Jul 22 12:36:06 CEST 2024
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -182,7 +184,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-subdir = packaging
+subdir = coverage
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_ac_append_to_file.m4 \
 	$(top_srcdir)/config/m4/ax_ac_print_to_file.m4 \
@@ -224,7 +226,7 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config/config.h
-CONFIG_CLEAN_FILES = control prerm postinst kim.pc
+CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -245,38 +247,9 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
-am__vpath_adj = case $$p in \
-    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-    *) f=$$p;; \
-  esac;
-am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
-am__install_max = 40
-am__nobase_strip_setup = \
-  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
-am__nobase_strip = \
-  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
-am__nobase_list = $(am__nobase_strip_setup); \
-  for p in $$list; do echo "$$p $$p"; done | \
-  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
-  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
-    if (++n[$$2] == $(am__install_max)) \
-      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
-    END { for (dir in files) print dir, files[dir] }'
-am__base_list = \
-  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
-  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__uninstall_files_from_dir = { \
-  test -z "$$files" \
-    || { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
-    || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
-         $(am__cd) "$$dir" && rm -f $$files; }; \
-  }
-am__installdirs = "$(DESTDIR)$(pkgconfigdir)"
-DATA = $(pkgconfig_DATA)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
-am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/control.in \
-	$(srcdir)/kim.pc.in $(srcdir)/postinst.in $(srcdir)/prerm.in
+am__DIST_COMMON = $(srcdir)/Makefile.in \
+	$(top_srcdir)/aminclude_static.am
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
@@ -466,23 +439,52 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 
-######################
-# pkgconfig handling #
-######################
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = @PACKAGE@-@PACKAGE_VERSION@.pc
+# Ignore external libraries/headers in coverage reports.
+GCOVR_CORE_OPTS = \
+  --root "$(top_builddir)"			\
+  --exclude-unreachable-branches		\
+  --exclude '^$(GCOVR_TESTS_DIRECTORY)/'	\
+  --exclude '^(.*/)?external/'	\
+  --filter '^(.*/)?src/'
+
+CODE_COVERAGE_LCOV_RMOPTS_DEFAULT = /usr/* $(GCOVR_TESTS_DIRECTORY) */external/*
+
+# Ignore (and suppress) `unused` and `deprecated` warnings emitted by
+# the `lcov` program.
+CODE_COVERAGE_LCOV_SHOPTS = $(CODE_COVERAGE_LCOV_SHOPTS_DEFAULT) --ignore-errors unused,unused,deprecated,deprecated,inconsistent,inconsistent,mismatch
+
+# Ignore (and suppress) `deprecated` warnings emitted by the `genhtml`
+# program.
+CODE_COVERAGE_GENHTML_OPTIONS = $(CODE_COVERAGE_GENHTML_OPTIONS_DEFAULT) --ignore-errors deprecated,deprecated
+@CODE_COVERAGE_ENABLED_TRUE@GITIGNOREFILES := $(GITIGNOREFILES) $(CODE_COVERAGE_OUTPUT_FILE) $(CODE_COVERAGE_OUTPUT_DIRECTORY)
+@CODE_COVERAGE_ENABLED_TRUE@code_coverage_v_lcov_cap = $(code_coverage_v_lcov_cap_$(V))
+@CODE_COVERAGE_ENABLED_TRUE@code_coverage_v_lcov_cap_ = $(code_coverage_v_lcov_cap_$(AM_DEFAULT_VERBOSITY))
+@CODE_COVERAGE_ENABLED_TRUE@code_coverage_v_lcov_cap_0 = @echo "  LCOV   --capture" $(CODE_COVERAGE_OUTPUT_FILE);
+@CODE_COVERAGE_ENABLED_TRUE@code_coverage_v_lcov_ign = $(code_coverage_v_lcov_ign_$(V))
+@CODE_COVERAGE_ENABLED_TRUE@code_coverage_v_lcov_ign_ = $(code_coverage_v_lcov_ign_$(AM_DEFAULT_VERBOSITY))
+@CODE_COVERAGE_ENABLED_TRUE@code_coverage_v_lcov_ign_0 = @echo "  LCOV   --remove /tmp/*" $(CODE_COVERAGE_IGNORE_PATTERN);
+@CODE_COVERAGE_ENABLED_TRUE@code_coverage_v_genhtml = $(code_coverage_v_genhtml_$(V))
+@CODE_COVERAGE_ENABLED_TRUE@code_coverage_v_genhtml_ = $(code_coverage_v_genhtml_$(AM_DEFAULT_VERBOSITY))
+@CODE_COVERAGE_ENABLED_TRUE@code_coverage_v_genhtml_0 = @echo "  GEN   " "$(CODE_COVERAGE_OUTPUT_DIRECTORY)";
+@CODE_COVERAGE_ENABLED_TRUE@code_coverage_quiet = $(code_coverage_quiet_$(V))
+@CODE_COVERAGE_ENABLED_TRUE@code_coverage_quiet_ = $(code_coverage_quiet_$(AM_DEFAULT_VERBOSITY))
+@CODE_COVERAGE_ENABLED_TRUE@code_coverage_quiet_0 = --quiet
+
+# sanitizes the test-name: replaces with underscores: dashes and dots
+@CODE_COVERAGE_ENABLED_TRUE@code_coverage_sanitize = $(subst -,_,$(subst .,_,$(1)))
+@CODE_COVERAGE_ENABLED_TRUE@AM_DISTCHECK_CONFIGURE_FLAGS := $(AM_DISTCHECK_CONFIGURE_FLAGS) --disable-code-coverage
 
 ####################
 # Cleaning targets #
 ####################
 MOSTLYCLEANFILES = *~
 CLEANFILES = *~
-DISTCLEANFILES = *~ control @PACKAGE@-@PACKAGE_VERSION@.pc
+DISTCLEANFILES = *~
 MAINTAINERCLEANFILES = *~
 all: all-am
 
 .SUFFIXES:
-$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(top_srcdir)/aminclude_static.am $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -491,9 +493,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign packaging/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign coverage/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign packaging/Makefile
+	  $(AUTOMAKE) --foreign coverage/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -502,6 +504,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__maybe_remake_depfiles)'; \
 	    cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__maybe_remake_depfiles);; \
 	esac;
+$(top_srcdir)/aminclude_static.am $(am__empty):
 
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
@@ -511,41 +514,12 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
-control: $(top_builddir)/config.status $(srcdir)/control.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-prerm: $(top_builddir)/config.status $(srcdir)/prerm.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-postinst: $(top_builddir)/config.status $(srcdir)/postinst.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-kim.pc: $(top_builddir)/config.status $(srcdir)/kim.pc.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 mostlyclean-libtool:
 	-rm -f *.lo
 
 clean-libtool:
 	-rm -rf .libs _libs
-install-pkgconfigDATA: $(pkgconfig_DATA)
-	@$(NORMAL_INSTALL)
-	@list='$(pkgconfig_DATA)'; test -n "$(pkgconfigdir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(pkgconfigdir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(pkgconfigdir)" || exit 1; \
-	fi; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(pkgconfigdir)'"; \
-	  $(INSTALL_DATA) $$files "$(DESTDIR)$(pkgconfigdir)" || exit $$?; \
-	done
-
-uninstall-pkgconfigDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(pkgconfig_DATA)'; test -n "$(pkgconfigdir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	dir='$(DESTDIR)$(pkgconfigdir)'; $(am__uninstall_files_from_dir)
 tags TAGS:
 
 ctags CTAGS:
@@ -587,11 +561,8 @@ distdir-am: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(DATA)
+all-am: Makefile
 installdirs:
-	for dir in "$(DESTDIR)$(pkgconfigdir)"; do \
-	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
-	done
 install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
@@ -632,7 +603,7 @@ clean-am: clean-generic clean-libtool clean-local mostlyclean-am
 
 distclean: distclean-am
 	-rm -f Makefile
-distclean-am: clean-am distclean-generic
+distclean-am: clean-am distclean-generic distclean-local
 
 dvi: dvi-am
 
@@ -646,9 +617,8 @@ info: info-am
 
 info-am:
 
-install-data-am: install-pkgconfigDATA
-	@$(NORMAL_INSTALL)
-	$(MAKE) $(AM_MAKEFLAGS) install-data-hook
+install-data-am:
+
 install-dvi: install-dvi-am
 
 install-dvi-am:
@@ -691,40 +661,131 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-pkgconfigDATA
-	@$(NORMAL_INSTALL)
-	$(MAKE) $(AM_MAKEFLAGS) uninstall-hook
-.MAKE: install-am install-data-am install-strip uninstall-am
+uninstall-am:
+
+.MAKE: install-am install-strip
 
 .PHONY: all all-am check check-am clean clean-generic clean-libtool \
 	clean-local cscopelist-am ctags-am distclean distclean-generic \
-	distclean-libtool distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am \
-	install-data-hook install-dvi install-dvi-am install-exec \
+	distclean-libtool distclean-local distdir dvi dvi-am html \
+	html-am info info-am install install-am install-data \
+	install-data-am install-dvi install-dvi-am install-exec \
 	install-exec-am install-html install-html-am install-info \
 	install-info-am install-man install-pdf install-pdf-am \
-	install-pkgconfigDATA install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-generic \
 	mostlyclean-libtool pdf pdf-am ps ps-am tags-am uninstall \
-	uninstall-am uninstall-hook uninstall-pkgconfigDATA
+	uninstall-am
 
 .PRECIOUS: Makefile
 
 
-@DEBIAN_PACKAGE_RULES@
+@GCOVR_CODE_COVERAGE_RULES@
 
-clean-local: deb-clean
+# Code coverage
+#
+# Optional:
+#  - CODE_COVERAGE_DIRECTORY: Top-level directory for code coverage reporting.
+#    Multiple directories may be specified, separated by whitespace.
+#    (Default: $(top_builddir))
+#  - CODE_COVERAGE_OUTPUT_FILE: Filename and path for the .info file generated
+#    by lcov for code coverage. (Default:
+#    $(PACKAGE_NAME)-$(PACKAGE_VERSION)-coverage.info)
+#  - CODE_COVERAGE_OUTPUT_DIRECTORY: Directory for generated code coverage
+#    reports to be created. (Default:
+#    $(PACKAGE_NAME)-$(PACKAGE_VERSION)-coverage)
+#  - CODE_COVERAGE_BRANCH_COVERAGE: Set to 1 to enforce branch coverage,
+#    set to 0 to disable it and leave empty to stay with the default.
+#    (Default: empty)
+#  - CODE_COVERAGE_LCOV_SHOPTS_DEFAULT: Extra options shared between both lcov
+#    instances. (Default: based on )
+#  - CODE_COVERAGE_LCOV_SHOPTS: Extra options to shared between both lcov
+#    instances. (Default: )
+#  - CODE_COVERAGE_LCOV_OPTIONS_GCOVPATH: --gcov-tool pathtogcov
+#  - CODE_COVERAGE_LCOV_OPTIONS_DEFAULT: Extra options to pass to the
+#    collecting lcov instance. (Default: )
+#  - CODE_COVERAGE_LCOV_OPTIONS: Extra options to pass to the collecting lcov
+#    instance. (Default: )
+#  - CODE_COVERAGE_LCOV_RMOPTS_DEFAULT: Extra options to pass to the filtering
+#    lcov instance. (Default: empty)
+#  - CODE_COVERAGE_LCOV_RMOPTS: Extra options to pass to the filtering lcov
+#    instance. (Default: )
+#  - CODE_COVERAGE_GENHTML_OPTIONS_DEFAULT: Extra options to pass to the
+#    genhtml instance. (Default: based on )
+#  - CODE_COVERAGE_GENHTML_OPTIONS: Extra options to pass to the genhtml
+#    instance. (Default: )
+#  - CODE_COVERAGE_IGNORE_PATTERN: Extra glob pattern of files to ignore
+#
+# The generated report will be titled using the $(PACKAGE_NAME) and
+# $(PACKAGE_VERSION). In order to add the current git hash to the title,
+# use the git-version-gen script, available online.
+# Optional variables
+# run only on top dir
+@CODE_COVERAGE_ENABLED_TRUE@ ifeq ($(abs_builddir), $(abs_top_builddir))
+@CODE_COVERAGE_ENABLED_TRUE@CODE_COVERAGE_DIRECTORY ?= $(top_builddir)
+@CODE_COVERAGE_ENABLED_TRUE@CODE_COVERAGE_OUTPUT_FILE ?= $(PACKAGE_NAME)-$(PACKAGE_VERSION)-coverage.info
+@CODE_COVERAGE_ENABLED_TRUE@CODE_COVERAGE_OUTPUT_DIRECTORY ?= $(PACKAGE_NAME)-$(PACKAGE_VERSION)-coverage
 
-@PACKAGE@-@PACKAGE_VERSION@.pc: @PACKAGE@.pc
-	$(AM_V_at)cp "$^" "$@"
+@CODE_COVERAGE_ENABLED_TRUE@CODE_COVERAGE_BRANCH_COVERAGE ?=
+@CODE_COVERAGE_ENABLED_TRUE@CODE_COVERAGE_LCOV_SHOPTS_DEFAULT ?= $(if $(CODE_COVERAGE_BRANCH_COVERAGE),--rc lcov_branch_coverage=$(CODE_COVERAGE_BRANCH_COVERAGE))
+@CODE_COVERAGE_ENABLED_TRUE@CODE_COVERAGE_LCOV_SHOPTS ?= $(CODE_COVERAGE_LCOV_SHOPTS_DEFAULT)
+@CODE_COVERAGE_ENABLED_TRUE@CODE_COVERAGE_LCOV_OPTIONS_GCOVPATH ?= --gcov-tool "$(GCOV)"
+@CODE_COVERAGE_ENABLED_TRUE@CODE_COVERAGE_LCOV_OPTIONS_DEFAULT ?= $(CODE_COVERAGE_LCOV_OPTIONS_GCOVPATH)
+@CODE_COVERAGE_ENABLED_TRUE@CODE_COVERAGE_LCOV_OPTIONS ?= $(CODE_COVERAGE_LCOV_OPTIONS_DEFAULT)
+@CODE_COVERAGE_ENABLED_TRUE@CODE_COVERAGE_LCOV_RMOPTS_DEFAULT ?=
+@CODE_COVERAGE_ENABLED_TRUE@CODE_COVERAGE_LCOV_RMOPTS ?= $(CODE_COVERAGE_LCOV_RMOPTS_DEFAULT)
+@CODE_COVERAGE_ENABLED_TRUE@CODE_COVERAGE_GENHTML_OPTIONS_DEFAULT ?=$(if $(CODE_COVERAGE_BRANCH_COVERAGE),--rc genhtml_branch_coverage=$(CODE_COVERAGE_BRANCH_COVERAGE))
+@CODE_COVERAGE_ENABLED_TRUE@CODE_COVERAGE_GENHTML_OPTIONS ?= $(CODE_COVERAGE_GENHTML_OPTIONS_DEFAULT)
+@CODE_COVERAGE_ENABLED_TRUE@CODE_COVERAGE_IGNORE_PATTERN ?=
 
-install-data-hook:
-	$(LN_S) -f @PACKAGE@-@VERSION@.pc "$(DESTDIR)$(pkgconfigdir)/@PACKAGE@.pc"
+# Use recursive makes in order to ignore errors during check
+@CODE_COVERAGE_ENABLED_TRUE@check-code-coverage:
+@CODE_COVERAGE_ENABLED_TRUE@	-$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -k check
+@CODE_COVERAGE_ENABLED_TRUE@	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) code-coverage-capture
 
-uninstall-hook:
-	$(AM_V_at)test "`readlink "$(DESTDIR)$(pkgconfigdir)/@PACKAGE@.pc"`" != @PACKAGE@-@VERSION@.pc \
-        || $(RM) "$(DESTDIR)$(pkgconfigdir)/@PACKAGE@.pc"
+# Capture code coverage data
+@CODE_COVERAGE_ENABLED_TRUE@code-coverage-capture: code-coverage-capture-hook
+@CODE_COVERAGE_ENABLED_TRUE@	$(code_coverage_v_lcov_cap)$(LCOV) $(code_coverage_quiet) $(addprefix --directory ,$(CODE_COVERAGE_DIRECTORY)) --capture --output-file "$(CODE_COVERAGE_OUTPUT_FILE).tmp" --test-name "$(call code_coverage_sanitize,$(PACKAGE_NAME)-$(PACKAGE_VERSION))" --no-checksum --compat-libtool $(CODE_COVERAGE_LCOV_SHOPTS) $(CODE_COVERAGE_LCOV_OPTIONS)
+@CODE_COVERAGE_ENABLED_TRUE@	$(code_coverage_v_lcov_ign)$(LCOV) $(code_coverage_quiet) $(addprefix --directory ,$(CODE_COVERAGE_DIRECTORY)) --remove "$(CODE_COVERAGE_OUTPUT_FILE).tmp" "/tmp/*" $(CODE_COVERAGE_IGNORE_PATTERN) --output-file "$(CODE_COVERAGE_OUTPUT_FILE)" $(CODE_COVERAGE_LCOV_SHOPTS) $(CODE_COVERAGE_LCOV_RMOPTS)
+@CODE_COVERAGE_ENABLED_TRUE@	-@rm -f "$(CODE_COVERAGE_OUTPUT_FILE).tmp"
+@CODE_COVERAGE_ENABLED_TRUE@	$(code_coverage_v_genhtml)LANG=C $(GENHTML) $(code_coverage_quiet) $(addprefix --prefix ,$(CODE_COVERAGE_DIRECTORY)) --output-directory "$(CODE_COVERAGE_OUTPUT_DIRECTORY)" --title "$(PACKAGE_NAME)-$(PACKAGE_VERSION) Code Coverage" --legend --show-details "$(CODE_COVERAGE_OUTPUT_FILE)" $(CODE_COVERAGE_GENHTML_OPTIONS)
+@CODE_COVERAGE_ENABLED_TRUE@	@echo "file://$(abs_builddir)/$(CODE_COVERAGE_OUTPUT_DIRECTORY)/index.html"
+
+@CODE_COVERAGE_ENABLED_TRUE@code-coverage-clean:
+@CODE_COVERAGE_ENABLED_TRUE@	-$(LCOV) --directory $(top_builddir) -z
+@CODE_COVERAGE_ENABLED_TRUE@	-rm -rf "$(CODE_COVERAGE_OUTPUT_FILE)" "$(CODE_COVERAGE_OUTPUT_FILE).tmp" "$(CODE_COVERAGE_OUTPUT_DIRECTORY)"
+@CODE_COVERAGE_ENABLED_TRUE@	-find . \( -name "*.gcda" -o -name "*.gcno" -o -name "*.gcov" \) -delete
+
+@CODE_COVERAGE_ENABLED_TRUE@code-coverage-dist-clean:
+@CODE_COVERAGE_ENABLED_TRUE@ else # ifneq ($(abs_builddir), $(abs_top_builddir))
+@CODE_COVERAGE_ENABLED_TRUE@check-code-coverage:
+
+@CODE_COVERAGE_ENABLED_TRUE@code-coverage-capture: code-coverage-capture-hook
+
+@CODE_COVERAGE_ENABLED_TRUE@code-coverage-clean:
+
+@CODE_COVERAGE_ENABLED_TRUE@code-coverage-dist-clean:
+@CODE_COVERAGE_ENABLED_TRUE@ endif # ifeq ($(abs_builddir), $(abs_top_builddir))
+# Use recursive makes in order to ignore errors during check
+@CODE_COVERAGE_ENABLED_FALSE@check-code-coverage:
+@CODE_COVERAGE_ENABLED_FALSE@	@echo "Need to reconfigure with --enable-code-coverage"
+# Capture code coverage data
+@CODE_COVERAGE_ENABLED_FALSE@code-coverage-capture: code-coverage-capture-hook
+@CODE_COVERAGE_ENABLED_FALSE@	@echo "Need to reconfigure with --enable-code-coverage"
+
+@CODE_COVERAGE_ENABLED_FALSE@code-coverage-clean:
+
+@CODE_COVERAGE_ENABLED_FALSE@code-coverage-dist-clean:
+
+# Hook rule executed before code-coverage-capture, overridable by the user
+code-coverage-capture-hook:
+
+.PHONY: check-code-coverage code-coverage-capture code-coverage-dist-clean code-coverage-clean code-coverage-capture-hook
+
+clean-local: coverage-clean
+
+distclean-local: coverage-distclean
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

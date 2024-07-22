@@ -88,8 +88,8 @@
 ******************************************************************************/
 
 #include <kim.h>
-#include "optionparser.h"
 
+#include <optionparser.h>
 #include <iostream>
 #include <map>
 
@@ -160,7 +160,7 @@ enum  optionIndex {
 const option::Descriptor usage[] =
   {
    { UNKNOWN_OPT,            0, "" , "",                   Arg::None,
-     PACKAGE " version " VERSION " -- " PACKAGE_DESCRIPTION "\n\n"
+     PACKAGE " version " VERSION " -- " PACKAGE_SHORT_DESCRIPTION "\n\n"
      "Usages:\n"
      "  kim [options] --create-index\n"
      "  kim [options] <file> [<file> ...]\n"
@@ -229,6 +229,7 @@ const option::Descriptor usage[] =
    ////////////////////////////////////////////////////////////////////////
    { UNKNOWN_OPT,            0, "" ,  "",                  Arg::None,
      "\n"
+     PACKAGE_FULL_DESCRIPTION "\n"
      "The kim program has two major features:\n"
      "- The first one is to create a k-mer index related to some variant of"
      " interest.\n"
@@ -284,7 +285,7 @@ void dump_file(const string &filename, size_t n = size_t(-1), ostream &os = cout
 }
 
 void show_copyright(bool full) {
-  cout << PACKAGE " version " VERSION " -- " PACKAGE_DESCRIPTION "\n\n";
+  cout << PACKAGE " version " VERSION " -- " PACKAGE_SHORT_DESCRIPTION "\n\n";
   string fname_orig = "LICENSE.md";
   string fname = FileReader::findFile(fname_orig);
   if (!fname.empty()) {

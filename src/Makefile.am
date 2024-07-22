@@ -87,15 +87,21 @@
 #                                                                             #
 ###############################################################################
 
+
+########################
+# Global configuration #
+########################
+
 AM_CXXFLAGS =				\
-  -I@top_srcdir@			\
   -DCXX="\"$(CXX)\""			\
   -DARCH="\"$(build_cpu)\""		\
   -DOS="\"$(build_os)\""		\
   -DPACKAGE_DATADIR="\"$(pkgdatadir)\""
 
-library_includedir = @includedir@/@PACKAGE@-@VERSION@
-library_include_HEADERS =	\
+install_dirname = $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+pkgincludedir = $(includedir)/$(install_dirname)
+
+pkginclude_HEADERS =	\
   bounded_size_string.h		\
   dna_file_reader.h		\
   file_reader.h			\
@@ -114,10 +120,19 @@ bindir="@bindir@"
 libdir="@libdir@"
 # End of bug fix
 
-lib_LTLIBRARIES = libkim.la
-check_LTLIBRARIES = libkim-debug.la
+lib_LTLIBRARIES =
+noinst_LTLIBRARIES =
+check_LTLIBRARIES =
+bin_PROGRAMS =
 
-libkim_ladir = @abs_srcdir@
+
+###############
+# kim library #
+###############
+
+lib_LTLIBRARIES += libkim.la
+
+libkim_ladir = $(abs_srcdir)
 libkim_la_SOURCES =						\
   bounded_size_string.h bounded_size_string.cpp			\
   dna_file_reader.h dna_file_reader.cpp				\
@@ -131,36 +146,87 @@ libkim_la_SOURCES =						\
   variant_identification.h variant_identification.cpp		\
   variant_nodes_index.h variant_nodes_index.cpp
 
-libkim_debug_ladir = @abs_srcdir@
-libkim_debug_la_SOURCES = $(libkim_la_SOURCES)
-libkim_debug_la_CXXFLAGS = $(AM_CXXFLAGS) -UNDEBUG
+libkim_la_configdir   = $(libdir)/$(install_dirname)/include
+libkim_la_config_DATA = $(CONFIG_HEADER)
+libkim_la_LDFLAGS     = -version-info "$(LIB_VERSION)" $(AM_LDFLAGS)
+libkim_la_CXXFLAGS = $(AM_CXXFLAGS)
 
-GCDA_FILES = $(patsubst %.cpp,%.gcda,$(filter %.cpp,$(SOURCES)))
+
+#####################
+# kim-debug library #
+#####################
+
+check_LTLIBRARIES += libkim-debug.la
+libkim_debug_ladir = $(libkim_ladir)
+libkim_debug_la_SOURCES = $(libkim_la_SOURCES)
+libkim_debug_la_LDFLAGS = $(libkim_la_LDFLAGS)
+libkim_debug_la_CXXFLAGS = $(libkim_la_CXXFLAGS) -UNDEBUG
+
+
+###############
+# kim program #
+###############
+
+bin_PROGRAMS += kim
+
+kim_SOURCES  = kim.h kim.cpp
+
+kim_LDADD    = libkim.la
+kim_LDFLAGS = -static -lkim $(AM_LDFLAGS)
+kim_CXXFLAGS = $(AM_CXXFLAGS)
+kim_DEPENDENCIES = $(kim_LDADD)
+
+
+#########################
+# Dependencies handling #
+#########################
+
+# named target
+.PHONY: force-rebuild
+
+# rule
+force-rebuild:
+
+$(top_builddir)/external/%: force-rebuild
+	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) "$(@F)" -C "$(@D)"
+
+
+#################
+# Code Coverage #
+#################
+
+GCDA_FILES = $(patsubst %.cpp,%.gcda,$(filter %.cpp %.c,$(SOURCES)))
+GCDA_FILES += $(kim_OBJECTS:.o=.gcda)
+GCDA_FILES += $(libkim_la_OBJECTS:.lo=.gcda)
+GCDA_FILES += $(libkim_debug_la_OBJECTS:.lo=.gcda)
 GCNO_FILES = $(GCDA_FILES:.gcda=.gcno)
 GCOV_FILES = $(GCDA_FILES:.gcda=.gcov)
 
-libkim_la_configdir   = @libdir@/@PACKAGE@-@VERSION@/include
-libkim_la_config_DATA = $(CONFIG_HEADER)
-libkim_la_LDFLAGS     = -version-info "@LIB_VERSION@" $(AM_LDFLAGS)
 
-bin_PROGRAMS = kim
-kim_SOURCES  = kim.h kim.cpp
-kim_LDADD    = libkim.la
+##########################
+# install/uninstall hook #
+##########################
 
 install-data-hook:
-	$(AM_V_at)test "`readlink "$(DESTDIR)@includedir@/@PACKAGE@"`" == "@PACKAGE@-@VERSION@" \
-	|| ( cd "$(DESTDIR)@includedir@" && $(LN_S) -f -n "@PACKAGE@-@VERSION@" "@PACKAGE@" )
-	$(AM_V_at)test "`readlink "$(DESTDIR)@libdir@/@PACKAGE@"`" == "@PACKAGE@-@VERSION@" \
-	|| ( cd "$(DESTDIR)@libdir@" && $(LN_S) -f -n "@PACKAGE@-@VERSION@" "@PACKAGE@" )
+	$(AM_V_at)test "`readlink "$(DESTDIR)$(includedir)/$(LIBNAME)"`" == "$(install_dirname)"	 \
+	|| ( cd "$(DESTDIR)$(includedir)" && $(LN_S) -f -n "$(install_dirname)" "$(LIBNAME)" )
+	$(AM_V_at)test "`readlink "$(DESTDIR)$(libdir)/$(LIBNAME)"`" == "$(install_dirname)" \
+	|| ( cd "$(DESTDIR)$(libdir)" && $(LN_S) -f -n "$(install_dirname)" "$(LIBNAME)" )
 
 uninstall-hook:
-	$(AM_V_at)test "`readlink "$(DESTDIR)@includedir@/@PACKAGE@"`" != "@PACKAGE@-@VERSION@" \
-        || rm -rf "$(DESTDIR)@includedir@"/@PACKAGE@{,-@VERSION@}
-	$(AM_V_at)test "`readlink "$(DESTDIR)@libdir@/@PACKAGE@"`" != "@PACKAGE@-@VERSION@" \
-        || rm -rf "$(DESTDIR)@libdir@"/@PACKAGE@{,-@VERSION@}
+	$(AM_V_at)test "`readlink "$(DESTDIR)$(includedir)/$(LIBNAME)"`" != "$(install_dirname)" \
+	|| rm -f "$(DESTDIR)$(includedir)/$(LIBNAME)"
+	$(AM_V_at)rm -rf "$(DESTDIR)$(includedir)/$(install_dirname)"
+	$(AM_V_at)test "`readlink "$(DESTDIR)$(libdir)/$(LIBNAME)"`" != "$(install_dirname)" \
+	|| rm -f "$(DESTDIR)$(libdir)/$(LIBNAME)"
+	$(AM_V_at)rm -rf "$(DESTDIR)$(libdir)/$(install_dirname)"
 
-MOSTLYCLEANFILES=*~
-CLEANFILES=*~ $(GCDA_FILES) $(GCNO_FILES) $(GCOV_FILES)
-DISTCLEANFILES=*~
-MAINTAINERCLEANFILES=*~
 
+####################
+# Cleaning targets #
+####################
+
+MOSTLYCLEANFILES = *~
+CLEANFILES = *~ $(GCDA_FILES) $(GCNO_FILES) $(GCOV_FILES)
+DISTCLEANFILES = *~
+MAINTAINERCLEANFILES = *~

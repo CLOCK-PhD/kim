@@ -1,8 +1,8 @@
 # ===========================================================================
-#  https://https://gite.lirmm.fr/doccy/doccy-dev-tools/autoconf
+#  https://https://gite.lirmm.fr/doccy-dev-tools/autoconf
 # ===========================================================================
 #
-# Serial 4
+# Serial 5
 #
 # SYNOPSIS
 #

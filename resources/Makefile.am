@@ -87,11 +87,10 @@
 #                                                                             #
 ###############################################################################
 
-STATS_FILE_BASENAME = @PACKAGE@-@PACKAGE_VERSION@
-CLOC_FILE = $(STATS_FILE_BASENAME).cloc
-OHCOUNT_FILE = $(STATS_FILE_BASENAME).ohcount
-LIST_FILE = $(STATS_FILE_BASENAME).filelist
-STATS_FILE = $(STATS_FILE_BASENAME).stats
+
+########################
+# Global configuration #
+########################
 
 dist_pkgdata_DATA =	\
   kim.bash_completion	\
@@ -99,72 +98,17 @@ dist_pkgdata_DATA =	\
   test-sequences.fasta	\
   $(STATS_FILE)
 
-$(LIST_FILE):
-	@echo "Generate package file list"
-	$(AM_V_at)git ls-tree --name-only -r  HEAD "$(abs_top_srcdir)" > "$@" || true
+@CODE_STATISTICS_RULES@
 
-if CLOC
+all-local: stats
+clean-local: clean-stats
 
-$(CLOC_FILE): $(LIST_FILE)
-	@echo "Generate cloc summary"
-	$(AM_V_at)echo "CLoC summary" | sed 'h;s/./=/g;p;x;p;x' > "$@"
-	$(AM_V_at)echo >> "$@"
-	$(AM_V_at)@CLOC@ --list-file="$<" --quiet | tail -n +2 >> "$@"
 
-else
+####################
+# Cleaning targets #
+####################
 
-$(CLOC_FILE):
-	@echo "You should install cloc (source code line counter) and reconfigure this package."
-	$(AM_V_at)echo "CLoC isn't installed. No report created" > "$@"
-
-endif
-
-if OHCOUNT
-
-$(OHCOUNT_FILE): $(LIST_FILE)
-	@echo "Generate OhCount summary"
-	$(AM_V_at)echo "OhCount summary" | sed 'h;s/./=/g;p;x;p;x' > "$@"
-	$(AM_V_at)@OHCOUNT@ $$(cat "$<") | tail -n +2 >> "$@"
-
-else
-
-$(OHCOUNT_FILE): $(LIST_FILE)
-	@echo "You should install ohcount (source code line counter) and reconfigure this package."
-	$(AM_V_at)echo "OhCount isn't installed. No report created" > "$@"
-
-endif
-
-force-renew:
-
-$(STATS_FILE): $(CLOC_FILE) $(OHCOUNT_FILE) $(LIST_FILE) force-renew
-	@echo "Backup existing code statistics (if any)"
-	$(AM_V_at)test ! -f "$(abs_srcdir)/$(STATS_FILE)" || cat "$(abs_srcdir)/$(STATS_FILE)" > "$(STATS_FILE).tmp"
-	@echo "Generate code statistics"
-	$(AM_V_at)echo "# $@ #" | sed 'h;s/./#/g;p;x;p;x' > "$@"
-	$(AM_V_at)echo >> "$@"
-	$(AM_V_at)cat $(CLOC_FILE) >> "$@"
-	$(AM_V_at)echo >> "$@"
-	$(AM_V_at)cat $(OHCOUNT_FILE) >> "$@"
-	$(AM_V_at)echo >> "$@"
-	$(AM_V_at)printf "%.78d\n" | tr 0 - >> "$@"
-	$(AM_V_at)echo >> "$@"
-	$(AM_V_at)if test ! -s "$(LIST_FILE)" -a -f "$(STATS_FILE).tmp"; then		\
-	  echo "Using existing code statistics backup file since generation failed";	\
-	  mv "$(STATS_FILE).tmp" "$(STATS_FILE)";					\
-	fi
-	@echo "Removing temporary files and backup (if any)"
-	$(AM_V_at)$(RM) "$(STATS_FILE).tmp" "$(CLOC_FILE)" "$(OHCOUNT_FILE)" "$(LIST_FILE)"
-	$(AM_V_at)cat "$(STATS_FILE)"
-
-cloc: $(CLOC_FILE)
-
-ohcount: $(OHCOUNT_FILE)
-
-filelist: $(LIST_FILE)
-
-stats: $(STATS_FILE)
-
-MOSTLYCLEANFILES=*~
-CLEANFILES=*~ $(LIST_FILE) $(CLOC_FILE) $(OHCOUNT_FILE) $(STATS_FILE)
-DISTCLEANFILES=*~
-MAINTAINERCLEANFILES=*~
+MOSTLYCLEANFILES = *~
+CLEANFILES = *~
+DISTCLEANFILES = *~
+MAINTAINERCLEANFILES = *~

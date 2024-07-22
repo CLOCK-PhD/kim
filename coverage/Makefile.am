@@ -92,64 +92,37 @@
 # Global configuration #
 ########################
 
-SUBDIRS = resources
+@GCOVR_CODE_COVERAGE_RULES@
 
-if INCLUDED_HTSlib
-SUBDIRS += external/htslib
-endif
+# Ignore external libraries/headers in coverage reports.
+GCOVR_CORE_OPTS = 				\
+  --root "$(top_builddir)"			\
+  --exclude-unreachable-branches		\
+  --exclude '^$(GCOVR_TESTS_DIRECTORY)/'	\
+  --exclude '^(.*/)?external/'	\
+  --filter '^(.*/)?src/'
 
-SUBDIRS += src tests doc coverage packaging
+CODE_COVERAGE_LCOV_RMOPTS_DEFAULT  = /usr/* $(GCOVR_TESTS_DIRECTORY) */external/*
 
-STATS_FILE = resources/$(PACKAGE_NAME)-$(PACKAGE_VERSION).stats
+# Ignore (and suppress) `unused` and `deprecated` warnings emitted by
+# the `lcov` program.
+CODE_COVERAGE_LCOV_SHOPTS = $(CODE_COVERAGE_LCOV_SHOPTS_DEFAULT) --ignore-errors unused,unused,deprecated,deprecated,inconsistent,inconsistent,mismatch
 
-BUILT_SOURCES = $(STATS_FILE)
+# Ignore (and suppress) `deprecated` warnings emitted by the `genhtml`
+# program.
+CODE_COVERAGE_GENHTML_OPTIONS = $(CODE_COVERAGE_GENHTML_OPTIONS_DEFAULT) --ignore-errors deprecated,deprecated
 
-$(STATS_FILE):
-	$(AM__at)$(MAKE) $(AM_MAKEFLAGS) $(@F) -C $(@D)
+include $(top_srcdir)/aminclude_static.am
 
-dist_pkgdata_DATA = \
-  AUTHORS ChangeLog README.md \
-  LICENSE.md LICENSE-fr.md LICENSE-en.md
+clean-local: coverage-clean
 
-EXTRA_DIST = \
-  COPYING INSTALL NEWS \
-  config/fix-timestamp.sh config/git-release config/git-version-gen \
-  config/version config/version.configure.ac
-
-EXTRA_DIST += external/BitMagic
-
-EXTRA_DIST += external/optionparser
-
-EXTRA_DIST += external/vcfpp
-
-ACLOCAL_AMFLAGS = -I config/m4
-
+distclean-local: coverage-distclean
 
 ####################
 # Cleaning targets #
 ####################
 
-MOSTLYCLEANFILES = *~ config/*~
-CLEANFILES = *~ config/*~
-DISTCLEANFILES = *~ $(distdir).tar.gz
-# We need to manually set the distcleancheck_listfiles variable if the
-# included HTSlib library is used (since the library authors decided
-# not to use automake and have made some uncomfortable choices).
-#
-# Unfortunately, if this variable is not set globally, automake will
-# emit an annoying warning.
-#
-# To get around this problem, the variable is defined globally to be
-# empty then set to its correct value in either the ifthen or the
-# ifelse part.
-distcleancheck_listfiles =
-if INCLUDED_HTSlib
-  distcleancheck_listfiles += \
-    find . -type f \
-           -exec sh -c 'test -f $(srcdir)/$$1 || echo $$1' sh '{}' ';'
-  # We also need to remove the computed
-#  DISTCLEANFILES += external/htslib/htscodecs/htscodecs/version.h
-else
-  distcleancheck_listfiles += find . -type f -print
-endif
-MAINTAINERCLEANFILES = *~ config/*~
+MOSTLYCLEANFILES = *~
+CLEANFILES = *~
+DISTCLEANFILES = *~
+MAINTAINERCLEANFILES = *~

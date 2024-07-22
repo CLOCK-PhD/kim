@@ -92,8 +92,9 @@
 # Global configuration #
 ########################
 
-#EXTRA_DIST= control.in @PACKAGE@-@PACKAGE_VERSION@.pc.in
+@DEBIAN_PACKAGE_RULES@
 
+clean-local: deb-clean
 
 ######################
 # pkgconfig handling #
@@ -117,7 +118,7 @@ uninstall-hook:
 # Cleaning targets #
 ####################
 
-MOSTLYCLEANFILES=*~
-CLEANFILES=*~
-DISTCLEANFILES=*~ control @PACKAGE@-@PACKAGE_VERSION@.pc
-MAINTAINERCLEANFILES=*~
+MOSTLYCLEANFILES = *~
+CLEANFILES = *~
+DISTCLEANFILES = *~ control @PACKAGE@-@PACKAGE_VERSION@.pc
+MAINTAINERCLEANFILES = *~
