@@ -1,3 +1,238 @@
+2024-07-22  DoccY <alban.mancheron@lirmm.fr>
+
+	* config/compile, config/config.guess, config/config.sub,
+	config/depcomp, config/install-sh, config/ltmain.sh,
+	config/m4/ax_check_gnu_make.m4, config/m4/libtool.m4,
+	config/m4/ltoptions.m4, config/m4/ltsugar.m4,
+	config/m4/ltversion.m4, config/m4/lt~obsolete.m4, config/missing,
+	config/test-driver:
+	Update *autotools* macros and scripts.
+	
+	
+2024-06-12  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitignore, .gitmodules, Makefile.am, Makefile.in, aclocal.m4,
+	config/config.h.in, config/fix-timestamp.sh, config/ltmain.sh,
+	config/m4/ax_append_link_flags.m4, config/m4/ax_check_link_flag.m4,
+	config/m4/ax_compiler_flags_ldflags.m4,
+	config/m4/ax_external_included_c_library_detection.m4,
+	config/m4/ax_external_included_cpp_header_detection.m4,
+	config/m4/ax_external_included_cxx_library_detection.m4,
+	config/m4/ax_external_included_generic_library_check.m4,
+	config/m4/ax_external_included_library_declare_options.m4,
+	config/m4/ax_require_defined.m4, config/m4/libtool.m4,
+	config/m4/ltoptions.m4, config/m4/ltsugar.m4,
+	config/m4/ltversion.m4, config/m4/lt~obsolete.m4, config/m4/pkg.m4,
+	config/version.configure.ac, configure, configure.ac,
+	doc/Makefile.am, doc/Makefile.in, doc/doxygen.cfg.in,
+	doc/mainpage.dox.in, BitMagic => external/BitMagic,
+	external/htslib, external/optionparser/README.md, {src =>
+	external/optionparser}/optionparser.h, external/vcfpp,
+	packaging/Makefile.am, packaging/Makefile.in, packaging/control.in,
+	packaging/{libkim.pc.in => kim.pc.in}, resources/Makefile.am,
+	resources/Makefile.in, src/Makefile.am, src/Makefile.in,
+	src/dna_file_reader.cpp, src/dna_file_reader.h,
+	src/variant_nodes_index.h, tests/Makefile.in:
+	Lots of code refactoring.
+	Moving external libraries/headers in a dedicated directory.
+	Fix usage of included HTSlib library (if used).
+	
+	
+2024-03-21  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/dna_file_reader.cpp, src/dna_file_reader.h,
+	src/file_reader.cpp, src/file_reader.h, src/kim.cpp,
+	tests/test_dna_file_reader.cpp:
+	Code refactoring for improve reading of DNA files.
+	In order to allow the FileReader and DNAFileReader class to be re-used in some other projects, remove the need of the programm Settings binding.
+	Now FileReader instances have a single 'warn' public attribute in read/write access and a DNAFileReader instances are built for a constant k-mer length parameter specified on construction.
+	
+	For any text file, the FileReader (and derived classes) can now:
+	- save and restore "bookmarks" on files.
+	- change the 'warn' setting at any time.
+	
+	For DNA files, the DNAFileReader can now:
+	- get the sequence ID (its number starting from 1 in the file).
+	- compute the total length of the sequence without extracting all the k-mers;
+	- extract degenerated k-mers;
+	- extract k-mers at any position of the current sequence;
+	- go to the beginning of the current sequence;
+	- go to the end of the current sequence;
+	- go to the next sequence;
+	- add or remove callback functions to run each time a new sequence is encountered.
+	
+	The functional test of the DNAFileReader has been greatly improved in order to reflect the changes.
+	
+	
+2024-03-21  DoccY <alban.mancheron@lirmm.fr>
+
+	* resources/test-reads.fastq:
+	Fix error in the resource fasta file example.
+	
+	
+2024-03-14  DoccY <alban.mancheron@lirmm.fr>
+
+	* resources/demo_index/AA, resources/demo_index/AC,
+	resources/demo_index/AG, resources/demo_index/AT,
+	resources/demo_index/CA, resources/demo_index/CC,
+	resources/demo_index/CG, resources/demo_index/CT,
+	resources/demo_index/GA, resources/demo_index/GC,
+	resources/demo_index/GG, resources/demo_index/GT,
+	resources/demo_index/TA, resources/demo_index/TC,
+	resources/demo_index/TG, resources/demo_index/TT,
+	resources/test-sequences.fasta, src/Makefile.am, src/Makefile.in,
+	src/dna_file_reader.cpp, src/dna_file_reader.h,
+	src/fastq_file_reader.cpp, src/fastq_file_reader.h,
+	src/file_reader.h, src/kim.cpp, src/kim.h,
+	src/kmer_variant_edges_subindex.cpp, src/kmer_variant_graph.cpp,
+	tests/Makefile.am, tests/Makefile.in,
+	tests/{test_fastq_file_reader.cpp => test_dna_file_reader.cpp}:
+	Update the DnaFileReader class in order to handle both Fasta and Fastq formatted files (instead of using derived class as previously planned).
+	Fix some errors in the code.
+	Add a demo kim index.
+	Add a sample resource fasta file for testing that can be used with the demo kim index.
+	
+	
+2024-03-13  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/Makefile.am, src/Makefile.in, src/dna_file_reader.cpp,
+	src/dna_file_reader.h, src/fastq_file_reader.cpp,
+	src/fastq_file_reader.h, src/file_reader.cpp, src/file_reader.h,
+	src/kim.cpp, tests/test_fastq_file_reader.cpp:
+	Adding an intermediate `DNAFileReader` class between the `FileReader` abstract class and the `FastqFileReader` class in preparation of the incoming `FastFileReader` class.
+	Change the FileReader (and derived classes) constructor arguments order.
+	
+	
+2024-03-13  DoccY <alban.mancheron@lirmm.fr>
+
+	* configure, configure.ac:
+	BugFix: Passing option `--disable-doxygen-doc` to the configure script was buggy.
+	
+	
+2024-03-13  DoccY <alban.mancheron@lirmm.fr>
+
+	* Makefile.am, Makefile.in, README.md, config/config.h.in,
+	configure, configure.ac, doc/Makefile.am, doc/Makefile.in,
+	packaging/Makefile.am, packaging/Makefile.in,
+	packaging/postinst.in, packaging/prerm.in, resources/Makefile.am,
+	resources/Makefile.in, resources/kim.bash_completion,
+	src/Makefile.am, src/Makefile.in, src/bounded_size_string.cpp,
+	src/bounded_size_string.h, src/fastq_file_reader.cpp,
+	src/fastq_file_reader.h, src/file_reader.cpp, src/file_reader.h,
+	src/kim.cpp, src/kim.h, src/kim_exception.h, src/kim_settings.cpp,
+	src/kim_settings.h, src/kmer_nodes_subindex.cpp,
+	src/kmer_nodes_subindex.h, src/kmer_variant_edges_subindex.cpp,
+	src/kmer_variant_edges_subindex.h, src/kmer_variant_graph.cpp,
+	src/kmer_variant_graph.h, src/sort_helper.cpp, src/sort_helper.h,
+	src/variant_identification.cpp, src/variant_identification.h,
+	src/variant_nodes_index.cpp, src/variant_nodes_index.h,
+	tests/Makefile.am, tests/Makefile.in,
+	tests/test_bounded_size_string.cpp,
+	tests/test_fastq_file_reader.cpp, tests/test_kim_exception.cpp,
+	tests/test_kim_settings.cpp, tests/test_kmer_nodes_subindex.cpp,
+	tests/test_kmer_variant_edges_subindex.cpp,
+	tests/test_kmer_variant_graph.cpp, tests/test_sort_helper.cpp,
+	tests/test_variant_nodes_index.cpp:
+	Update copyrights.
+	
+	
+2024-03-13  DoccY <alban.mancheron@lirmm.fr>
+
+	* resources/test-reads.fastq:
+	Fix a typo in the sequence description.
+	
+	
+2023-08-24  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/Makefile.am, src/Makefile.in, src/fastq_file_reader.cpp,
+	src/fastq_file_reader.h, src/file_reader.cpp, src/file_reader.h,
+	src/kim.cpp, tests/test_fastq_file_reader.cpp:
+	Move part of the FastqFileReader to a generic FileReader class (since other file readers are to be defined for other formats like fasta or VCF).
+	
+	
+2023-08-24  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/kmer_nodes_subindex.cpp, src/kmer_variant_edges_subindex.cpp,
+	src/kmer_variant_graph.cpp, src/kmer_variant_graph.h,
+	tests/Makefile.am, tests/Makefile.in,
+	tests/test_kmer_variant_graph.cpp:
+	Adding a unit test for the k-mer/variant association bi-partite graph
+	construction. This test driven approach leads to some bug fixes and a lots of
+	improvement of the KmerVariantGraph class. The documentation for this class
+	has been updated and fixed too.
+	
+	From now, a KmerVariantGraph can be either built on the fly by adding k-mer to
+	variant edges or loaded from a dumped index (see the
+	`test_kmer_variant_graph.cpp` unit test file for a quite complete example).
+	
+	
+2023-08-24  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/fastq_file_reader.cpp, src/kim_settings.cpp,
+	src/kmer_nodes_subindex.cpp, src/kmer_nodes_subindex.h,
+	src/kmer_variant_edges_subindex.cpp, src/kmer_variant_graph.cpp,
+	src/kmer_variant_graph.h, src/sort_helper.h,
+	src/variant_identification.h, tests/test_bounded_size_string.cpp,
+	tests/test_fastq_file_reader.cpp:
+	Code refactoring (on exception hanlding) to make it more readable.
+	
+	
+2023-08-24  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/kmer_variant_edges_subindex.cpp,
+	src/kmer_variant_edges_subindex.h, src/variant_nodes_index.h,
+	tests/test_kmer_variant_edges_subindex.cpp:
+	Change the edge "view" in the k-mer node to variant node sub-index.
+	
+	
+2023-08-24  DoccY <alban.mancheron@lirmm.fr>
+
+	* tests/test_kmer_nodes_subindex.cpp,
+	tests/test_kmer_variant_edges_subindex.cpp,
+	tests/test_variant_nodes_index.cpp:
+	Add expected results in the output of unit tests for the sake of clarity.
+	
+	
+2023-08-23  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitignore, src/kmer_variant_edges_subindex.cpp,
+	src/kmer_variant_edges_subindex.h, src/variant_nodes_index.h,
+	tests/Makefile.am, tests/Makefile.in,
+	tests/test_kmer_variant_edges_subindex.cpp:
+	Add a unit test for k-mer to variant edges sub-index and improve (test-driven) the KmerVariantEdgesSubindex class.
+	
+	
+2023-08-23  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/kmer_nodes_subindex.cpp, src/kmer_nodes_subindex.h,
+	tests/test_kmer_nodes_subindex.cpp:
+	Update k-mer suffix nodes sub-index class definition in order to 1/ allow to consider k-mer suffixes as unordered when added and 2/ to expand duplicated k-mer nodes in a sub-index (this will be required to add edges for unordered k-mers).
+	
+	
+2023-08-23  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/Makefile.am, src/Makefile.in,
+	src/kmer_variant_edges_subindex.cpp, tests/Makefile.am,
+	tests/Makefile.in:
+	Use a library compiled with assertion checks to run unit tests.
+	
+	
+2023-08-22  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitignore, src/kmer_variant_edges_subindex.cpp,
+	src/variant_nodes_index.cpp, src/variant_nodes_index.h,
+	tests/Makefile.am, tests/Makefile.in,
+	tests/test_variant_nodes_index.cpp:
+	Add a unit test for variant nodes index (and updates class VariantNodesIndex according to this test).
+	
+	
+2023-08-22  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitignore, src/kim_exception.h, tests/Makefile.am,
+	tests/Makefile.in, tests/test_kim_exception.cpp:
+	Add unit test for kim Exception (and fix Exception class).
+	
+	
 2023-07-28  DoccY <alban.mancheron@lirmm.fr>
 
 	* src/Makefile.am, src/Makefile.in, src/kim.cpp, src/kim.h,
