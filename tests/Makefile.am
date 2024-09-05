@@ -125,6 +125,16 @@ TESTS          += test_dna_file_reader
 test_dna_file_reader_SOURCES = test_dna_file_reader.cpp
 
 
+########################################
+# kim::DnaFileIndex class test program #
+########################################
+
+check_PROGRAMS += test_dna_file_index
+TESTS          += test_dna_file_index
+
+test_dna_file_index_SOURCES = test_dna_file_index.cpp
+
+
 #####################################
 # kim::Exception class test program #
 #####################################

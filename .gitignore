@@ -31,6 +31,7 @@ tests/.deps/
 tests/.libs/
 tests/*.trs
 tests/test_bounded_size_string
+tests/test_dna_file_index
 tests/test_dna_file_reader
 tests/test_fastq_file_reader
 tests/test_kim_exception

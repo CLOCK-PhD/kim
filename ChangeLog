@@ -1,5 +1,13 @@
 2024-09-05  DoccY <alban.mancheron@lirmm.fr>
 
+	* .gitignore, src/Makefile.am, src/Makefile.in,
+	src/dna_file_index.cpp, src/dna_file_index.h, tests/Makefile.am,
+	tests/Makefile.in, tests/test_dna_file_index.cpp:
+	Add a DNAFileIndex class to retrieve more efficiently parts of DNA sequences.
+	
+	
+2024-09-05  DoccY <alban.mancheron@lirmm.fr>
+
 	* .gitignore, resources/test-reads.fastq,
 	resources/test-sequences.fasta, src/dna_file_reader.cpp,
 	src/dna_file_reader.h, src/file_reader.cpp,

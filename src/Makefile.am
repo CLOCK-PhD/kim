@@ -103,6 +103,7 @@ pkgincludedir = $(includedir)/$(install_dirname)
 
 pkginclude_HEADERS =	\
   bounded_size_string.h		\
+  dna_file_index.h		\
   dna_file_reader.h		\
   file_reader.h			\
   kim.h				\
@@ -135,6 +136,7 @@ lib_LTLIBRARIES += libkim.la
 libkim_ladir = $(abs_srcdir)
 libkim_la_SOURCES =						\
   bounded_size_string.h bounded_size_string.cpp			\
+  dna_file_index.h dna_file_index.cpp				\
   dna_file_reader.h dna_file_reader.cpp				\
   file_reader.h file_reader.cpp					\
   kim_exception.h						\
