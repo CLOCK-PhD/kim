@@ -199,7 +199,7 @@ namespace kim {
       std::string kmer_aux;
 
       /**
-       * The starting position of the k-mer in the _kmer string.
+       * The starting position of the k-mer in the kmer_aux string.
        */
       size_t kmer_start_pos;
 
@@ -333,14 +333,14 @@ namespace kim {
      * of the current available sequence (the last position before the
      * new sequence starting character).
      *
-     * \param check_consistency When set to false, just goes to the
-     * position before the "new sequence character" that starts on a
-     * newline without ensuring the validity of the current processed
-     * sequence (if any). This performs faster but may lead to bad
-     * positioning.
+     * \remark When the check_consistency attribute is set to false,
+     * just goes to the position before the "new sequence character"
+     * that starts on a newline without ensuring the validity of the
+     * current processed sequence (if any). This performs faster but
+     * may lead to bad positioning.
      */
     template <Format>
-    void _gotoSequenceEnd(bool check_consistency);
+    void _gotoSequenceEnd();
 
   public:
 
@@ -358,6 +358,22 @@ namespace kim {
      * (default is to emit warnings).
      */
     DNAFileReader(size_t k, const std::string &filename = "", bool warn = true);
+
+    /**
+     * Check file consistency while reading (default is true). It goes
+     * wiithout saying but checking consistency is safer but loses
+     * efficiency.
+     */
+    bool check_consistency;
+
+    /**
+     * Get the current filename being processed.
+     *
+     * \return Return the current filename being processed.
+     */
+    inline std::string getFilename() const {
+      return getState().filename;
+    }
 
     /**
      * Get the detected file format.
@@ -385,13 +401,24 @@ namespace kim {
     const std::string &getCurrentKmer() const;
 
     /**
-     * Get the k-mer starting at the given relative position in the current sequence.
+     * Get the k-mer starting at the given relative position in the
+     * current sequence.
+     *
+     * \remark When the check_consistency attribute is set to false,
+     * just goes to the next visible character that should correspond
+     * the wanted position, then read the k-mer at this location. If
+     * the wanted k-mer doesn't exist in the sequence, the rest of the
+     * file reading will be erroneous. When set to true, then it is
+     * mostly equivalent to call getNextKmer() until the wanted k-mer
+     * is reached (if the wanted position is greater or equal to the
+     * sequence length, then an empty string is returned). Checking
+     * consistency goes slower but is safer.
      *
      * \param p The start position of the expected k-mer in the
      * current sequence (starting from 0). If the position is located
      * before the current position, then restart counting from the
      * beginning of the sequence, which is not optimal at all. If the
-     * given positon is the current position, then it returns the
+     * given position is the current position, then it returns the
      * current k-mer. If the position is located after the current
      * k-mer position, then the file is read forward to the the
      * desired k-mer. If the given position is greater or equal to the
@@ -399,20 +426,10 @@ namespace kim {
      * expected k-mer doesn't exist), then an empty string is
      * returned.
      *
-     * \param check_consistency When set to false, just goes to the
-     * next visible character that should correspond the wanted
-     * position, then read the k-mer at this location. If the wanted
-     * k-mer doesn't exist in the sequence, the rest of the file
-     * reading will be erroneous. When set to true, then it is mostly
-     * equivalent to call getNextKmer() until the wanted k-mer is
-     * reached (if the wanted position is greater or equal to the
-     * sequence length, then the last k-mer is returned. Checking
-     * consistency goes slower but is safer.
-     *
      * \return Returns the k-mer at the given location or an empty
      * string.
      */
-    const std::string &getKmerAt(size_t p, bool check_consistency = true);
+    const std::string &getKmerAt(size_t p);
 
     /**
      * Get the next k-mer from this file reader object.
@@ -428,10 +445,10 @@ namespace kim {
     const std::string &getNextKmer(bool skip_degenerate = false);
 
     /**
-     * Check whether the current k-mer contains degenerate symbols.
+     * Check whether the current k-mer contains degenerated symbols.
      *
      * \return Returns true if 1/ the k-mer exists and 2/ doesn't
-     * contains degenerate symbols. Otherwise, false is returned.
+     * contains degenerated symbols. Otherwise, false is returned.
      */
     bool currentKmerContainsDegenerateSymbols() const {
       return (getState().nb_consecutive_regular_nucleotides < k());
@@ -474,6 +491,9 @@ namespace kim {
      * Parse the current sequence until its end in order to compute
      * its length if it is not already known.
      *
+     * This temporarily set the consistency checking to true if it
+     * wasn't enabled.
+     *
      * \return Return the total length of the current sequence.
      */
     size_t computeCurrentSequenceLength();
@@ -496,7 +516,8 @@ namespace kim {
      * -1.
      */
     inline size_t getCurrentKmerRelativePosition() const {
-      return ((getState().nb_nucleotides >= getState().k) ? getState().nb_nucleotides - getState().k : -1);
+      const FileState &s = getState();
+      return (*this && !s.start_symbol_expected && (s.nb_nucleotides >= s.k) ? s.nb_nucleotides - s.k : -1);
     }
 
     /**
@@ -506,13 +527,13 @@ namespace kim {
      * the sequence (or on a newly opened file) doesn't change its
      * position.
      *
-     * \param check_consistency When set to false, simply goes to the
-     * character juste before the next "new sequence character"
-     * starting a newline without ensuring the validity of the current
-     * processed sequence (if any). This performs faster but may lead
-     * to bad positioning.
+     * \remark When the check_consistency attribute is set to false,
+     * simply goes to the character juste before the next "new
+     * sequence character" starting a newline without ensuring the
+     * validity of the current processed sequence (if any). This
+     * performs faster but may lead to bad positioning.
      */
-    void gotoSequenceEnd(bool check_consistency = true);
+    void gotoSequenceEnd();
 
     /**
      * Set the reading cursor at the beginning of the current
@@ -532,18 +553,19 @@ namespace kim {
      * Calling this method on a newly file opened file position the
      * cursor to the beginning of the first sequence.
      *
-     * \param check_consistency When set to false, just goes to the
-     * next "new sequence character" starting a newline without
-     * ensuring the validity of the current processed sequence (if
-     * any), then read the line as the description and consider the
-     * first next non-empty position as the beginning of the
-     * sequence. This performs faster but may lead to bad positioning.
+     * \remark When the check_consistency attribute is set to false,
+     * just goes to the next "new sequence character" starting a
+     * newline without ensuring the validity of the current processed
+     * sequence (if any), then read the line as the description and
+     * consider the first next non-empty position as the beginning of
+     * the sequence. This performs faster but may lead to bad
+     * positioning.
      *
      * \return This method returns true if the cursor is correctly
      * positioned to the start of a new sequence and false if no new
      * sequence has been found.
      */
-    bool gotoNextSequence(bool check_consistency = true);
+    bool gotoNextSequence();
 
     /**
      * Add a callback function to run each time a new sequence is
@@ -563,7 +585,7 @@ namespace kim {
      * \param cb The callback function to remove.
      */
     inline void removeOnNewSequenceCallback(onNewSequenceFct cb) {
-      std::remove(_on_new_sequence_cb.begin(), _on_new_sequence_cb.end(), cb);
+      [[maybe_unused]] auto r = std::remove(_on_new_sequence_cb.begin(), _on_new_sequence_cb.end(), cb);
     }
 
     /**

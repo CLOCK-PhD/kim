@@ -1,8 +1,8 @@
-> Sequence 1 of length 100 (from line 1 to line 4) that contains all k-mers used in the demo kim index.
+> Sequence_1 of length 100 [0 degenerated symbols] (from line 1 to line 4) that contains all k-mers used in the demo kim index.
 CGTTCCGATCAGCATGTTCCACAGTCAGCTAGCATCAGCATCGACATACG
 CGATCAGCTACGACTATTCGACGCGACGGCATCTAGCGACGAGCACGCAA
 
-> Sequence 2 of length 113 (from line 5 to line 12) strange sequence with ignored symbols and gaps
+> Sequence_2 of length 113 [0 degenerated symbols] (from line 5 to line 12) strange sequence with ignored symbols and gaps
 
   ACGCT-GACGG ACGAC.TAGCG ACGAGCATGC GCATCAGCTA CGATCAGCAT
 
@@ -10,10 +10,10 @@ CGATCAGCTACGACTATTCGACGCGACGGCATCTAGCGACGAGCACGCAA
   
        GATCTAGCAC GAC ; X Z A C N 
 
-> Sequence 3 of length 36 (from line 13 to line 15) with ignored symbols (at positions 11 and 21) as well as degeneracy  symbols (at even pos positions from 2 to 26)
+> Sequence_3 of length 36 [11 degenerated symbols] (from line 13 to line 15) with ignored symbols (at positions 11 and 21) as well as degeneracy  symbols (at even pos positions from 2 to 26)
 ABCDGHTVAW XSPCAYAMGK ZNA.C-ACAN CGACATCGACA
 
-> Sequence 4 of length 56 (from line 16 to line 31) > with very strange content...
+> Sequence_4 of length 56 [22 degenerated symbols] (from line 16 to line 31) > with very strange content...
 
  __________________________________
 / ACGTCAGCAC actactatca BDHVWSMKPY \
@@ -29,6 +29,6 @@ ABCDGHTVAW XSPCAYAMGK ZNA.C-ACAN CGACATCGACA
     /'\_   _/`\
     \___)=(___/
 
-> Sequence 5 of length 0 (from line 32 to line 32) which is empty... What a stange idea!
-> Sequence 6 of length 4 (from line 33 to line 34) a very short sequence with no ending new line
+> Sequence_5 of length 0 [0 degenerated symbols] (from line 32 to line 32) which is empty... What a stange idea!
+> Sequence_6 of length 4 [0 degenerated symbols] (from line 33 to line 34) a very short sequence with no ending new line
 ACGT

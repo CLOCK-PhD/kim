@@ -210,6 +210,7 @@ char FileReader::_nextVisibleCharacter() {
     }
   }
   ++current_state.column;
+  current_state.pos = _ifs.tellg();
   return ((c != -1) ? c : 0);
 }
 
@@ -234,7 +235,7 @@ string FileReader::findFile(const string &filename, const char **directories) {
       ifs.close();
       dir = NULL;
     } else {
-      if (directories && (filename[0] != '/')) {
+      if (directories && *directories && (filename[0] != '/')) {
         dir = *directories++;
         res = dir;
         if (res.back() != '/') {

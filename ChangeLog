@@ -1,3 +1,12 @@
+2024-09-05  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitignore, resources/test-reads.fastq,
+	resources/test-sequences.fasta, src/dna_file_reader.cpp,
+	src/dna_file_reader.h, src/file_reader.cpp,
+	tests/test_dna_file_reader.cpp:
+	Fix some bugs in the DNAFileReader class and improves this class documentation.
+	
+	
 2024-07-22  DoccY <alban.mancheron@lirmm.fr>
 
 	* .gitignore, Makefile.am, Makefile.in, aclocal.m4,
@@ -28,10 +37,10 @@
 	
 2024-07-22  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, config/compile, config/config.guess,
-	config/config.sub, config/depcomp, config/install-sh,
-	config/ltmain.sh, config/m4/ax_check_gnu_make.m4,
-	config/m4/libtool.m4, config/m4/ltoptions.m4, config/m4/ltsugar.m4,
+	* config/compile, config/config.guess, config/config.sub,
+	config/depcomp, config/install-sh, config/ltmain.sh,
+	config/m4/ax_check_gnu_make.m4, config/m4/libtool.m4,
+	config/m4/ltoptions.m4, config/m4/ltsugar.m4,
 	config/m4/ltversion.m4, config/m4/lt~obsolete.m4, config/missing,
 	config/test-driver:
 	Update *autotools* macros and scripts.
@@ -263,8 +272,8 @@
 	
 2023-07-28  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, src/Makefile.am, src/Makefile.in, src/kim.cpp,
-	src/kim.h, src/kmer_variant_graph.cpp, src/{variant_kmer_index.h =>
+	* src/Makefile.am, src/Makefile.in, src/kim.cpp, src/kim.h,
+	src/kmer_variant_graph.cpp, src/{variant_kmer_index.h =>
 	kmer_variant_graph.h}, src/variant_kmer_index.cpp:
 	Update the kim main program.
 	The program options are not fully implemented.
@@ -465,7 +474,7 @@
 	
 2023-07-10  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, configure, src/kim.cpp, src/variant_kmer_index.cpp:
+	* configure, src/kim.cpp, src/variant_kmer_index.cpp:
 	Use map instead of unordered_map in the main program in order to reduce memory footprint.
 	
 	
@@ -483,7 +492,7 @@
 	
 2023-07-07  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, src/variant_identification.cpp:
+	* src/variant_identification.cpp:
 	Fix the code due to the last modification of the internal data structure.
 	
 	
@@ -535,14 +544,6 @@
 	
 2023-06-16  DoccY <alban.mancheron@lirmm.fr>
 
-	* :
-	commit 29b006418ac3dcf43521178bca782fd949f2b432
-	Author: DoccY <alban.mancheron@lirmm.fr>
-	Date:   Fri Jun 16 20:48:08 2023 +0200
-	
-	
-2023-06-16  DoccY <alban.mancheron@lirmm.fr>
-
 	* src/variant_kmer_index.cpp, src/variant_kmer_index.h:
 	Implement a quick and not fully controlled index loading strategy.
 	
@@ -567,7 +568,7 @@
 	
 2023-06-15  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, INSTALL, Makefile.am, Makefile.in, TODO, aclocal.m4,
+	* INSTALL, Makefile.am, Makefile.in, TODO, aclocal.m4,
 	config/config.h.in, config/git-release, config/git-version-gen,
 	config/version, config/version.configure.ac, configure,
 	configure.ac, doc/Makefile.in, doc/doxygen.cfg.in,
@@ -608,12 +609,6 @@
 	
 2023-06-14  Ositofeliz <remy.costa@live.fr>
 
-	* ChangeLog:
-	Update ChangeLog.
-	
-	
-2023-06-14  Ositofeliz <remy.costa@live.fr>
-
 	* .gitignore, src/Makefile.am, src/Makefile.in,
 	src/file_reader.cpp, src/file_reader.h, src/kim.cpp,
 	src/variant_identification.cpp, src/variant_identification.h,
@@ -632,13 +627,13 @@
 	
 2023-06-14  Ositofeliz <remy.costa@live.fr>
 
-	* .gitignore, AUTHORS, ChangeLog, LICENSE-CeCILL-en.md,
-	LICENSE-CeCILL-fr.md, LICENSE.md, Makefile.am, Makefile.in, NEWS,
-	README.md, aclocal.m4, config/compile, config/config.guess,
-	config/config.h.in, config/config.sub, config/depcomp,
-	config/install-sh, config/m4/ax_compare_version.m4,
-	config/m4/ax_prog_doxygen.m4, config/missing, configure,
-	configure.ac, doc/Makefile.am, doc/Makefile.in, doc/doxygen.cfg.in:
+	* .gitignore, AUTHORS, LICENSE-CeCILL-en.md, LICENSE-CeCILL-fr.md,
+	LICENSE.md, Makefile.am, Makefile.in, NEWS, README.md, aclocal.m4,
+	config/compile, config/config.guess, config/config.h.in,
+	config/config.sub, config/depcomp, config/install-sh,
+	config/m4/ax_compare_version.m4, config/m4/ax_prog_doxygen.m4,
+	config/missing, configure, configure.ac, doc/Makefile.am,
+	doc/Makefile.in, doc/doxygen.cfg.in:
 	Adding autotools.
 	
 	

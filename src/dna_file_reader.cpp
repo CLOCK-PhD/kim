@@ -186,7 +186,7 @@ void DNAFileReader::FileState::reset() {
   current_sequence_length = size_t(-1);
   kmer = kmer_aux = string(k, '?');
   kmer_start_pos = 0;
-  sequence_start_file_state = FileReader::FileState();
+  sequence_start_file_state = *this;
 }
 
 
@@ -373,7 +373,7 @@ void DNAFileReader::_parse() {
             ++current_state.nb_consecutive_regular_nucleotides;
             break;
           default:
-            // This is a degenerate symbol
+            // This is a degenerated symbol
             current_state.nb_consecutive_regular_nucleotides = 0;
           }
         }
@@ -418,6 +418,7 @@ void DNAFileReader::_onOpen() {
     assert(current_state.column > 0);
     --current_state.column;
     current_state.pos = _ifs.tellg();
+    current_state.reset();
   } else {
     ERROR_MSG("Unable to detect the file format. Character '" << (char) c << "'"
               << " found while expecting either a '@' for fastq file or one of '>' or ';' for fasta file.");
@@ -431,7 +432,7 @@ void DNAFileReader::_onClose() {
 void DNAFileReader::_onReset() {
   FileState &current_state = _getState();
   current_state.reset();
-  current_state.sequence_start_file_state = FileReader::getState();
+  current_state.sequence_start_file_state = current_state;
 }
 
 void DNAFileReader::_processSequenceDescription() {
@@ -450,7 +451,8 @@ void DNAFileReader::_processSequenceDescription() {
 const string &DNAFileReader::getCurrentKmer() const {
   static const string empty_string;
   const FileState &current_state = getState();
-  if (*this && (current_state.nb_nucleotides >= current_state.k)) {
+  if (*this && !current_state.start_symbol_expected && (current_state.nb_nucleotides >= current_state.k)) {
+    current_state.kmer = current_state.kmer_aux; // To force k-mer size
     for (size_t p = current_state.kmer_start_pos; p < current_state.k; ++p) {
       current_state.kmer[p - current_state.kmer_start_pos] = current_state.kmer_aux[p];
     }
@@ -476,17 +478,33 @@ const string &DNAFileReader::getNextKmer(bool skip_degenerate) {
   return getCurrentKmer();
 }
 
-const string &DNAFileReader::getKmerAt(size_t p, bool check_consistency) {
-  if (!*this) return getCurrentKmer();
-  const FileState &current_state = getState();
+const string &DNAFileReader::getKmerAt(size_t p) {
+  FileState &current_state = _getState();
+  if (!*this || ((p + current_state.k) > current_state.current_sequence_length)) {
+    return getCurrentKmer();
+  }
+  if (current_state.start_symbol_expected) {
+    if (current_state.nb_nucleotides == current_state.current_sequence_length) { 
+      // The end of sequence was reached by some previous reading.
+      current_state.start_symbol_expected = false;
+    } else {
+      // The sequence description is not already processed.
+      assert(current_state.nb_nucleotides == 0);
+      assert(current_state.nb_consecutive_regular_nucleotides == 0);
+      (this->*_parse_mth)();
+    }
+  }
   if (p < getCurrentKmerRelativePosition()) {
+    // The wanted k-mer is located strictly before the current
+    // loaded kmer.
     gotoSequenceStart();
   }
   if (getCurrentKmerRelativePosition() == (size_t) -1) {
+    assert(!current_state.start_symbol_expected);
     assert(current_state.nb_nucleotides == 0);
     assert(current_state.nb_consecutive_regular_nucleotides == 0);
-    // The sequence description was already processed, but no k-mer is
-    // currently loaded.
+    // The sequence description is processed but no k-mer is currently
+    // loaded.
     (this->*_parse_mth)();
   }
   assert((p >= getCurrentKmerRelativePosition())
@@ -499,6 +517,7 @@ const string &DNAFileReader::getKmerAt(size_t p, bool check_consistency) {
     assert(p >= current_state.nb_nucleotides);
     while (*this && ((current_state.nb_nucleotides + 1) < p)) {
       _nextVisibleCharacter();
+      ++current_state.nb_nucleotides;
     }
     if (*this) {
       assert((current_state.nb_consecutive_regular_nucleotides + 1) == p);
@@ -509,7 +528,7 @@ const string &DNAFileReader::getKmerAt(size_t p, bool check_consistency) {
 }
 
 template <DNAFileReader::Format fmt>
-void DNAFileReader::_gotoSequenceEnd(bool check_consistency) {
+void DNAFileReader::_gotoSequenceEnd() {
   FileState &current_state = _getState();
   if (check_consistency) {
     while (*this && !current_state.start_symbol_expected) {
@@ -517,8 +536,16 @@ void DNAFileReader::_gotoSequenceEnd(bool check_consistency) {
     }
   } else {
     bool found = false;
+    bool in_seq = true;
     while (*this && !found) {
       int c = _nextVisibleCharacter();
+      if (in_seq) {
+        if (_isEndOfNucleotideSequence<fmt>(current_state.column, c)) {
+          in_seq = false;
+        } else {
+          ++current_state.nb_nucleotides;
+        }
+      }
       if ((current_state.column == 1) and _isStartSymbol<fmt>(c)) {
         found = true;
       }
@@ -530,6 +557,8 @@ void DNAFileReader::_gotoSequenceEnd(bool check_consistency) {
       current_state.pos = _ifs.tellg();
       current_state.start_symbol_expected = true;
     }
+    assert(current_state.nb_nucleotides != (size_t) -1);
+    current_state.current_sequence_length = current_state.nb_nucleotides;
   }
 }
 
@@ -545,13 +574,13 @@ size_t DNAFileReader::computeCurrentSequenceLength() {
   return getCurrentSequenceLength();
 }
 
-void DNAFileReader::gotoSequenceEnd(bool check_consistency) {
+void DNAFileReader::gotoSequenceEnd() {
   switch (getFormat()) {
   case FASTA_FORMAT:
-    _gotoSequenceEnd<FASTA_FORMAT>(check_consistency);
+    _gotoSequenceEnd<FASTA_FORMAT>();
     break;
   case FASTQ_FORMAT:
-    _gotoSequenceEnd<FASTQ_FORMAT>(check_consistency);
+    _gotoSequenceEnd<FASTQ_FORMAT>();
     break;
   default:
     break;
@@ -568,8 +597,8 @@ void DNAFileReader::gotoSequenceStart() {
   current_state.kmer_start_pos = 0;
 }
 
-bool DNAFileReader::gotoNextSequence(bool check_consistency) {
-  gotoSequenceEnd(check_consistency);
+bool DNAFileReader::gotoNextSequence() {
+  gotoSequenceEnd();
   (this->*_parse_mth)();
   return (*this);
 }

@@ -125,6 +125,7 @@ void test_DNAFileReader_init(string fname, DNAFileReader &reader, DNAFileReader:
        << "("
        << "fname = '" << fname << "', "
        << "reader@" << &reader << ", "
+       << "check_consistency = " << reader.check_consistency << ", "
        << "expected_fmt = '" << expected_fmt << "'"
        << ") ==="
        << endl;
@@ -173,12 +174,12 @@ void test_DNAFileReader_init(string fname, DNAFileReader &reader, DNAFileReader:
 }
 
 // test moving sequence by sequence in the file
-vector<size_t> test_DNAFileReader_sequence_analysis(DNAFileReader &reader, bool check_consistency, size_t expected_nb_seq, list<size_t> bad_sequences) {
+vector<size_t> test_DNAFileReader_sequence_analysis(DNAFileReader &reader, size_t expected_nb_seq, list<size_t> bad_sequences) {
 
   cout << "=== " << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__
        << "("
        << "reader@" << &reader << ", "
-       << "check_consistency = " << check_consistency << ", "
+       << "check_consistency = " << reader.check_consistency << ", "
        << "expected_nb_seq = " << expected_nb_seq << ", "
        << "bad_sequences = {";
   for (list<size_t>::const_iterator it = bad_sequences.begin();
@@ -200,7 +201,7 @@ vector<size_t> test_DNAFileReader_sequence_analysis(DNAFileReader &reader, bool 
   sequence_length.reserve(expected_nb_seq);
   size_t cpt = 0;
 
-  if (check_consistency) {
+  if (reader.check_consistency) {
 
     // Check for proper but slower sequence counting This also check for
     // determining the sequence length and the save and restore cursor
@@ -216,13 +217,16 @@ vector<size_t> test_DNAFileReader_sequence_analysis(DNAFileReader &reader, bool 
           cout << "The sequence " << bad_sequences.front()  << " has a longer quality and should throw an exception." << endl;
         }
 
-        if (reader.gotoNextSequence(true /* check consistency */)) {
+        if (reader.gotoNextSequence()) {
 
           // All sequence of the test file have the same pattern:
-          regex pattern("[ ]*Sequence ([0-9]+) of length ([0-9]+) \\(from line ([0-9]+) to line ([0-9]+)\\)(.*)");
+          regex pattern("[ ]*Sequence_([0-9]+) of length ([0-9]+) \\[([0-9]+) degenerated symbols\\] \\(from line ([0-9]+) to line ([0-9]+)\\)(.*)");
           smatch matches;
+          // If NDEBUG macro is defined, the following code will not
+          // compile, but this doesn't matter since the NDEBUG is
+          // undefined at the beginning of this file.
           assert(regex_match(reader.getCurrentSequenceDescription(), matches, pattern));
-          assert(matches.size() == 6);
+          assert(matches.size() == 7);
           size_t v = stoi(matches[1]);
           cout << "- Sequence ID (from the description string) is " << v << endl;
           cout << "- Sequence ID (from the reader) is " << reader.getCurrentSequenceID() << endl;
@@ -232,7 +236,7 @@ vector<size_t> test_DNAFileReader_sequence_analysis(DNAFileReader &reader, bool 
           v = stoi(matches[2]);
           cout << "- Sequence length is " << v << endl;
           sequence_length.push_back(v);
-          v = stoi(matches[3]);
+          v = stoi(matches[4]);
           cout << "- Starting line is " << v << " (expecting " << (reader.getFileLineNumber() - 1) << ")" << endl;
           assert(size_t(v) == (reader.getFileLineNumber() - 1));
 
@@ -279,7 +283,9 @@ vector<size_t> test_DNAFileReader_sequence_analysis(DNAFileReader &reader, bool 
           bad_sequences.pop_front();
           cout << "This is expected since this sequence is voluntary badly formatted." << endl;
           cout << "Skip the end of this quality sequence until a new sequence start is being detected..." << endl;
-          reader.gotoSequenceEnd(false /* don't check consistency */);
+          reader.check_consistency = false;
+          reader.gotoSequenceEnd();
+          reader.check_consistency = true;
           --cpt;
         } else {
           exit(1);
@@ -296,7 +302,7 @@ vector<size_t> test_DNAFileReader_sequence_analysis(DNAFileReader &reader, bool 
     // Check for quick and dirty sequence counting
     cout << "Counting the number of sequences using no checking (thus will be wrong)" << endl;
     while (reader && (cpt < 1000)) {
-      if (reader.gotoNextSequence(false /* don't check consistency */)) {
+      if (reader.gotoNextSequence()) {
         ++cpt;
         cout << "- Sequence ID (from the reader) is " << reader.getCurrentSequenceID() << endl;
         cout << "- Sequence ID (expected) is " << cpt << endl;
@@ -323,8 +329,10 @@ void test_DNAFileReader_kmer_extraction(DNAFileReader &reader, bool skip_degener
   cout << "=== " << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__
        << "("
        << "reader@" << &reader << ", "
+       << "check_consistency = " << reader.check_consistency << ", "
        << "skip_degenerated_kmers = " << skip_degenerated_kmers << ", "
        << "sequence_length = [";
+  bool check_consistency = reader.check_consistency;
   for (vector<size_t>::const_iterator it = sequence_length.begin();
        it != sequence_length.end();
        ++it) {
@@ -383,7 +391,7 @@ void test_DNAFileReader_kmer_extraction(DNAFileReader &reader, bool skip_degener
       if (degenerated_kmers[cpt].empty()) {
         cout << "All k-mers from this sequence contains no degenerated symbols" << endl;
       } else {
-        cout << "List of k-mers that contains degenerate symbols in sequence " << cpt << ":" << endl;
+        cout << "List of k-mers that contains degenerated symbols in sequence " << cpt << ":" << endl;
         for (list<size_t>::const_iterator it = degenerated_kmers[cpt].begin();
              it != degenerated_kmers[cpt].end();
              ++it) {
@@ -418,8 +426,10 @@ void test_DNAFileReader_kmer_extraction(DNAFileReader &reader, bool skip_degener
     ++nb_kmers;
 
     if (!bad_sequences.empty() && (cpt == bad_sequences.front()) && (nb_kmers + k == sequence_length[cpt - 1])) {
-      cout << "In order to not throw and exception, the method gotoSequenceEnd(check_consistency: false) is invoked." << endl;
-      reader.gotoSequenceEnd(false /* don't check consistency */);
+      cout << "In order to not throw and exception, the method gotoSequenceEnd() is invoked." << endl;
+      reader.check_consistency = false;
+      reader.gotoSequenceEnd();
+      reader.check_consistency = check_consistency;
       bad_sequences.pop_front();
       ++nb_kmers;
     }
@@ -448,6 +458,7 @@ void test_DNAFileReader_indexation(DNAFileReader &reader, list<size_t> bad_seque
   cout << "=== " << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__
        << "("
        << "reader@" << &reader << ", "
+       << "check_consistency = " << reader.check_consistency << ", "
        << "bad_sequences = {";
   for (list<size_t>::const_iterator it = bad_sequences.begin();
        it != bad_sequences.end();
@@ -488,18 +499,20 @@ void test_DNAFileReader_indexation(DNAFileReader &reader, list<size_t> bad_seque
         while (reader.getCurrentSequenceLength() == size_t(-1)) {
           // The reader has not encountered the end of the current sequence.
           string kmer = reader.getKmerAt(p);
-          DNAFileReader::FileState state = reader.getState();
-          cout << "      kmer at " << reader.getCurrentKmerRelativePosition()
-               << " (wanted position was " << p << ")"
-               << " corresponds to kmer '" << kmer
-               << "' from '" << state.filename
-               << ":" << state.line
-               << ":" << state.column
-               << "@" << state.pos << endl;
-          assert((reader.getCurrentSequenceLength() != size_t(-1)) || (p == reader.getCurrentKmerRelativePosition()));
-          cur_kmers.push_back(kmer);
-          cur_states.push_back(state);
-          p += 25; // index every 25 positions
+          if (reader.getCurrentSequenceLength() == (size_t)-1) {
+            DNAFileReader::FileState state = reader.getState();
+            cout << "      kmer at " << reader.getCurrentKmerRelativePosition()
+                 << " (wanted position was " << p << ")"
+                 << " corresponds to kmer '" << kmer
+                 << "' from '" << state.filename
+                 << ":" << state.line
+                 << ":" << state.column
+                 << "@" << state.pos << endl;
+            assert(p == reader.getCurrentKmerRelativePosition());
+            cur_kmers.push_back(kmer);
+            cur_states.push_back(state);
+            p += 25; // index every 25 positions
+          }
         }
       }
     } catch (const FileReaderParseError &e) {
@@ -510,7 +523,10 @@ void test_DNAFileReader_indexation(DNAFileReader &reader, list<size_t> bad_seque
         bad_sequences.pop_front();
         cout << "This is expected since this sequence is voluntary badly formatted." << endl;
         cout << "Skip the end of this quality sequence until a new sequence start is being detected..." << endl;
-        reader.gotoSequenceEnd(false /* don't check consistency */);
+        bool check_consistency = reader.check_consistency;
+        reader.check_consistency = false;
+        reader.gotoSequenceEnd();
+        reader.check_consistency = check_consistency;;
       } else {
         exit(1);
       }
@@ -560,9 +576,8 @@ void test_DNAFileReader_indexation(DNAFileReader &reader, list<size_t> bad_seque
 struct kmer_record {
   string kmer;
   size_t pos;
-  size_t expected_pos;
-  kmer_record(const string &s, size_t p, size_t e = -1):
-    kmer(s), pos(p), expected_pos(e == size_t(-1) ? p : e)
+  kmer_record(const string &s, size_t p):
+    kmer(s), pos(p)
   {}
 };
 
@@ -571,13 +586,14 @@ void test_DNAFileReader_some_kmers(DNAFileReader &reader, size_t num_seq, list<k
   cout << "=== " << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__
        << "("
        << "reader@" << &reader << ", "
+       << "check_consistency = " << reader.check_consistency << ", "
        << "num_seq = " << num_seq << ", "
        << "kmers = {";
   for (list<kmer_record>::const_iterator it = kmers.begin();
        it != kmers.end();
        ++it) {
     cout << (it == kmers.begin() ? "" : ", ")
-         << "('" << it->kmer << "', " << it->pos << ", " << it->expected_pos << ")";
+         << "('" << it->kmer << "', " << it->pos << ")";
   }
   cout << "]"
        << ") ==="
@@ -597,11 +613,29 @@ void test_DNAFileReader_some_kmers(DNAFileReader &reader, size_t num_seq, list<k
   for (list<kmer_record>::iterator it = kmers.begin();
        it != kmers.end();
        ++it) {
+    cout << "[BEFORE]:" << endl
+         << "k-mer: '" << reader.getCurrentKmer() << "'" << endl
+         << "k-mer pos: " << reader.getCurrentKmerRelativePosition() << endl
+         << "Seq ID: " << reader.getCurrentSequenceID() << endl
+         << "Seq Description: '" << reader.getCurrentSequenceDescription() << "'" << endl
+         << "Seq nb nucl: " << reader.getCurrentSequenceProcessedNucleotides() << endl
+         << "Seq length: " << reader.getCurrentSequenceLength() << endl;
+
     reader.getKmerAt(it->pos);
-    cout << "The " << k << "-mer at position " << it->pos << " in sequence " << num_seq << " is " << reader.getCurrentKmer() << " (expecting '" << it->kmer << "')." << endl;
+
+    cout << "[AFTER]:" << endl
+         << "k-mer: '" << reader.getCurrentKmer() << "'" << endl
+         << "k-mer pos: " << reader.getCurrentKmerRelativePosition() << endl
+         << "Seq ID: " << reader.getCurrentSequenceID() << endl
+         << "Seq Description: '" << reader.getCurrentSequenceDescription() << "'" << endl
+         << "Seq nb nucl: " << reader.getCurrentSequenceProcessedNucleotides() << endl
+         << "Seq length: " << reader.getCurrentSequenceLength() << endl;
+
+
+    cout << "The " << k << "-mer at position " << it->pos << " in sequence " << num_seq << " is '" << reader.getCurrentKmer() << "' (expecting '" << it->kmer << "')." << endl;
     assert(reader.getCurrentKmer() == it->kmer);
-    cout << "It is located at position " << reader.getCurrentKmerRelativePosition() << " (expecting " << it->expected_pos << ")" << endl;
-    assert(reader.getCurrentKmerRelativePosition() == it->expected_pos);
+    cout << "It is located at position " << reader.getCurrentKmerRelativePosition() << " (expecting " << (it->kmer.empty() ? -1 : it->pos) << ")" << endl;
+    assert(reader.getCurrentKmerRelativePosition() == (it->kmer.empty() ? -1 : it->pos));
   }
 
   cout << endl;
@@ -637,8 +671,10 @@ int main() {
 
   test_DNAFileReader_init("test-reads.fastq", reader, DNAFileReader::FASTQ_FORMAT);
   bad_sequences.push_back(15);
-  test_DNAFileReader_sequence_analysis(reader, false /* don't check consistency */, 21, bad_sequences);
-  sequence_length = test_DNAFileReader_sequence_analysis(reader, true /* check consistency */, 18, bad_sequences);
+  reader.check_consistency = false;
+  test_DNAFileReader_sequence_analysis(reader, 21, bad_sequences);
+  reader.check_consistency = true;
+  sequence_length = test_DNAFileReader_sequence_analysis(reader, 18, bad_sequences);
   degenerated_kmers.resize(18 + 1); // degenerated k-mers for sequence i are stored at offset i
 
   _fill_list(degenerated_kmers[4], 5, 10);
@@ -656,8 +692,10 @@ int main() {
   degenerated_kmers.clear();
 
   test_DNAFileReader_init("test-sequences.fasta", reader, DNAFileReader::FASTA_FORMAT);
-  test_DNAFileReader_sequence_analysis(reader, false /* don't check consistency */, 6, bad_sequences);
-  sequence_length = test_DNAFileReader_sequence_analysis(reader, true /* check consistency */, 6, bad_sequences);
+  reader.check_consistency = false;
+  test_DNAFileReader_sequence_analysis(reader, 6, bad_sequences);
+  reader.check_consistency = true;
+  sequence_length = test_DNAFileReader_sequence_analysis(reader, 6, bad_sequences);
   degenerated_kmers.resize(6 + 1); // same as above
   _fill_list(degenerated_kmers[3], 0, 19);
   _fill_list(degenerated_kmers[3], 20, 25);
@@ -675,7 +713,7 @@ int main() {
   some_kmers.emplace_back("TCGAT", 38);
   some_kmers.emplace_back("ATCNN", 45);
   some_kmers.emplace_back("ACTAC", 10);
-  some_kmers.emplace_back("ACUGT", 1000, 51);
+  some_kmers.emplace_back("", 1000);
   some_kmers.emplace_back("ACTAC", 10);
   test_DNAFileReader_some_kmers(reader, 4, some_kmers);
 
