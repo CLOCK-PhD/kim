@@ -90,6 +90,8 @@
 #ifndef __SETTINGS_H__
 #define __SETTINGS_H__
 
+#include <string>
+
 #include <kim_exception.h>
 
 namespace kim {
@@ -134,9 +136,19 @@ namespace kim {
     size_t _s;
 
     /**
+     * The index directory.
+     */
+    std::string _index_directory;
+
+    /**
      * Emit warning messages or not.
      */
     bool _warn;
+
+    /**
+     * Check DNA file consistency (this increase the reading time).
+     */
+    bool _check_consistency;
 
     /**
      * The settings can't be modified if _frozen is set to true.
@@ -157,11 +169,16 @@ namespace kim {
      *
      * \param p The length of the k-mers prefixes.
      *
+     * \param index_directory The index directory.
+     *
      * \param warn Activate or deactivate warnings.
+     *
+     * \param check_consistency Enable or disable DNA file consistency
+     * checking while reading.
      *
      * \param freeze Do freeze or not the settings.
      */
-    Settings(size_t k = 0, size_t p = 0, bool warn = true, bool freeze = false);
+    Settings(size_t k = 0, size_t p = 0, const std::string &index_directory = "", bool warn = true, bool check_consistency = false, bool freeze = false);
 
     /**
      * Check whether settings are valid or not.
@@ -247,6 +264,38 @@ namespace kim {
     void setKmerLength(size_t k);
 
     /**
+     * Get the index directory (where files are stored).
+     *
+     * \remark No verification about settings validity is performed.
+     *
+     * \return Returns the directory containing the index files.
+     */
+    inline const std::string &getIndexDirectory() const {
+      return _index_directory;
+    }
+
+    /**
+     * Set the index directory.
+     *
+     * If the settings are frozen, any attempt to change the index
+     * directory throws a BadSettingsException with an explicit
+     * message.
+     *
+     * \param path The directory to use.
+     *
+     * \param must_exist If true, the index directory must already
+     * exists.
+     *
+     * \param must_not_exist IF true, the index directory must not
+     * already exists.
+     *
+     * \note Obvisouly, setting a directory with both must_exist and
+     * must_not_exist set to true necessarily leads to a
+     * BadSettingsException.
+     */
+    void setIndexDirectory(const std::string &path, bool must_exist = false, bool must_not_exist = false);
+
+    /**
      * Get the prefix length of the k-mers.
      *
      * \remark No verification about settings validity is performed.
@@ -304,10 +353,28 @@ namespace kim {
     /**
      * Set the warning status for this settings.
      *
-     * \param status Waring are enabled only if this parameter is set
+     * \param status Warning are enabled only if this parameter is set
      * to true.
      */
     void warn(bool status);
+
+    /**
+     * Get the consistency checking state of current settings.
+     *
+     * \return Returns true if current settings enables consistency
+     * checking on DNA file reading.
+     */
+    inline bool checkConsistency() const {
+      return _check_consistency;
+    }
+
+    /**
+     * Set the consistency checking status for this settings.
+     *
+     * \param status Consistency checking is enabled only if this
+     * parameter is set to true.
+     */
+    void checkConsistency(bool status);
 
   };
 

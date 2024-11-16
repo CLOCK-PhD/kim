@@ -101,28 +101,42 @@ using namespace kim;
 
 int main() {
 
+  bool exception_thrown;
+
   cout << "Testing KimSettings" << endl;
 
+  cout << "Creating default settings" << endl;
   Settings s;
   assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
   assert(!s.valid());
 
+  cout << "Setting k-mer length to 3" << endl;
   s.setKmerLength(3);
   assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
   assert(s.getKmerLength() == s.k());
   assert(s.getKmerLength() == 3);
 
+  cout << "Setting k-mer prefix length to 1" << endl;
   s.setKmerPrefixLength(1);
   assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
   assert(s.getKmerPrefixLength() == 1);
   assert(s.getKmerSuffixLength() == 2);
   assert(s.valid());
 
+  cout << "Trying to set k-mer prefix length to 4 (should lead to 2)" << endl;
   s.setKmerPrefixLength(4);
   assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
   assert(s.getKmerLength() == s.k());
   assert(s.getKmerLength() == 3);
@@ -130,8 +144,11 @@ int main() {
   assert(s.getKmerSuffixLength() == 1);
   assert(s.valid());
 
+  cout << "Setting k-mer length to 10" << endl;
   s.setKmerLength(10);
   assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
   assert(s.getKmerLength() == s.k());
   assert(s.getKmerLength() == 10);
@@ -139,8 +156,11 @@ int main() {
   assert(s.getKmerSuffixLength() == 8);
   assert(s.valid());
 
+  cout << "Setting k-mer prefix length to 4" << endl;
   s.setKmerPrefixLength(4);
   assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
   assert(s.getKmerLength() == s.k());
   assert(s.getKmerLength() == 10);
@@ -148,8 +168,61 @@ int main() {
   assert(s.getKmerSuffixLength() == 6);
   assert(s.valid());
 
+  cout << "Setting index directory to '/some/path'" << endl;
+  s.setIndexDirectory("/some/path");
+  assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory() == "/some/path");
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  for (auto const &p: { "/some/path/that/must/not/exist", "/tmp"}) {
+    for (bool must_exist: {false, true}) {
+      for (bool must_not_exist: {false, true}) {
+        bool expected_exception_thrown = (((p[1] == 's') && must_exist)
+                                          || ((p[1] == 't') && must_not_exist));
+        exception_thrown = false;
+        try {
+          cout << "Trying to set index directory to '" << p << "'"
+               << " with flag must_exist set to " << must_exist
+               << " and flag must_not_exist set to " << must_not_exist << "." << endl
+               << (expected_exception_thrown ? "An" : "No")
+               << " exception should be thrown..." << endl;
+          s.setIndexDirectory(p, must_exist, must_not_exist);
+          cout << "Index Directory: '" << s.getIndexDirectory() << "'" << endl;
+        } catch (const BadSettingsException &e) {
+          cout << "The following exception was thrown: " << e.what() << endl;
+          exception_thrown = true;
+        }
+        if (!exception_thrown) {
+          assert(s.getIndexDirectory() == p);
+        }
+        assert(exception_thrown == expected_exception_thrown);
+      }
+    }
+  }
+
+  cout << "Setting index directory to ''" << endl;
+  s.setIndexDirectory("");
+  assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  cout << "Enable warnings." << endl;
   s.warn(true);
   assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
   assert(s.getKmerLength() == s.k());
   assert(s.getKmerLength() == 10);
@@ -157,8 +230,11 @@ int main() {
   assert(s.getKmerSuffixLength() == 6);
   assert(s.valid());
 
+  cout << "Disable warnings." << endl;
   s.warn(false);
   assert(!s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
   assert(s.getKmerLength() == s.k());
   assert(s.getKmerLength() == 10);
@@ -166,8 +242,11 @@ int main() {
   assert(s.getKmerSuffixLength() == 6);
   assert(s.valid());
 
+  cout << "Enable warnings again." << endl;
   s.warn(true);
   assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
   assert(s.getKmerLength() == s.k());
   assert(s.getKmerLength() == 10);
@@ -175,17 +254,11 @@ int main() {
   assert(s.getKmerSuffixLength() == 6);
   assert(s.valid());
 
-  s.freeze();
+  cout << "Enable consistency checking." << endl;
+  s.checkConsistency(true);
   assert(s.warn());
-  assert(s.frozen());
-  assert(s.getKmerLength() == s.k());
-  assert(s.getKmerLength() == 10);
-  assert(s.getKmerPrefixLength() == 4);
-  assert(s.getKmerSuffixLength() == 6);
-  assert(s.valid());
-
-  s.unfreeze();
-  assert(s.warn());
+  assert(s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
   assert(s.getKmerLength() == s.k());
   assert(s.getKmerLength() == 10);
@@ -193,23 +266,23 @@ int main() {
   assert(s.getKmerSuffixLength() == 6);
   assert(s.valid());
 
-  s.freeze();
+  cout << "Disable consistency checking." << endl;
+  s.checkConsistency(false);
   assert(s.warn());
-  assert(s.frozen());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(!s.frozen());
   assert(s.getKmerLength() == s.k());
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
   assert(s.valid());
 
-  bool exception_thrown = false;
-  try {
-    s.setKmerLength(12);
-  } catch (const BadSettingsException &e) {
-    exception_thrown = true;
-  }
-  assert(exception_thrown);
+  cout << "Freeze settings." << endl;
+  s.freeze();
   assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
   assert(s.frozen());
   assert(s.getKmerLength() == s.k());
   assert(s.getKmerLength() == 10);
@@ -219,27 +292,16 @@ int main() {
 
   exception_thrown = false;
   try {
-    s.setKmerPrefixLength(6);
-  } catch (const BadSettingsException &e) {
-    exception_thrown = true;
-  }
-  assert(exception_thrown);
-  assert(s.warn());
-  assert(s.frozen());
-  assert(s.getKmerLength() == s.k());
-  assert(s.getKmerLength() == 10);
-  assert(s.getKmerPrefixLength() == 4);
-  assert(s.getKmerSuffixLength() == 6);
-  assert(s.valid());
-
-  exception_thrown = false;
-  try {
+    cout << "Trying to disable warnings (should throw a BadSettingsException)" << endl;
     s.warn(false);
   } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
     exception_thrown = true;
   }
   assert(exception_thrown);
   assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
   assert(s.frozen());
   assert(s.getKmerLength() == s.k());
   assert(s.getKmerLength() == 10);
@@ -247,13 +309,260 @@ int main() {
   assert(s.getKmerSuffixLength() == 6);
   assert(s.valid());
 
-  Settings s2(10, 4, true, true);
+  exception_thrown = false;
+  try {
+    cout << "Trying to set k-mer length to 5 (should throw a BadSettingsException)" << endl;
+    s.setKmerLength(5);
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  exception_thrown = false;
+  try {
+    cout << "Trying to set k-mer prefix length to 5 (should throw a BadSettingsException)" << endl;
+    s.setKmerPrefixLength(5);
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  exception_thrown = false;
+  try {
+    cout << "Trying to set Index Directory to '/some/path' (should throw a BadSettingsException)" << endl;
+    s.setIndexDirectory("/some/path");
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  exception_thrown = false;
+  try {
+    cout << "Trying to enable consistency checking (should throw a BadSettingsException)" << endl;
+    s.checkConsistency(true);
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  exception_thrown = false;
+  try {
+    cout << "Trying to disable warnings (should throw a BadSettingsException)" << endl;
+    s.warn(false);
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  cout << "Unfreeze settings." << endl;
+  s.unfreeze();
+  assert(s.warn());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  cout << "Enable consistency checking." << endl;
+  s.checkConsistency(true);
+  assert(s.warn());
+  assert(s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  cout << "Freeze settings again." << endl;
+  s.freeze();
+  assert(s.warn());
+  assert(s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  exception_thrown = false;
+  try {
+    cout << "Trying to disable warnings (should throw a BadSettingsException)" << endl;
+    s.warn(false);
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  exception_thrown = false;
+  try {
+    cout << "Trying to set k-mer length to 5 (should throw a BadSettingsException)" << endl;
+    s.setKmerLength(5);
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  exception_thrown = false;
+  try {
+    cout << "Trying to set k-mer prefix length to 5 (should throw a BadSettingsException)" << endl;
+    s.setKmerPrefixLength(5);
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  exception_thrown = false;
+  try {
+    cout << "Trying to set Index Directory to '/some/path' (should throw a BadSettingsException)" << endl;
+    s.setIndexDirectory("/some/path");
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  exception_thrown = false;
+  try {
+    cout << "Trying to enable consistency checking (should throw a BadSettingsException)" << endl;
+    s.checkConsistency(true);
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  exception_thrown = false;
+  try {
+    cout << "Trying to disable warnings (should throw a BadSettingsException)" << endl;
+    s.warn(false);
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  Settings s2(15, 5, "/some/path", true, true, true);
   assert(s2.warn());
+  assert(s2.checkConsistency());
+  assert(s2.getIndexDirectory() == "/some/path");
   assert(s2.frozen());
   assert(s2.getKmerLength() == s2.k());
-  assert(s2.getKmerLength() == 10);
-  assert(s2.getKmerPrefixLength() == 4);
-  assert(s2.getKmerSuffixLength() == 6);
+  assert(s2.getKmerLength() == 15);
+  assert(s2.getKmerPrefixLength() == 5);
+  assert(s2.getKmerSuffixLength() == 10);
   assert(s2.valid());
 
   cout << "That's All, Folk!!!" << endl;

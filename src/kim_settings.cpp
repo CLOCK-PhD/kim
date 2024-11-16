@@ -92,8 +92,10 @@
 #include "config.h"
 
 #include <iostream>
+#include <filesystem>
 
 using namespace std;
+namespace fs = std::filesystem;
 
 BEGIN_KIM_NAMESPACE
 
@@ -112,9 +114,11 @@ BEGIN_KIM_NAMESPACE
   }                                                                     \
   (void) 0
 
-Settings::Settings(size_t k, size_t p, bool warn, bool freeze):
-  _k(0), _p(0), _s(0),
-  _warn(false), _frozen(false) {
+Settings::Settings(size_t k, size_t p, const string &index_directory,
+                   bool warn, bool check_consistency, bool freeze):
+_k(0), _p(0), _s(0), _index_directory(index_directory),
+  _warn(false), _check_consistency(check_consistency),
+  _frozen(false) {
   if (k || p) {
     setKmerLength(k);
     _warn = warn;
@@ -168,9 +172,47 @@ void Settings::setKmerPrefixLength(size_t p) {
   _s = _k - _p;
 }
 
+void Settings::setIndexDirectory(const string &path, bool must_exist, bool must_not_exist) {
+  CHECK_FROZEN_STATE(!frozen(), setIndexDirectory);
+  if (must_exist || must_not_exist) {
+    fs::file_status s = fs::status(path);
+    if (must_exist) {
+      if (!fs::is_directory(s)) {
+        BadSettingsException e;
+        e << "The index directory '" << path << "' doesn't exist or you don't have enough access rights";
+        throw e;
+      }
+
+      fs::perms permissions = s.permissions();
+      static const fs::perms urx = fs::perms::owner_read | fs::perms::owner_exec;
+      static const fs::perms grx = fs::perms::group_read | fs::perms::group_exec;
+      static const fs::perms orx = fs::perms::others_read | fs::perms::others_exec;
+      if (((permissions & urx) != urx)       // permissions doesn't match 'dr.x......'
+          && ((permissions & grx) != grx)    // permissions doesn't match 'd...r.x...'
+          && ((permissions & orx) != orx)) { // permissions doesn't match 'd......r.x'
+        BadSettingsException e;
+        e << "The index directory '" << path << "' is not readable";
+        throw e;
+      }
+    }
+
+    if (must_not_exist && fs::exists(s)) {
+      BadSettingsException e;
+      e << "The index directory '" << path << "' already exists";
+      throw e;
+    }
+  }
+  _index_directory = path;
+}
+
 void Settings::warn(bool status) {
   CHECK_FROZEN_STATE(!frozen(), warn);
   _warn = status;
+}
+
+void Settings::checkConsistency(bool status) {
+  CHECK_FROZEN_STATE(!frozen(), warn);
+  _check_consistency = status;
 }
 
 END_KIM_NAMESPACE
