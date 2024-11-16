@@ -616,7 +616,7 @@ namespace kim {
      * \param check_consistency When true, file consistency is checked
      * while being processed by the internal reader.
      */
-    inline void consistencyChecking(bool check_consistency) {
+    inline void checkConsistency(bool check_consistency) {
       _reader.check_consistency = check_consistency;
     }
 
@@ -633,7 +633,7 @@ namespace kim {
      * \return Returns true if the internal reader checks for file
      * consistency and false otherwise.
      */
-    inline bool consistencyChecking() const {
+    inline bool checkConsistency() const {
       return _reader.check_consistency;
     }
 

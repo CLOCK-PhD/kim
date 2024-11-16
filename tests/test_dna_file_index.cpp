@@ -190,12 +190,12 @@ public:
     assert(_index.bookmark_distance == bookmark_distance);
     // The testing files are inconsistent and thus require consistency
     // checking.
-    consistencyChecking(true);
+    checkConsistency(true);
     warn(true);
   }
 
-  void consistencyChecking(bool check_consistency) {
-    _index.consistencyChecking(check_consistency);
+  void checkConsistency(bool check_consistency) {
+    _index.checkConsistency(check_consistency);
     _reader.check_consistency = check_consistency;
   }
 
@@ -347,9 +347,9 @@ public:
     size_t cpt = 0;
     bool check_consistency = _reader.check_consistency;
     bool warn = _reader.warn;
-    assert(_index.consistencyChecking() == check_consistency);
+    assert(_index.checkConsistency() == check_consistency);
     do {
-      assert(_index.consistencyChecking() == check_consistency);
+      assert(_index.checkConsistency() == check_consistency);
       assert(_reader.check_consistency == check_consistency);
       try {
         if (_reader.gotoNextSequence()) {
@@ -489,7 +489,7 @@ int main() {
 
   DNAFileIndex_Tester tester;
 
-  tester.consistencyChecking(true);
+  tester.checkConsistency(true);
   tester.warn(true);
 
   // Test empty index.
@@ -532,9 +532,9 @@ int main() {
       cout << "Number of nucleotides until this exception is " << tester.getIndex().getNumberOfNucleotides()
            << " (expecting " << nb_nucleotides << ")" << endl;
       assert(tester.getIndex().getNumberOfNucleotides() == nb_nucleotides);
-      tester.consistencyChecking(false);
+      tester.checkConsistency(false);
       tester.gotoNextSequence();
-      tester.consistencyChecking(true);
+      tester.checkConsistency(true);
     }
   }
   assert(bad_ids.empty());
