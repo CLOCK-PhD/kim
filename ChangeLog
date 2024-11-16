@@ -1,3 +1,60 @@
+2024-11-16  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitignore, config/config.h.in:
+	Prevent binary program test_kmer_variant_graph from being versioned.
+	Update configuration header template.
+	
+	
+2024-11-16  DoccY <alban.mancheron@lirmm.fr>
+
+	* README.md:
+	Update README notice.
+	
+	
+2024-11-16  DoccY <alban.mancheron@lirmm.fr>
+
+	* external/BitMagic, external/htslib, external/vcfpp:
+	Update external submodules to their latest version.
+	
+	
+2024-11-16  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/kim.cpp:
+	Rewrite main application using simple singleton design pattern.
+	
+	
+2024-11-16  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/kim.h:
+	Add the DNA file index header to kim library headers.
+	
+	
+2024-11-16  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/kmer_variant_graph.cpp:
+	Update index directory settings when loading the kmer variant graph.
+	
+	
+2024-11-16  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/dna_file_index.h, tests/test_dna_file_index.cpp:
+	Rename of consistencyChecking() method to chechConsistency() in order to be more homogeneous (and rigourous) with the naming convention.
+	
+	
+2024-11-16  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/dna_file_index.cpp, src/dna_file_index.h,
+	tests/test_dna_file_index.cpp:
+	Add a static method to display the DNA file index status as a string.
+	
+	
+2024-11-16  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/kim_settings.cpp, src/kim_settings.h,
+	tests/test_kim_settings.cpp:
+	Update kim settings class by adding consistency checking status and the index directory.
+	
+	
 2024-09-05  DoccY <alban.mancheron@lirmm.fr>
 
 	* .gitignore, src/Makefile.am, src/Makefile.in,
@@ -645,7 +702,7 @@
 	Adding autotools.
 	
 	
-2023-06-14  Rémy Costa <remy.costa.bioinfo@gmail.com>
+2023-06-14  RÃ©my Costa <remy.costa.bioinfo@gmail.com>
 
 	* Initial commit
 
