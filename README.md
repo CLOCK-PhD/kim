@@ -1,4 +1,4 @@
-# KIM: k-mer based genomic variation identification in raw genomic sequencing data 
+# KIM: k-mer based genomic variation identification in raw genomic sequencing data
 
 [TOC]
 
@@ -28,8 +28,8 @@ KIM requires:
 
 ### Single user installation
 
-To download and install `KIM` into some user local directory (e.g., `${HOME}/local_install`) , use the 
-following commands:
+To download and install `KIM` into some user local directory (e.g.,
+`${HOME}/local_install`) , use the following commands:
 
 First, it is needed to clone the `kim` repository
 ```sh
@@ -63,6 +63,43 @@ mkdir build
 cd build
 ../configure --prefix=${HOME}/local_install
 ```
+
+If you obtain an error as below:
+```sh
+prompt$ ./configure
+Checking for git-version-gen... config/git-version-gen
+...
+=== configuring in external/htslib (/home/doccy/Work/kim/external/htslib)
+configure: running /bin/bash ./configure --disable-option-checking '--prefix=/usr/local'  --cache-file=/dev/null --srcdir=.
+checking for gcc... gcc
+checking whether the C compiler works... yes
+checking for C compiler default output file name... a.out
+checking for suffix of executables...
+checking whether we are cross compiling... no
+checking for suffix of object files... o
+checking whether the compiler supports GNU C... yes
+checking whether gcc accepts -g... yes
+checking for gcc option to enable C11 features... none needed
+checking for ranlib... ranlib
+checking for grep that handles long lines and -e... /usr/bin/grep
+checking for C compiler warning flags... -Wall
+checking for pkg-config... /usr/bin/pkg-config
+checking pkg-config is at least version 0.9.0... yes
+checking for gcc option to enable large file support... none needed
+checking shared library type for unknown-Linux... plain .so
+checking whether the compiler accepts -fvisibility=hidden... yes
+checking build system type... x86_64-pc-linux-gnu
+checking host system type... Invalid configuration `unknown-Linux': machine `unknown-unknown' not recognized
+configure: error: /bin/bash ./htscodecs/config.sub unknown-Linux failed
+configure: error: ./configure failed for external/htslib
+```
+
+Then you may try to set the `--host` flag according to your current
+OS:
+```sh
+./configure --host=x86_64-linux --prefix=${HOME}/local_install
+```
+
 
 #### Uninstall
 
