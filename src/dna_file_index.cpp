@@ -936,4 +936,18 @@ string DNAFileIndex::getNameFromDescription(const string &description) {
   return name;
 }
 
+string DNAFileIndex::statusString(Status status) {
+  switch (status) {
+  case SUCCESS: return "Operation succeed.";
+  case SEQUENCE_NOT_FOUND: return "Sequence not found.";
+  case POSITION_NOT_FOUND: return "Sequence position not found.";
+  case FILE_NOT_FOUND: return "File not found.";
+  case FILE_PARSE_ERROR: return "File can't be parsed.";
+  case SEQUENCE_NAME_DUPLICATED: return "Sequence name is already indexed.";
+  }
+  Exception e;
+  e << "Undefined status code " << (int) status;
+  throw e;
+}
+
 END_KIM_NAMESPACE

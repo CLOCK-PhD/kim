@@ -158,20 +158,7 @@ ostream &operator<<(ostream &os, const DNAFileReader::FileState &s) {
 }
 
 ostream &operator<<(ostream &os, const DNAFileIndex::Status &status) {
-  switch (status) {
-  case DNAFileIndex::SUCCESS:
-    os << "SUCCESS"; break;
-  case DNAFileIndex::SEQUENCE_NOT_FOUND:
-    os << "SEQUENCE_NOT_FOUND"; break;
-  case DNAFileIndex::POSITION_NOT_FOUND:
-    os << "POSITION_NOT_FOUND"; break;
-  case DNAFileIndex::FILE_NOT_FOUND:
-    os << "FILE_NOT_FOUND"; break;
-  case DNAFileIndex::FILE_PARSE_ERROR:
-    os << "FILE_PARSE_ERROR"; break;
-  case DNAFileIndex::SEQUENCE_NAME_DUPLICATED:
-    os << "SEQUENCE_NAME_DUPLICATED"; break;
-  }
+  os << DNAFileIndex::statusString(status);
   return os;
 }
 
@@ -394,7 +381,7 @@ public:
     _reader.close();
 
     cout << endl << "* Indexing the whole file..." << endl;
-    DNAFileIndex::Status status;
+    DNAFileIndex::Status status = DNAFileIndex::SUCCESS;
     try {
       status = _index.indexFile(new_fname);
     } catch (const FileReaderParseError &) {

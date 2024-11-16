@@ -971,6 +971,15 @@ namespace kim {
      */
     static std::string getNameFromDescription(const std::string &description);
 
+    /**
+     * Return the string version of the given status.
+     *
+     * \param status The status code.
+     *
+     * \return Returns the string representation of the given status.
+     */
+    static std::string statusString(Status status);
+
   };
 
 }
