@@ -463,6 +463,7 @@ void KmerVariantGraph::load(const string &path) {
          << "Step 1: Scanning index for k-mers and variants" << endl;
   }
   _settings.unfreeze();
+  _settings.setIndexDirectory(path);
   _settings.setKmerLength(size_t(-1));
   // It is not possible to freeze this settings since it is not valid yet.
   while ((entry = readdir(dir))) {
