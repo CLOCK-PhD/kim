@@ -94,6 +94,7 @@
 #  include <config.h>
 #endif
 #include <bounded_size_string.h>
+#include <dna_file_index.h>
 #include <dna_file_reader.h>
 #include <file_reader.h>
 #include <kim_exception.h>
