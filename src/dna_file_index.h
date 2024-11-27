@@ -428,8 +428,12 @@ namespace kim {
      *
      * \remark This method is declared as const since the internal
      * reader is mutable.
+     *
+     * \param position If different from -1, don't reset the internal
+     * reader if already in the current bookmark section and the
+     * position is located after the current one.
      */
-    void _syncReaderWithCurrentBookmark() const;
+    void _syncReaderWithCurrentBookmark(size_t position = (size_t) -1) const;
 
     /**
      * Restore the internal reader to the last bookmark saved
@@ -595,9 +599,7 @@ namespace kim {
     /**
      * Builds an index to allow storing bookmarks over DNA files.
      *
-     * This uses an internal DNA file reader of 1-mers which doesn't
-     * check for file consistency by default (this later setting can
-     * be changed using the consistencyChecking() method).
+     * This uses an internal DNA file reader of 1-mers.
      *
      * \param bookmark_distance The number of nucleotides between two
      * consecutive bookmarks in the same sequence.
@@ -607,11 +609,11 @@ namespace kim {
     /**
      * Check file consistency when using the internal reader.
      *
-     * It goes without saying but checking consistency is safer but
-     * loses efficiency.
-     *
-     * By default, the internal reader doesn't check for file
-     * consistency.
+     * By default, the internal reader checks for file consistency
+     * since it needs to jump to possibly inexistent k-mer positions
+     * (disabling it is at your own risk). This functionnality makes
+     * possible to skip a badly formatted sequence (see
+     * test_dna_file_index.cpp to see an example).
      *
      * \param check_consistency When true, file consistency is checked
      * while being processed by the internal reader.
@@ -624,11 +626,11 @@ namespace kim {
      * Status of file consistency checking when using the internal
      * reader.
      *
-     * It goes without saying but checking consistency is safer but
-     * loses efficiency.
-     *
-     * By default, the internal reader doesn't check for file
-     * consistency.
+     * By default, the internal reader checks for file consistency
+     * since it needs to jump to possibly inexistent k-mer positions
+     * (disabling it is at your own risk). This functionnality makes
+     * possible to skip a badly formatted sequence (see
+     * test_dna_file_index.cpp to see an example).
      *
      * \return Returns true if the internal reader checks for file
      * consistency and false otherwise.

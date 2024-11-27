@@ -329,8 +329,7 @@ void DNAFileIndex::_indexEndOfCurrentSequence() {
   while (_addNewBookmark());
 }
 
-
-void DNAFileIndex::_syncReaderWithCurrentBookmark() const {
+void DNAFileIndex::_syncReaderWithCurrentBookmark(size_t position) const {
   ASSERT_VALID_CURRENT_BOOKMARK(false);
 
   const _File &file = _files[_current_file_pos];
@@ -340,39 +339,56 @@ void DNAFileIndex::_syncReaderWithCurrentBookmark() const {
   const _Bookmark &bookmark = bookmarks[_current_bookmark_pos];
 
   if (_reader.getFilename() != file.filename) {
+    // Opening the wanted file and forcing position to -1 (the reader
+    // will be set to the wanted bookmark).
     _reader.open(file.filename);
+    position = (size_t) -1;
+  } else {
+    size_t lower_pos = _current_bookmark_pos * bookmark_distance;
+    size_t upper_pos = lower_pos + bookmark_distance;
+    if ((_reader.getCurrentSequenceID() != _current_sequence_pos + 1)
+        || (position < lower_pos) || (position >= upper_pos)
+        || (position < _reader.getCurrentSequenceProcessedNucleotides())) {
+      // The reader is reading the wanted file, but not the wanted
+      // sequence or is not in the wanted bookmark section or has
+      // exceeded the wanted position. Force the position to -1 (the
+      // reading will be set to the wanted bookmark).
+      position = (size_t) -1;
+    }
   }
   assert(_reader);
 
-  // Retrieve current internal reader state.
-  DNAFileReader::FileState state = _reader.getState();
+  if (position == (size_t) -1) {
+    // Retrieve current internal reader state.
+    DNAFileReader::FileState state = _reader.getState();
 
-  // Since a bookmark exists, this is not the beginning of the file
-  state.start_symbol_expected = false;
+    // Since a bookmark exists, this is not the beginning of the file
+    state.start_symbol_expected = false;
 
-  // Informations derived from current sequence
-  state.nb_nucleotides = _current_bookmark_pos * bookmark_distance;
-  state.nb_consecutive_regular_nucleotides = 0;
-  state.current_sequence_length = sequence.nb_nucleotides;
-  state.current_sequence_id = _current_sequence_pos + 1;
-  state.current_sequence_description = sequence.description;
+    // Informations derived from current sequence
+    state.nb_nucleotides = _current_bookmark_pos * bookmark_distance;
+    state.nb_consecutive_regular_nucleotides = 0;
+    state.current_sequence_length = sequence.nb_nucleotides;
+    state.current_sequence_id = _current_sequence_pos + 1;
+    state.current_sequence_description = sequence.description;
 
-  // Informations derived from first bookmark of the current sequence
-  state.sequence_start_file_state.pos = first_bookmark.pos;
-  state.sequence_start_file_state.line = first_bookmark.line;
-  state.sequence_start_file_state.column = first_bookmark.column;
+    // Informations derived from first bookmark of the current sequence
+    state.sequence_start_file_state.pos = first_bookmark.pos;
+    state.sequence_start_file_state.line = first_bookmark.line;
+    state.sequence_start_file_state.column = first_bookmark.column;
 
-  // Informations derived from current bookmark of the current sequence
-  state.pos = bookmark.pos;
-  state.line = bookmark.line;
-  state.column = bookmark.column;
+    // Informations derived from current bookmark of the current sequence
+    state.pos = bookmark.pos;
+    state.line = bookmark.line;
+    state.column = bookmark.column;
 
-  // Information that can't be retrieved.
-  state.kmer = state.kmer_aux = string(state.k, '?');
+    // Information that can't be retrieved.
+    state.kmer = state.kmer_aux = string(state.k, '?');
 
-  // Now set the reader to the wanted bookmark.
-  _reader.setState(state);
-    assert(_reader.getState().pos != -1); // TEMP
+    // Now set the reader to the wanted bookmark.
+    _reader.setState(state);
+  }
+  assert(_reader.getState().pos != -1); // TEMP
 
 }
 
@@ -497,18 +513,17 @@ DNAFileIndex::Status DNAFileIndex::_setInternalReader(size_t position) {
 
   if (sequence.nb_nucleotides != (size_t) -1) {
     // The sequence is already fully indexed
-    if (position > sequence.nb_nucleotides) {
+    if (position >= sequence.nb_nucleotides) {
       // The position doesn't exist, Setting the internal reader to
       // the end of the current sequence.
       _current_bookmark_pos = bookmarks.size() - 1;
-      _syncReaderWithCurrentBookmark();
     } else {
-      // The position exists, thus going to the closest bookmark of
+      // The position exists, thus going to the closest bookmark from
       // the current sequence.
       assert(expected_bookmark_pos <= bookmarks.size());
       _current_bookmark_pos = expected_bookmark_pos;
-      _syncReaderWithCurrentBookmark();
     }
+    _syncReaderWithCurrentBookmark(position);
   } else {
     // The sequence is not fully indexed.
     //
@@ -691,7 +706,10 @@ DNAFileIndex::DNAFileIndex(const size_t bookmark_distance):
   _reader(1),
   _current_file_pos(-1), _current_sequence_pos(-1), _current_bookmark_pos(-1),
   bookmark_distance(bookmark_distance) {
-  _reader.check_consistency = false;
+  // This is mandatory to check for consistency while reading the file
+  // since the internal reader performs "jumps" to possibly inexistant
+  // positions of k-mers to discover the end of sequences.
+  _reader.check_consistency = true;
   _reader.warn = true;
 }
 
