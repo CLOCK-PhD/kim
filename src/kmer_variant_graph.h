@@ -286,34 +286,22 @@ namespace kim {
 
     /**
      * Initialize the index of k-mers associated to variants using the
-     * given directory and the given parameters.
+     * given parameters.
      *
      * \param settings The k-mer identification metric program
      * settings. The settings are frozen after this instance
-     * construction and prior to any other initialization.
+     * construction and prior to any other initialization. If settings
+     * index directory exist, then load the index from that
+     * directory. In such case, the estimated_nb_kmers parameter is
+     * unused.
      *
      * \param estimated_nb_kmers Estimation of the number of k-mers
      * (used to preallocate memory and thus to reduce time due to
      * dynamic memory reallocation). If not set, 1GB in the limit of
-     * half the available memory is used.
+     * half the available memory is used. This parameter is used only
+     * if the instance is not loaded from an existing dumped index.
      */
     KmerVariantGraph(Settings &settings, size_t estimated_nb_kmers = -1);
-
-    /**
-     * Load the index of k-mers associated to variants using the files
-     * from the given directory.
-     *
-     * \remark Once loaded, this graph is frozen (see freeze(),
-     * unfreeze() and frozen() methods).
-     *
-     * \param path Directory where index files are stored.
-     *
-     * \param settings The k-mer identification metric program
-     * settings. Notice that only the warning status will be
-     * unmodified. After instance construction, the settings will be
-     * updated and frozen.
-     */
-    KmerVariantGraph(const std::string &path, Settings &settings);
 
     /**
      * Load the index of k-mers associated to variants using the files
@@ -326,9 +314,13 @@ namespace kim {
      * \remark Once loaded, this graph is frozen (see freeze(),
      * unfreeze() and frozen() methods).
      *
-     * \param path Directory where index files are stored.
+     * \param path Directory where index files to load are stored.
+     *
+     * \return Returns false if the index directory doesn't exist and
+     * true if the directory exist and the index is successfully
+     * loaded.
      */
-    void load(const std::string &path);
+    bool load(const std::string &path);
 
     /**
      * Get this graph settings.

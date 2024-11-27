@@ -171,7 +171,11 @@ namespace kim {
      * variant if found ot the VariantNode::undefined node otherwise.
      */
     inline VariantNode getVariantNode(const std::string &variant) const {
-      const_iterator it = find(variant);
+      const_iterator it;
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+      it = find(variant);
       return ((it == cend())
               ? VariantNode::undefined
               : VariantNode(it));

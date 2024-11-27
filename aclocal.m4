@@ -14,8 +14,8 @@
 m4_ifndef([AC_CONFIG_MACRO_DIRS], [m4_defun([_AM_CONFIG_MACRO_DIRS], [])m4_defun([AC_CONFIG_MACRO_DIRS], [_AM_CONFIG_MACRO_DIRS($@)])])
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
-m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.71],,
-[m4_warning([this file was generated for autoconf 2.71.
+m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.72],,
+[m4_warning([this file was generated for autoconf 2.72.
 You have another version of autoconf.  It may work, but is not guaranteed to.
 If you have problems, you may need to regenerate the build system entirely.
 To do so, use the procedure documented by the package, typically 'autoreconf'.])])
@@ -1173,6 +1173,7 @@ m4_include([config/m4/ax_external_included_library_declare_options.m4])
 m4_include([config/m4/ax_file_escapes.m4])
 m4_include([config/m4/ax_gcovr_code_coverage.m4])
 m4_include([config/m4/ax_git_versioning.m4])
+m4_include([config/m4/ax_openmp.m4])
 m4_include([config/m4/ax_package_infos.m4])
 m4_include([config/m4/ax_prog_doxygen.m4])
 m4_include([config/m4/ax_require_defined.m4])

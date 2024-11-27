@@ -443,6 +443,22 @@ AM_CONDITIONAL([BUILD_DOC_MAN], [test ${DX_FLAG_man} = 1])
 dnl ============================= End of Doxygen ==============================
 
 
+dnl ================================== OpenMP =================================
+
+dnl add option for compiling with OpenMP
+AC_ARG_ENABLE([OpenMP],
+              [AS_HELP_STRING([--disable-OpenMP],
+                              [Disable the use of OpenMP])],
+              [],
+              [AX_OPENMP])
+
+AX_APPEND_COMPILE_FLAGS([${OPENMP_CFLAGS}], [CFLAGS])
+AX_APPEND_COMPILE_FLAGS([${OPENMP_CXXFLAGS}], [CXXFLAGS])
+AX_APPEND_LINK_FLAGS([${OPENMP_LDFLAGS}], [LDFLAGS])
+
+dnl ============================== End of OpenMP ==============================
+
+
 dnl ============================== Code Coverage ==============================
 
 dnl All formats of code coverage reports supported by the gcovr (until

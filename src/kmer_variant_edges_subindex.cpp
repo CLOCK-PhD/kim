@@ -296,6 +296,7 @@ void KmerVariantEdgesSubindex::clear() {
        it != _kmer_variant_edges.end();
        ++it) {
     assert(it->variant_node_iterator->second);
+#pragma omp critical
     if (--(it->variant_node_iterator->second) == 0) {
       _variant_nodes.erase(it->variant_node_iterator);
     }

@@ -106,11 +106,17 @@ VariantNodesIndex::VariantNode::VariantNode():
 VariantNodesIndex::iterator VariantNodesIndex::addVariantNode(const string &variant, bool increment_in_degree) {
   // Add or update the variant node.
   assert(!variant.empty());
-  pair<iterator, bool> it = emplace(variant, uint16_t(0));
-  // Emplace doesn't update the value if the variant already exist
-  // in the index and in any case, an iterator on the variant node
-  // is returned.
-  it.first->second += increment_in_degree;
+  pair<iterator, bool> it;
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+  {
+    it = emplace(variant, uint16_t(0));
+    // Emplace doesn't update the value if the variant already exist
+    // in the index and in any case, an iterator on the variant node
+    // is returned.
+    it.first->second += increment_in_degree;
+  }
   return it.first;
 }
 

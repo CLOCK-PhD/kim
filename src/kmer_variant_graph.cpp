@@ -298,6 +298,7 @@ void KmerVariantGraph::_resizeSubindexes(size_t total, size_t estimated_nb_kmers
   _kmer_nodes.clear();
   _kmer_nodes.shrink_to_fit();
   _kmer_nodes.reserve(total);
+  // Don't parallelize this loop
   for (size_t prefix = 0; prefix < total; ++prefix) {
     _kmer_nodes.emplace_back(estimated_nb_kmers, sorted);
     _edges.emplace_back(_kmer_nodes.back(), _variant_nodes, estimated_nb_kmers);
@@ -455,6 +456,16 @@ KmerVariantGraph::KmerVariantGraph(Settings &settings, size_t estimated_nb_kmers
   _kmer_nodes(), _variant_nodes(),
   _edges(), _frozen(false), _extra_metadata()
 {
+
+  bool loaded = false;
+#ifdef _OPENMP
+#  pragma omp parallel
+#  pragma omp single
+#endif
+  loaded = load(settings.getIndexDirectory());
+
+  if (loaded) return;
+
   assert(_settings.valid());
   _settings.freeze();
   BoundedSizeString::setMaximalSize(_settings.getKmerSuffixLength());
@@ -470,34 +481,23 @@ KmerVariantGraph::KmerVariantGraph(Settings &settings, size_t estimated_nb_kmers
   size_t total = 1 << (_settings.getKmerPrefixLength() << 1);
   estimated_nb_kmers /= total;
   _resizeSubindexes(total, estimated_nb_kmers, false);
+  assert(_settings.valid());
 }
 
-KmerVariantGraph::KmerVariantGraph(const string &path, Settings &settings):
-  _settings(settings),
-  _nb_kmers(0), _nb_edges(0),
-  _kmer_nodes(), _variant_nodes(),
-  _edges(), _frozen(false)
-{
-  load(path);
-}
-
-void KmerVariantGraph::load(const string &path) {
+bool KmerVariantGraph::load(const string &path) {
   CHECK_FROZEN_STATE(!frozen(), load);
   clear();
   _kmer_nodes.clear();
   _edges.clear();
   DIR *dir = opendir(path.c_str());
-  if (dir == NULL) {
-    PARSE_ERROR_MSG("Unable to open the given directory index '" << path << "'");
-  }
+  if (dir == NULL) return false;
 
   struct dirent *entry;
   size_t total = 0;
   size_t cpt = 0;
   if (_settings.warn()) {
     cerr << "Index directory: '" << path << "'" << endl
-         << "Loading index..." << endl
-         << "Step 1: Scanning index for k-mers and variants" << endl;
+         << "Loading index..." << endl;
   }
   _settings.unfreeze();
   _settings.setIndexDirectory(path);
@@ -530,16 +530,28 @@ void KmerVariantGraph::load(const string &path) {
                << (cpt + 1) << " / " << total
                << ": '" << full_fname << "'";
         }
+#ifdef _OPENMP
+#  pragma omp task firstprivate(full_fname,prefix)
+#endif
         _parseFile(full_fname, prefix);
         ++cpt;
         if (_settings.warn()) {
+#ifdef _OPENMP
+#  pragma omp critical
+#endif
           cerr << " (" << (cpt * 10000 / total) / 100. << "%)\033[K\033[u";
         }
       } else {
+#ifdef _OPENMP
+#  pragma omp task firstprivate(full_fname)
+#endif
         _parseMetadata(full_fname);
       }
     }
   }
+#ifdef _OPENMP
+#  pragma omp taskwait
+#endif
 
   if (!_settings.frozen()) {
     if (_nb_edges || _nb_kmers) {
@@ -565,27 +577,39 @@ void KmerVariantGraph::load(const string &path) {
   }
 
   closedir(dir);
+  assert(_settings.valid());
+  return true;
 }
 
 void KmerVariantGraph::freeze() {
   if (frozen()) return;
-  _nb_kmers = 0;
-  _nb_edges = 0;
+  //  _nb_kmers = 0;
+  //  _nb_edges = 0;
+  size_t nb_kmers = 0;
+  size_t nb_edges = 0;
+#ifdef _OPENMP
+#  pragma omp parallel for reduction(+: nb_kmers, nb_edges)
+#endif
   for (size_t prefix = 0; prefix < _kmer_nodes.size(); ++prefix) {
     KmerNodesSubindex &kmer_nodes = _kmer_nodes[prefix];
     KmerVariantEdgesSubindex &edges = _edges[prefix];
     edges.compact();
     edges.freeze();
     kmer_nodes.freeze();
-    _nb_kmers += kmer_nodes.size();
-    _nb_edges += edges.size();
+    nb_kmers += kmer_nodes.size();
+    nb_edges += edges.size();
   }
+  _nb_kmers = nb_kmers;
+  _nb_edges = nb_edges;
   _settings.freeze();
   _frozen = true;
 }
 
 void KmerVariantGraph::unfreeze() {
   if (!frozen()) return;
+#ifdef _OPENMP
+#  pragma omp parallel for
+#endif
   for (size_t prefix = 0; prefix < _kmer_nodes.size(); ++prefix) {
     KmerNodesSubindex &kmer_nodes = _kmer_nodes[prefix];
     KmerVariantEdgesSubindex &edges = _edges[prefix];
@@ -674,6 +698,9 @@ void KmerVariantGraph::dump(const string &path, bool overwrite) {
            << endl;
 
   assert(_edges.size() == (1u << (_settings.getKmerPrefixLength() << 1)));
+#ifdef _OPENMP
+#  pragma omp parallel for
+#endif
   for (size_t i = 0; i < _edges.size(); ++i) {
     string prefix = decode(i, _settings.getKmerPrefixLength());
     string fname = path;
@@ -683,6 +710,9 @@ void KmerVariantGraph::dump(const string &path, bool overwrite) {
     fname += prefix;
     ofstream ofs(fname);
     if (!ofs) {
+#ifdef _OPENMP
+#  pragma omp critical
+#endif
       {
         ERROR_MSG(Exception, "Unable to dump graph sub-index #" << i
                   << " to '" << fname << "' file:");
@@ -716,11 +746,17 @@ void KmerVariantGraph::removeDumpedIndex(const string &path) const {
     cerr << "Removing dumped index located at '" << path << "'" << endl;
   }
   size_t nb = 1 << (_settings.getKmerPrefixLength() << 1);
+#ifdef _OPENMP
+#  pragma omp parallel for
+#endif
   for (size_t i = 0; i < nb; ++i) {
     string f = path;
     f += "/";
     f += decode(i, _settings.getKmerPrefixLength());
 #ifdef DEBUG
+#  ifdef _OPENMP
+#    pragma omp critical
+#  endif
     cerr << "Removing file '" << f << "'" << endl;
 #endif
 #ifndef NDEBUG
@@ -752,6 +788,9 @@ void KmerVariantGraph::removeDumpedIndex(const string &path) const {
 
 void KmerVariantGraph::clear() {
   CHECK_FROZEN_STATE(!frozen(), clear);
+#ifdef _OPENMP
+#  pragma omp parallel for
+#endif
   for (size_t i = 0; i < _edges.size(); ++i) {
     _edges[i].clear();
     assert(_edges[i].kmerNodesSubindex().empty());
