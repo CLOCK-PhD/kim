@@ -1,5 +1,18 @@
 2024-11-27  DoccY <alban.mancheron@lirmm.fr>
 
+	* src/kmer_variant_graph.h, tests/test_kmer_variant_graph.cpp:
+	Make the encode/decode/timestamp function visible.
+	Add/fix the test program to take into account the index metadata.
+	
+	
+2024-11-27  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/kmer_variant_graph.cpp, src/kmer_variant_graph.h:
+	Add a metadata file in the dumped index and an extra metadata field in order to customize those metadata.
+	
+	
+2024-11-27  DoccY <alban.mancheron@lirmm.fr>
+
 	* src/kmer_nodes_subindex.cpp, src/kmer_variant_edges_subindex.cpp:
 	BugFix: update of external Bitmagic external library broke the existing code.
 	

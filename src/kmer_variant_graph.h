@@ -596,6 +596,83 @@ namespace kim {
 
   };
 
+
+  /**
+   * Get the given nucleotide as an integer.
+   *
+   * \param c The nucleotide to encode.
+   *
+   * \return Returns 0 for 'a' or 'A' (Adenine), 1 for 'c' or 'C'
+   * (Cytosine), 2 for 'g' or 'G' (Guanine) and 3 for 't' or 'T'
+   * (Thymine) or 'u' or 'U' (Uracil). For any other character, an
+   * exception is thrown.
+   */
+  size_t encode(char c);
+
+  /**
+   * Encode the prefix of the given k-mer as an integer.
+   *
+   * \param kmer The k-mer for which the prefix is to be encoded.
+   *
+   * \param k1 The length of the prefix of the given k-mer. No
+   * verification is done about the length of k1 which is supposed to
+   * be less or equal than the length of the k-mer.
+   *
+   * \return Return the integer representation of the k-mer prefix of
+   * length k1. Said differently, the returned value is the
+   * lexicographic rank of the DNA string of length k1 among all DNA
+   * string having size k1 (starting from 0).
+   */
+  size_t encode(const std::string &kmer, size_t k1);
+
+  /**
+   * Get the given integer as a nucleotide uppercase letter.
+   *
+   * \param v the encoded nucleotide.
+   *
+   * \return Returns 'A' if v is 0, 'C' if v is 1, 'G' if v is 2 and
+   * 'T' if v is 3. For any other value of v, an exception is thrown.
+   * (see encode(const char)) for more details.
+   */
+  char decode(size_t v);
+
+  /**
+   * Decode the given integer as a k1-mer.
+   *
+   * \param v The encoded value of the k1-mer to decode.  No
+   * verification is done about the value of v which is supposed to be
+   * less or equal than 4^k1.
+   *
+   * \param k1 The length of the k1-mer to decode.
+   *
+   * \return Return the k1-mer string corresponding to the given value
+   * (see encode(const std::string &, size_t)) for more details.
+   */
+  std::string decode(size_t v, size_t k1);
+
+  /**
+   * Get a timestamp string corresponding to the current time.
+   *
+   * The defaut format requires at most 68 characters:
+   * - 10 characters for the date (YYY-MM-DD)
+   * - 1 characters for the 'T' letter between the date and the time
+   * - 8 characters for the time (HH:MM:SS)
+   * - 5 characters for the time zone (±0000)
+   * - 23 fixed characters for the epoch time
+   * - 20 characters max for the number of seconds (even if this
+       program stay alive when the sun will become a red giant)
+   * - 1 nul ending character
+   * and thus, it does respect the length constraint.
+   *
+   * \param fmt The timestamp format (\see std::strftime() for format
+   * specification). You must ensure that the given format will
+   * produce a string that fits in a 256 character buffer.
+   *
+   * \return Returns a timestamp string corresponding to the current
+   * time using the given format (default is the ISO 8601 format).
+   */
+  std::string timestamp(const char *fmt = "%FT%T%z (%s seconds since Epoch)");
+
 }
 
 #endif

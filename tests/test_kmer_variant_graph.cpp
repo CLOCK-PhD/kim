@@ -468,6 +468,63 @@ int main() {
   //     - CCG V1 (2)
   check_final_graph(graph, false);
 
+  const string test_metadata = ("\n\n"
+                                "Multiple paragraphs in informations might be reformatted in\n"
+                                "order to always start paragraphs by \"- \".\n\n"
+                                "Multiple lines inside a parargraph might be reformatted in   \n"
+                                "order to always start by two spaces.\n\n\n\n"
+                                "- A multiline item must preserved\n"
+                                "  -- even if it starts by some dash.  \n  \n  \n  \n"
+                                "- Empty lines will be removed."
+                                "\n\n\n\n\n");
+  const string expected_metadata = ("- Multiple paragraphs in informations might be reformatted in\n"
+                                    "  order to always start paragraphs by \"- \".\n"
+                                    "- Multiple lines inside a parargraph might be reformatted in\n"
+                                    "  order to always start by two spaces.\n"
+                                    "- A multiline item must preserved\n"
+                                    "  -- even if it starts by some dash.\n"
+                                    "- Empty lines will be removed.");
+  cout << "before setting extra metadata, graph.extraMetadata() should be empty" << endl;
+  assert(graph.extraMetadata().empty());
+
+  cout << "Setting the following extra metadata:" << endl
+       << "======" << endl
+       << test_metadata << endl
+       << "======" << endl;
+  graph.extraMetadata(test_metadata);
+  cout << "Now, the extra metadata are:" << endl
+       << "======" << endl
+       << graph.extraMetadata() << endl
+       << "======" << endl;
+  cout << "Expecting the following extra metadata:" << endl
+       << "======" << endl
+       << expected_metadata << endl
+       << "======" << endl;
+  assert(graph.extraMetadata() == expected_metadata);
+
+  cout << "After setting empty extra metadata." << endl;
+  graph.extraMetadata("");
+  cout << "the extra metadata are:" << endl
+       << "======" << endl
+       << graph.extraMetadata() << endl
+       << "======" << endl;
+  assert(graph.extraMetadata().empty());
+
+  cout << "Setting the following extra metadata:" << endl
+       << "======" << endl
+       << expected_metadata << endl
+       << "======" << endl;
+  graph.extraMetadata(expected_metadata);
+  cout << "Now, the extra metadata are:" << endl
+       << "======" << endl
+       << graph.extraMetadata() << endl
+       << "======" << endl;
+  cout << "Expecting the following extra metadata:" << endl
+       << "======" << endl
+       << expected_metadata << endl
+       << "======" << endl;
+  assert(graph.extraMetadata() == expected_metadata);
+
   char top_path[] = "test_kmer_variant_graph.XXXXXX";
   if (mkdtemp(top_path)) {
     string path = top_path;
@@ -491,10 +548,23 @@ int main() {
       check_graph_properties(graph, 0, 0, 0, false);
       cout << endl;
 
+      cout << "Ensure that extra metadata are empty." << endl;
+      assert(graph.extraMetadata().empty());
+
       cout << "Loading the graph from the dumped index" << endl;
       graph.load(path);
       check_final_graph(graph, true);
       cout << endl;
+
+      cout << "Checking if additional informations are correctly restored:" << endl
+           << "======" << endl
+           << graph.extraMetadata() << endl
+           << "======" << endl;
+      cout << "Expecting the following extra metadata:" << endl
+           << "======" << endl
+           << expected_metadata << endl
+           << "======" << endl;
+      assert(graph.extraMetadata() == expected_metadata);
 
       if (first_pass) {
         cout << "Removing the index directory" << endl;
@@ -512,6 +582,8 @@ int main() {
     graph.clear();
     check_graph_properties(graph, 0, 0, 0, false);
     cout << endl;
+    cout << "Ensure that extra metadata are empty." << endl;
+    assert(graph.extraMetadata().empty());
 
     cout << "Dumping the (empty) graph to " << path << " index directory which exists." << endl;
     graph.dump(path, true);
@@ -528,6 +600,8 @@ int main() {
     graph.load(path);
     check_graph_properties(graph, 0, 0, 0, true);
     cout << endl;
+    cout << "Ensure that extra metadata are still empty." << endl;
+    assert(graph.extraMetadata().empty());
 
     cout << "Removing the index directory" << endl;
     graph.removeDumpedIndex(path);
