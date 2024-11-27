@@ -98,12 +98,16 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <cerrno>
+#include <ctime>
 
 #include <cassert>
 
 using namespace std;
 
 BEGIN_KIM_NAMESPACE
+
+#define METADATA_FILENAME "0_metadata"
+static const string EXTRA_METADATA_TOKEN = "Additional informations:";
 
 #define WARNING_MSG(msg)        \
   if (_settings.warn()) {       \
@@ -178,6 +182,14 @@ string decode(size_t v, size_t k1) {
     v >>= 2; // equiv v /= 4;
   }
   return s;
+}
+
+string timestamp(const char *fmt) {
+  time_t now = time(NULL);
+  char buf[256];
+  strftime(buf, sizeof(buf), fmt, std::localtime(&now));
+  string t = buf;
+  return t;
 }
 
 //////////////////////////////////////////////////////////////////
@@ -412,11 +424,36 @@ void KmerVariantGraph::_parseFile(const string &filename, size_t prefix) {
   ifs.close();
 }
 
+void KmerVariantGraph::_parseMetadata(const string &filename) {
+  ifstream ifs(filename);
+  if (!ifs) {
+    PARSE_ERROR_MSG("Unable to open index file '" << filename << "'");
+  }
+  string line;
+  static const size_t n = EXTRA_METADATA_TOKEN.size();
+  do {
+    getline(ifs, line);
+  } while (ifs.good() && line.compare(0, n, EXTRA_METADATA_TOKEN));
+  if (ifs.good()) {
+    string m;
+    do {
+      getline(ifs, line);
+      if (ifs.good()
+          && (((line[0] == '-') || (line[0] == ' ')) && (line[1] == ' '))) {
+        m += line;
+        m += '\n';
+      }
+    } while (ifs.good());
+    extraMetadata(m);
+  }
+  ifs.close();
+}
+
 KmerVariantGraph::KmerVariantGraph(Settings &settings, size_t estimated_nb_kmers):
   _settings(settings),
   _nb_kmers(0), _nb_edges(0),
   _kmer_nodes(), _variant_nodes(),
-  _edges(), _frozen(false)
+  _edges(), _frozen(false), _extra_metadata()
 {
   assert(_settings.valid());
   _settings.freeze();
@@ -469,31 +506,41 @@ void KmerVariantGraph::load(const string &path) {
   while ((entry = readdir(dir))) {
     string fname(entry->d_name);
     if (!fname.empty() && (fname[0] != '.')) {
-      if (!cpt) {
-        _settings.unfreeze();
-        _settings.setKmerPrefixLength(fname.length());
-        // _settings.freeze();
-        total = 1 << (_settings.getKmerPrefixLength() << 1);
-        _resizeSubindexes(total, 0, true);
+
+      string full_fname = path;
+      if (full_fname.back() != '/') {
+        full_fname += "/";
       }
-      size_t prefix = _checkFilenameCorrectness(fname);
-      fname = path;
-      if (fname.back() != '/') {
-        fname += "/";
-      }
-      fname += entry->d_name;
-      if (_settings.warn()) {
-        cerr << "\033[sProcessing file "
-             << (cpt + 1) << " / " << total
-             << ": '" << fname << "'";
-      }
-      _parseFile(fname, prefix);
-      ++cpt;
-      if (_settings.warn()) {
-        cerr << " (" << (cpt * 10000 / total) / 100. << "%)\033[K\033[u";
+      full_fname += fname;
+
+      if (fname != METADATA_FILENAME) {
+        if (!cpt) {
+          _settings.unfreeze();
+          _settings.setKmerPrefixLength(fname.length());
+          // _settings.freeze();
+          total = 1 << (_settings.getKmerPrefixLength() << 1);
+          _resizeSubindexes(total, 0, true);
+        }
+        assert(_settings.getKmerPrefixLength() > 0);
+        assert(total > 0);
+        size_t prefix = _checkFilenameCorrectness(fname);
+        assert(_settings.getKmerLength() > 0);
+        if (_settings.warn()) {
+          cerr << "\033[sProcessing file "
+               << (cpt + 1) << " / " << total
+               << ": '" << full_fname << "'";
+        }
+        _parseFile(full_fname, prefix);
+        ++cpt;
+        if (_settings.warn()) {
+          cerr << " (" << (cpt * 10000 / total) / 100. << "%)\033[K\033[u";
+        }
+      } else {
+        _parseMetadata(full_fname);
       }
     }
   }
+
   if (!_settings.frozen()) {
     if (_nb_edges || _nb_kmers) {
       PARSE_ERROR_MSG("The index directory '" << path
@@ -607,20 +654,58 @@ void KmerVariantGraph::dump(const string &path, bool overwrite) {
     ERROR_MSG(Exception, "Unable to dump graph to '" << path << "' directory:"
               << strerror(errno));
   }
-  assert(_edges.size() == (4u << _settings.getKmerPrefixLength()));
+  ofstream metadata(path + "/" + METADATA_FILENAME);
+  metadata << "File created at: " << timestamp() << "\n\n"
+           << "Settings:\n"
+           << "- k-mer length: " << _settings.k() << "\n"
+           << "- k-mer prefix length: " << _settings.getKmerPrefixLength() << "\n"
+           << "- k-mer suffix length: " << _settings.getKmerSuffixLength() << "\n"
+           << "- index directory: " << _settings.getIndexDirectory() << "\n"
+           << "- warn: " << (_settings.warn() ? "enabled" : "disabled") << "\n"
+           << "- consistency checking: " << (_settings.checkConsistency() ? "enabled" : "disabled") << "\n\n"
+           << "Program informations:\n"
+           << "- name: " PACKAGE "\n"
+           << "- version: " VERSION "\n"
+           << "- description: " PACKAGE_SHORT_DESCRIPTION "\n"
+           << "- compiler: " CXX "\n"
+           << "- build CPU: " ARCH "\n"
+           << "- build OS: " OS "\n"
+           << "- package datadir: " PACKAGE_DATADIR "\n"
+           << endl;
+
+  assert(_edges.size() == (1u << (_settings.getKmerPrefixLength() << 1)));
   for (size_t i = 0; i < _edges.size(); ++i) {
     string prefix = decode(i, _settings.getKmerPrefixLength());
     string fname = path;
-    fname += "/";
+    if (fname.back() != '/') {
+      fname += "/";
+    }
     fname += prefix;
     ofstream ofs(fname);
     if (!ofs) {
-      ERROR_MSG(Exception, "Unable to dump graph sub-index #" << i
-                << " to '" << fname << "' file:");
+      {
+        ERROR_MSG(Exception, "Unable to dump graph sub-index #" << i
+                  << " to '" << fname << "' file:");
+      }
     }
     ofs << _edges[i];
     ofs.close();
   }
+  metadata << "Graph Properties:" << endl
+           << "- Number of indexed k-mers: " << getNbKmers() << endl
+           << "- Number of indexed variants: " << getNbVariants() << endl
+           << "- Number of edges: " << getNbKmerVariantEdges() << endl
+           << endl
+           << "Files written: " << _edges.size() << endl
+           << "- From: " << decode(0, _settings.getKmerPrefixLength()) << endl
+           << "- To: " << decode(_edges.size() - 1, _settings.getKmerPrefixLength()) << endl
+           << endl;
+  if (!_extra_metadata.empty()) {
+    metadata << EXTRA_METADATA_TOKEN << endl
+             << _extra_metadata << endl
+             << endl;
+  }
+  metadata.close();
 }
 
 void KmerVariantGraph::removeDumpedIndex(const string &path) const {
@@ -635,20 +720,31 @@ void KmerVariantGraph::removeDumpedIndex(const string &path) const {
     string f = path;
     f += "/";
     f += decode(i, _settings.getKmerPrefixLength());
-    if (_settings.warn()) {
-      cerr << "Removing file '" << f << "'" << endl;
-    }
+#ifdef DEBUG
+    cerr << "Removing file '" << f << "'" << endl;
+#endif
 #ifndef NDEBUG
     int res =
 #endif
       unlink(f.c_str());
     assert(res == 0);
   }
-  if (_settings.warn()) {
-    cerr << "Removing directory '" << path << "'" << endl;
-  }
+  string f = path;
+  f += "/";
+  f += METADATA_FILENAME;
+#ifdef DEBUG
+  cerr << "Removing file '" << f << "'" << endl;
+#endif
 #ifndef NDEBUG
   int res =
+#endif
+    unlink(f.c_str());
+  assert(res == 0);
+#ifdef DEBUG
+  cerr << "Removing directory '" << path << "'" << endl;
+#endif
+#ifndef NDEBUG
+  res =
 #endif
     rmdir(path.c_str());
   assert(res == 0);
@@ -661,7 +757,77 @@ void KmerVariantGraph::clear() {
     assert(_edges[i].kmerNodesSubindex().empty());
   }
   assert(_variant_nodes.empty());
+  _extra_metadata.clear();
+  assert(_extra_metadata.empty());
   _nb_kmers = _nb_edges = 0;
+}
+
+void KmerVariantGraph::extraMetadata(const string &metadata) {
+  CHECK_FROZEN_STATE(!frozen(), extraMetadata);
+  _extra_metadata = "";
+  size_t start_pos = 0;
+  size_t n = metadata.size();
+  _extra_metadata.reserve(2 * n); // Reserve twice the length of the
+                                  // given metadata (should be enough
+                                  // for most of cases)
+  do {
+    // Trim leading not visible characters and spaces.
+    size_t nb_new_lines = 0;
+    bool leading_space_trimmed = false;
+    while ((start_pos < n) && (metadata[start_pos] <= ' ')) {
+      // Count the number of newlines after anthe last non empty line
+      leading_space_trimmed |= (metadata[start_pos] == ' ');
+      leading_space_trimmed &= (metadata[start_pos] != '\n');
+      nb_new_lines += (metadata[start_pos] == '\n') && !_extra_metadata.empty();
+      ++start_pos;
+    }
+    if (start_pos < n) {
+      assert(metadata[start_pos] > ' ');
+      // Get the end of line position
+      size_t end_pos = metadata.find_first_of('\n', start_pos);
+      assert(end_pos > start_pos);
+      if (end_pos == string::npos) {
+        end_pos = n;
+      }
+      assert(end_pos > start_pos);
+      // Trim trailing not visible characters and spaces.
+      while ((end_pos > start_pos) && (metadata[end_pos - 1] <= ' ')) {
+        --end_pos;
+        assert(metadata[end_pos] != '\n');
+      }
+      assert(end_pos > start_pos);
+      assert(metadata[end_pos - 1]  > ' ');
+      string line = metadata.substr(start_pos, end_pos - start_pos);
+      if (nb_new_lines) {
+        _extra_metadata += '\n';
+      } else {
+        nb_new_lines = 2;
+      }
+      if (!leading_space_trimmed && (line[0] == '-')) {
+        // This is an explicit new item
+        if (line[1] == ' ') {
+          // There is a space after the dash, everything is right.
+          _extra_metadata += line;
+        } else {
+          // There is no space after the dash, adding it.
+          _extra_metadata += "- ";
+          _extra_metadata += line.substr(1);
+        }
+      } else {
+        if (nb_new_lines > 1) {
+          // This is a new paragraph, thus a new item.
+          _extra_metadata += "- ";
+        } else {
+          // This isn't a new paragraph, thus we need to add two
+          // spaces for indentation (pre-existing leading spaces have
+          // been timmed).
+          _extra_metadata += "  ";
+        }
+        _extra_metadata += line;
+      }
+      start_pos = end_pos;
+    }
+  } while (start_pos < n);
 }
 
 END_KIM_NAMESPACE

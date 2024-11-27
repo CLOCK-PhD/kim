@@ -216,10 +216,15 @@ namespace kim {
     KmerVariantEdgesIndex _edges;
 
     /**
-     * This graph can't be modified if _frozen is set to true.  Graph
-     * can't be queried if _frozen is set to false.
+     * This graph can't be modified if _frozen is set to true. The
+     * graph can't be queried if _frozen is set to false.
      */
     bool _frozen;
+
+    /**
+     * The extra metadata associated to this graph.
+     */
+    std::string _extra_metadata;
 
     /**
      * Clear and resize sub-indexes to the given size.
@@ -269,6 +274,13 @@ namespace kim {
      * sub-indexes to load).
      */
     void _parseFile(const std::string &filename, size_t prefix);
+
+    /**
+     * parse the given metadata file in order to extract the content
+     * of the 'Additional informations' field.
+     */
+    void _parseMetadata(const std::string &filename);
+
 
   public:
 
@@ -535,6 +547,47 @@ namespace kim {
      * \param path Directory where index files are stored.
      */
     void removeDumpedIndex(const std::string &path) const;
+
+    /**
+     * Set extra metadata (used when index is dumped).
+     *
+     * \param metadata The metadata associated to the current graph.
+     */
+    void extraMetadata(const std::string &metadata);
+
+    /**
+     * Get extra metadata.
+     *
+     * When index is loaded from some directory, the value of extra
+     * metadata is extracted from the 'Additional informations'
+     * section (if it exists) of the metadata file. This value can be
+     * set/overwritten by using the extraMetadata() method too.
+     *
+     * The metadata might be reformatted:
+     * - Multiple paragraphs in informations might be reformatted in
+     *   order to always start paragraphs by "- ".
+     * - Multiple lines inside a parargraph might be reformatted in
+     *   order to always start by two spaces.
+     *  - Empty lines will be removed.
+     *
+     * As an example, using the following string:
+     *     "Multiple paragraphs in informations might be reformatted in\n"
+     *     "order to always start paragraphs by \"- \".\n\n"
+     *     "Multiple lines inside a parargraph might be reformatted in\n"
+     *     "order to always start by two spaces.\n\n\n\n"
+     *     "- Empty lines will be removed."
+     * will be reformatted as if it was provided as:
+     *     "- Multiple paragraphs in informations might be reformatted in\n"
+     *     "  order to always start paragraphs by \"- \".\n\n"
+     *     "- Multiple lines inside a parargraph might be reformatted in\n"
+     *     "order to always start by two spaces.\n\n"
+     *     "- Empty lines will be removed."
+     *
+     * \return Returns the metadata associated to the current graph.
+     */
+    inline const std::string &extraMetadata() const {
+      return _extra_metadata;
+    }
 
     /**
      * Clears this graph.
