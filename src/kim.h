@@ -102,9 +102,10 @@
 #include <kmer_nodes_subindex.h>
 #include <kmer_variant_edges_subindex.h>
 #include <kmer_variant_graph.h>
-#include <optionparser.h>
+#include <monitor.h>
 #include <sort_helper.h>
 #include <variant_identification.h>
+#include <variant_kmer_enumerator.h>
 #include <variant_nodes_index.h>
 
 #endif
