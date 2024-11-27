@@ -151,6 +151,11 @@ namespace kim {
     bool _check_consistency;
 
     /**
+     * Allow file or directory overwriting.
+     */
+    bool _allow_overwrite;
+
+    /**
      * The settings can't be modified if _frozen is set to true.
      */
     bool _frozen;
@@ -176,9 +181,13 @@ namespace kim {
      * \param check_consistency Enable or disable DNA file consistency
      * checking while reading.
      *
+     * \param allow_overwrite Allow file and directory overwriting.
+     *
      * \param freeze Do freeze or not the settings.
      */
-    Settings(size_t k = 0, size_t p = 0, const std::string &index_directory = "", bool warn = true, bool check_consistency = false, bool freeze = false);
+    Settings(size_t k = 0, size_t p = 0, const std::string &index_directory = "",
+             bool warn = true, bool check_consistency = false, bool allow_overwrite = false,
+             bool freeze = false);
 
     /**
      * Check whether settings are valid or not.
@@ -375,6 +384,23 @@ namespace kim {
      * parameter is set to true.
      */
     void checkConsistency(bool status);
+
+    /**
+     * Get the overwrite allowing state of current settings.
+     *
+     * \return Returns true if current settings allows file or directory overwriting.
+     */
+    inline bool allowOverwrite() const {
+      return _allow_overwrite;
+    }
+
+    /**
+     * Set the overwrite allwoing status for this settings.
+     *
+     * \param status File and directory overwrite is allowed only if
+     * this parameter is set to true.
+     */
+    void allowOverwrite(bool status);
 
   };
 

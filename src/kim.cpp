@@ -404,6 +404,8 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
 
   _settings.warn(!_opts.options[QUIET_OPT]);
 
+  _settings.allowOverwrite(_opts.options[FORCE_OPT]);
+
   if (_settings.warn()) {
     cerr << "kim version " << VERSION << endl;
   }
@@ -418,7 +420,7 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
   if (_opts.options[INDEX_DIRECTORY_OPT]) {
     _settings.setIndexDirectory(_opts.options[INDEX_DIRECTORY_OPT].arg,
                                 !_opts.options[CREATE_INDEX_OPT],
-                                _opts.options[CREATE_INDEX_OPT]);
+                                _opts.options[CREATE_INDEX_OPT] && !_settings.allowOverwrite());
   }
 
   if (_opts.options[CREATE_INDEX_OPT]) {
@@ -498,7 +500,7 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
     // Ensure that given output filename (if provided) is writable.
     if (_opts.options[OUTPUT_OPT]) {
       _output_file = _opts.options[OUTPUT_OPT].arg;
-      if (!_opts.options[FORCE_OPT]) {
+      if (!_settings.allowOverwrite()) {
         if (_checkIfFileExists(_output_file)) {
           Exception e;
           e << "File '" << _output_file << "'"

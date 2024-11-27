@@ -115,10 +115,11 @@ BEGIN_KIM_NAMESPACE
   (void) 0
 
 Settings::Settings(size_t k, size_t p, const string &index_directory,
-                   bool warn, bool check_consistency, bool freeze):
+                   bool warn, bool check_consistency, bool allow_overwrite,
+                   bool freeze):
 _k(0), _p(0), _s(0), _index_directory(index_directory),
   _warn(false), _check_consistency(check_consistency),
-  _frozen(false) {
+  _allow_overwrite(allow_overwrite), _frozen(false) {
   if (k || p) {
     setKmerLength(k);
     _warn = warn;
@@ -213,6 +214,11 @@ void Settings::warn(bool status) {
 void Settings::checkConsistency(bool status) {
   CHECK_FROZEN_STATE(!frozen(), warn);
   _check_consistency = status;
+}
+
+void Settings::allowOverwrite(bool status) {
+  CHECK_FROZEN_STATE(!frozen(), warn);
+  _allow_overwrite = status;
 }
 
 END_KIM_NAMESPACE

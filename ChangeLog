@@ -1,3 +1,10 @@
+2024-11-27  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/kim.cpp, src/kim_settings.cpp, src/kim_settings.h,
+	tests/test_kim_settings.cpp:
+	Store the allow overwrite flag in settings.
+	
+	
 2024-11-16  DoccY <alban.mancheron@lirmm.fr>
 
 	* .gitignore, config/config.h.in:

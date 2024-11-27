@@ -108,6 +108,7 @@ int main() {
   cout << "Creating default settings" << endl;
   Settings s;
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
@@ -116,6 +117,7 @@ int main() {
   cout << "Setting k-mer length to 3" << endl;
   s.setKmerLength(3);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
@@ -125,6 +127,7 @@ int main() {
   cout << "Setting k-mer prefix length to 1" << endl;
   s.setKmerPrefixLength(1);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
@@ -135,6 +138,7 @@ int main() {
   cout << "Trying to set k-mer prefix length to 4 (should lead to 2)" << endl;
   s.setKmerPrefixLength(4);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
@@ -147,6 +151,7 @@ int main() {
   cout << "Setting k-mer length to 10" << endl;
   s.setKmerLength(10);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
@@ -159,6 +164,7 @@ int main() {
   cout << "Setting k-mer prefix length to 4" << endl;
   s.setKmerPrefixLength(4);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
@@ -171,6 +177,7 @@ int main() {
   cout << "Setting index directory to '/some/path'" << endl;
   s.setIndexDirectory("/some/path");
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory() == "/some/path");
   assert(!s.frozen());
@@ -209,6 +216,7 @@ int main() {
   cout << "Setting index directory to ''" << endl;
   s.setIndexDirectory("");
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
@@ -221,6 +229,7 @@ int main() {
   cout << "Enable warnings." << endl;
   s.warn(true);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
@@ -233,6 +242,7 @@ int main() {
   cout << "Disable warnings." << endl;
   s.warn(false);
   assert(!s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
@@ -245,6 +255,7 @@ int main() {
   cout << "Enable warnings again." << endl;
   s.warn(true);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
@@ -257,6 +268,7 @@ int main() {
   cout << "Enable consistency checking." << endl;
   s.checkConsistency(true);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
@@ -269,6 +281,33 @@ int main() {
   cout << "Disable consistency checking." << endl;
   s.checkConsistency(false);
   assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  cout << "Allow overwrite." << endl;
+  s.allowOverwrite(true);
+  assert(s.warn());
+  assert(s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  cout << "Forbid overwrite." << endl;
+  s.allowOverwrite(false);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
@@ -281,6 +320,7 @@ int main() {
   cout << "Freeze settings." << endl;
   s.freeze();
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(s.frozen());
@@ -300,6 +340,27 @@ int main() {
   }
   assert(exception_thrown);
   assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  exception_thrown = false;
+  try {
+    cout << "Trying to allow file overwite (should throw a BadSettingsException)" << endl;
+    s.allowOverwrite(true);
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(s.frozen());
@@ -319,6 +380,7 @@ int main() {
   }
   assert(exception_thrown);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(s.frozen());
@@ -338,6 +400,7 @@ int main() {
   }
   assert(exception_thrown);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(s.frozen());
@@ -357,6 +420,7 @@ int main() {
   }
   assert(exception_thrown);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(s.frozen());
@@ -376,6 +440,7 @@ int main() {
   }
   assert(exception_thrown);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(s.frozen());
@@ -395,6 +460,7 @@ int main() {
   }
   assert(exception_thrown);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(s.frozen());
@@ -407,6 +473,7 @@ int main() {
   cout << "Unfreeze settings." << endl;
   s.unfreeze();
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
@@ -419,6 +486,7 @@ int main() {
   cout << "Enable consistency checking." << endl;
   s.checkConsistency(true);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
@@ -431,6 +499,7 @@ int main() {
   cout << "Freeze settings again." << endl;
   s.freeze();
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(s.frozen());
@@ -450,6 +519,7 @@ int main() {
   }
   assert(exception_thrown);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(s.frozen());
@@ -469,6 +539,27 @@ int main() {
   }
   assert(exception_thrown);
   assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.valid());
+
+  exception_thrown = false;
+  try {
+    cout << "Trying to allow file overwite (should throw a BadSettingsException)" << endl;
+    s.allowOverwrite(true);
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(s.frozen());
@@ -488,6 +579,7 @@ int main() {
   }
   assert(exception_thrown);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(s.frozen());
@@ -507,6 +599,7 @@ int main() {
   }
   assert(exception_thrown);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(s.frozen());
@@ -526,6 +619,7 @@ int main() {
   }
   assert(exception_thrown);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(s.frozen());
@@ -545,6 +639,7 @@ int main() {
   }
   assert(exception_thrown);
   assert(s.warn());
+  assert(!s.allowOverwrite());
   assert(s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(s.frozen());
@@ -554,8 +649,9 @@ int main() {
   assert(s.getKmerSuffixLength() == 6);
   assert(s.valid());
 
-  Settings s2(15, 5, "/some/path", true, true, true);
+  Settings s2(15, 5, "/some/path", true, true, true, true);
   assert(s2.warn());
+  assert(s2.allowOverwrite());
   assert(s2.checkConsistency());
   assert(s2.getIndexDirectory() == "/some/path");
   assert(s2.frozen());
