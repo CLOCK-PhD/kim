@@ -115,6 +115,7 @@ pkginclude_HEADERS =	\
   monitor.h			\
   sort_helper.h                 \
   variant_identification.h	\
+  variant_kmer_enumerator.h	\
   variant_nodes_index.h
 
 # Bug fix for path with spaces
@@ -148,6 +149,7 @@ libkim_la_SOURCES =						\
   monitor.h monitor.cpp						\
   sort_helper.h sort_helper.cpp					\
   variant_identification.h variant_identification.cpp		\
+  variant_kmer_enumerator.h variant_kmer_enumerator.cpp		\
   variant_nodes_index.h variant_nodes_index.cpp
 
 libkim_la_configdir   = $(libdir)/$(install_dirname)/include

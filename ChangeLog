@@ -1,5 +1,18 @@
 2024-11-27  DoccY <alban.mancheron@lirmm.fr>
 
+	* src/Makefile.am, src/Makefile.in,
+	src/variant_kmer_enumerator.cpp, src/variant_kmer_enumerator.h:
+	Add an helper class to enumerate k-mers associaed to some variant.
+	
+	
+2024-11-27  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/Makefile.am, src/Makefile.in, src/monitor.cpp, src/monitor.h:
+	Add a Monitor helper class to evaluate resources usage of some process.
+	
+	
+2024-11-27  DoccY <alban.mancheron@lirmm.fr>
+
 	* src/kmer_variant_graph.h, tests/test_kmer_variant_graph.cpp:
 	Make the encode/decode/timestamp function visible.
 	Add/fix the test program to take into account the index metadata.

@@ -272,6 +272,7 @@ am__objects_1 = libkim_debug_la-bounded_size_string.lo \
 	libkim_debug_la-kmer_variant_graph.lo \
 	libkim_debug_la-monitor.lo libkim_debug_la-sort_helper.lo \
 	libkim_debug_la-variant_identification.lo \
+	libkim_debug_la-variant_kmer_enumerator.lo \
 	libkim_debug_la-variant_nodes_index.lo
 am_libkim_debug_la_OBJECTS = $(am__objects_1)
 libkim_debug_la_OBJECTS = $(am_libkim_debug_la_OBJECTS)
@@ -291,6 +292,7 @@ am_libkim_la_OBJECTS = libkim_la-bounded_size_string.lo \
 	libkim_la-kmer_variant_edges_subindex.lo \
 	libkim_la-kmer_variant_graph.lo libkim_la-monitor.lo \
 	libkim_la-sort_helper.lo libkim_la-variant_identification.lo \
+	libkim_la-variant_kmer_enumerator.lo \
 	libkim_la-variant_nodes_index.lo
 libkim_la_OBJECTS = $(am_libkim_la_OBJECTS)
 libkim_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -328,6 +330,7 @@ am__depfiles_remade = ./$(DEPDIR)/kim-kim.Po \
 	./$(DEPDIR)/libkim_debug_la-monitor.Plo \
 	./$(DEPDIR)/libkim_debug_la-sort_helper.Plo \
 	./$(DEPDIR)/libkim_debug_la-variant_identification.Plo \
+	./$(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Plo \
 	./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo \
 	./$(DEPDIR)/libkim_la-bounded_size_string.Plo \
 	./$(DEPDIR)/libkim_la-dna_file_index.Plo \
@@ -340,6 +343,7 @@ am__depfiles_remade = ./$(DEPDIR)/kim-kim.Po \
 	./$(DEPDIR)/libkim_la-monitor.Plo \
 	./$(DEPDIR)/libkim_la-sort_helper.Plo \
 	./$(DEPDIR)/libkim_la-variant_identification.Plo \
+	./$(DEPDIR)/libkim_la-variant_kmer_enumerator.Plo \
 	./$(DEPDIR)/libkim_la-variant_nodes_index.Plo
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
@@ -619,6 +623,7 @@ pkginclude_HEADERS = \
   monitor.h			\
   sort_helper.h                 \
   variant_identification.h	\
+  variant_kmer_enumerator.h	\
   variant_nodes_index.h
 
 # End of bug fix
@@ -647,6 +652,7 @@ libkim_la_SOURCES = \
   monitor.h monitor.cpp						\
   sort_helper.h sort_helper.cpp					\
   variant_identification.h variant_identification.cpp		\
+  variant_kmer_enumerator.h variant_kmer_enumerator.cpp		\
   variant_nodes_index.h variant_nodes_index.cpp
 
 libkim_la_configdir = $(libdir)/$(install_dirname)/include
@@ -847,6 +853,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-monitor.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-sort_helper.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_identification.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-bounded_size_string.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-dna_file_index.Plo@am__quote@ # am--include-marker
@@ -859,6 +866,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-monitor.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-sort_helper.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_identification.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_kmer_enumerator.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_nodes_index.Plo@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
@@ -965,6 +973,13 @@ libkim_debug_la-variant_identification.lo: variant_identification.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-variant_identification.lo `test -f 'variant_identification.cpp' || echo '$(srcdir)/'`variant_identification.cpp
 
+libkim_debug_la-variant_kmer_enumerator.lo: variant_kmer_enumerator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-variant_kmer_enumerator.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Tpo -c -o libkim_debug_la-variant_kmer_enumerator.lo `test -f 'variant_kmer_enumerator.cpp' || echo '$(srcdir)/'`variant_kmer_enumerator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Tpo $(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_kmer_enumerator.cpp' object='libkim_debug_la-variant_kmer_enumerator.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-variant_kmer_enumerator.lo `test -f 'variant_kmer_enumerator.cpp' || echo '$(srcdir)/'`variant_kmer_enumerator.cpp
+
 libkim_debug_la-variant_nodes_index.lo: variant_nodes_index.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-variant_nodes_index.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-variant_nodes_index.Tpo -c -o libkim_debug_la-variant_nodes_index.lo `test -f 'variant_nodes_index.cpp' || echo '$(srcdir)/'`variant_nodes_index.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_debug_la-variant_nodes_index.Tpo $(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo
@@ -1048,6 +1063,13 @@ libkim_la-variant_identification.lo: variant_identification.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_identification.cpp' object='libkim_la-variant_identification.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-variant_identification.lo `test -f 'variant_identification.cpp' || echo '$(srcdir)/'`variant_identification.cpp
+
+libkim_la-variant_kmer_enumerator.lo: variant_kmer_enumerator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-variant_kmer_enumerator.lo -MD -MP -MF $(DEPDIR)/libkim_la-variant_kmer_enumerator.Tpo -c -o libkim_la-variant_kmer_enumerator.lo `test -f 'variant_kmer_enumerator.cpp' || echo '$(srcdir)/'`variant_kmer_enumerator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-variant_kmer_enumerator.Tpo $(DEPDIR)/libkim_la-variant_kmer_enumerator.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_kmer_enumerator.cpp' object='libkim_la-variant_kmer_enumerator.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-variant_kmer_enumerator.lo `test -f 'variant_kmer_enumerator.cpp' || echo '$(srcdir)/'`variant_kmer_enumerator.cpp
 
 libkim_la-variant_nodes_index.lo: variant_nodes_index.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-variant_nodes_index.lo -MD -MP -MF $(DEPDIR)/libkim_la-variant_nodes_index.Tpo -c -o libkim_la-variant_nodes_index.lo `test -f 'variant_nodes_index.cpp' || echo '$(srcdir)/'`variant_nodes_index.cpp
@@ -1267,6 +1289,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libkim_debug_la-monitor.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-sort_helper.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_identification.Plo
+	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-bounded_size_string.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-dna_file_index.Plo
@@ -1279,6 +1302,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libkim_la-monitor.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-sort_helper.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_identification.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-variant_kmer_enumerator.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_nodes_index.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
@@ -1339,6 +1363,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libkim_debug_la-monitor.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-sort_helper.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_identification.Plo
+	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-bounded_size_string.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-dna_file_index.Plo
@@ -1351,6 +1376,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libkim_la-monitor.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-sort_helper.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_identification.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-variant_kmer_enumerator.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_nodes_index.Plo
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
