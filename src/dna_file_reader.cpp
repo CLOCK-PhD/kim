@@ -484,7 +484,7 @@ const string &DNAFileReader::getKmerAt(size_t p) {
     return getCurrentKmer();
   }
   if (current_state.start_symbol_expected) {
-    if (current_state.nb_nucleotides == current_state.current_sequence_length) { 
+    if (current_state.nb_nucleotides == current_state.current_sequence_length) {
       // The end of sequence was reached by some previous reading.
       current_state.start_symbol_expected = false;
     } else {
@@ -509,20 +509,17 @@ const string &DNAFileReader::getKmerAt(size_t p) {
   }
   assert((p >= getCurrentKmerRelativePosition())
          || (current_state.current_sequence_length < current_state.k));
-  if (check_consistency || (p < current_state.nb_nucleotides)) {
-    while (*this && !current_state.start_symbol_expected && (getCurrentKmerRelativePosition() < p)) {
-      (this->*_parse_mth)();
-    }
-  } else {
+  if (!check_consistency) {
     assert(p >= current_state.nb_nucleotides);
     while (*this && ((current_state.nb_nucleotides + 1) < p)) {
       _nextVisibleCharacter();
       ++current_state.nb_nucleotides;
     }
-    if (*this) {
-      assert((current_state.nb_consecutive_regular_nucleotides + 1) == p);
-      (this->*_parse_mth)();
-    }
+    assert((current_state.nb_nucleotides == p)
+           || ((current_state.nb_nucleotides + 1) == p));
+  }
+  while (*this && !current_state.start_symbol_expected && (getCurrentKmerRelativePosition() < p)) {
+    (this->*_parse_mth)();
   }
   return getCurrentKmer();
 }
@@ -628,10 +625,22 @@ bool DNAFileReader::setState(const FileReader::FileState &) {
 bool DNAFileReader::setState(const DNAFileReader::FileState &s) {
   FileState &current_state = _getState();
   FileState backup_state = current_state;
-  current_state = s;
   bool ok = FileReader::setState(s);
   if (!ok) {
     current_state = backup_state;
+  } else {
+    current_state.format = s.format;
+    current_state.k = s.k;
+    current_state.start_symbol_expected = s.start_symbol_expected;
+    current_state.nb_nucleotides = s.nb_nucleotides;
+    current_state.nb_consecutive_regular_nucleotides = s.nb_consecutive_regular_nucleotides;
+    current_state.current_sequence_id = s.current_sequence_id;
+    current_state.current_sequence_description = s.current_sequence_description;
+    current_state.current_sequence_length = s.current_sequence_length;
+    current_state.kmer_aux = s.kmer_aux;
+    current_state.kmer_start_pos = s.kmer_start_pos;
+    current_state.kmer = s.kmer;
+    current_state.sequence_start_file_state = s.sequence_start_file_state;
   }
   return ok;
 }
