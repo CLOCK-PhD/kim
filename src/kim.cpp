@@ -90,13 +90,23 @@
 #include <kim.h>
 
 #include <optionparser.h>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <vcfpp.h>
+#pragma GCC diagnostic pop
 
 #include <iostream>
 #include <map>
+#include <regex>
+
+#ifdef _OPENMP
+#  include <omp.h>
+#endif
 
 using namespace std;
 using namespace kim;
+
 
 struct Arg: public option::Arg {
 
@@ -144,7 +154,6 @@ option::ArgStatus Arg::Numeric(const option::Option& option, bool msg) {
 }
 
 
-
 class KimProgram {
 
 private:
@@ -184,6 +193,7 @@ private:
     INDEX_CREATION_MODE
   };
 
+  string _progname;
   Settings _settings;
   _RunningMode _running_mode;
   vector<string> _dna_files;
@@ -197,6 +207,8 @@ private:
   void _runQuery();
   void _createIndex();
 
+  static bool _variantOfInterest(vcfpp::BcfRecord &v);
+  static bool _isURL(const string &f);
   static bool _checkIfFileExists(const string &f);
   static void _assertFileExists(const string &f);
   static void _dumpFile(const string &filename, size_t n = size_t(-1), ostream &os = cout);
@@ -345,6 +357,7 @@ KimProgram::~KimProgram() {
 }
 
 KimProgram::KimProgram(int argc, char **argv):
+  _progname(basename(argv[0])),
   _settings(), _running_mode(UNDEFINED_MODE),
   _dna_files(), _variants_files(), _output_file()
 {
@@ -407,7 +420,8 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
   _settings.allowOverwrite(_opts.options[FORCE_OPT]);
 
   if (_settings.warn()) {
-    cerr << "kim version " << VERSION << endl;
+    cerr << _progname << " version " VERSION << endl
+         << "Starting time: " << timestamp() << endl;
   }
 
   _settings.checkConsistency(_opts.options[CONSISTENCY_CHECKING_OPT]);
@@ -449,7 +463,7 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
     // variant_files vector with their filenames.
     _variants_files.reserve(_opts.options[VARIANTS_OPT].count());
     for (option::Option* opt = _opts.options[VARIANTS_OPT]; opt; opt = opt->next()) {
-      _assertFileExists(opt->arg);
+      if (!_isURL(opt->arg)) _assertFileExists(opt->arg);
       _variants_files.push_back(opt->arg);
     }
 
@@ -549,6 +563,32 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
 
   }
 
+}
+
+bool KimProgram::_variantOfInterest(vcfpp::BcfRecord &v) {
+  return true;
+  cerr << "Processing variant '" << v.ID() << "':" << endl
+       << "- CHROM: " << v.CHROM() << endl
+       << "- POS: " << v.POS() << endl
+       << "- PLOIDY: " << v.ploidy() << endl
+       << "- START: " << v.Start() << endl
+       << "- END: " << v.End() << endl
+       << "- REF: " << v.REF() << endl
+       << "- ALT: " << v.ALT() << endl
+       << "- QUAL: " << v.QUAL() << endl
+       << "- FILTER: " << v.FILTER() << endl
+       << "- INFOS: " << v.allINFO() << endl;
+  if (v.isSNP()) cerr << "- TYPE: SNP" << endl;
+  if (v.isSV()) cerr << "- TYPE: SV" << endl;
+  if (v.isIndel()) cerr << "- TYPE: INDEL" << endl;
+  if (v.isMultiAllelics()) cerr << "- TYPE: MultiAllelics" << endl;
+  if (v.isMultiAllelicSNP()) cerr << "- TYPE: MultiAllelicsSNP" << endl;
+  return true;
+}
+
+bool KimProgram::_isURL(const string &f) {
+  static const regex url_regex("^(([^:/?#]+):)(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?$"); // From https://www.rfc-editor.org/rfc/rfc2396#appendix-B
+  return regex_match(f, url_regex);
 }
 
 bool KimProgram::_checkIfFileExists(const string &f) {
@@ -662,6 +702,7 @@ void KimProgram::_showCopyright(bool full) {
 }
 
 void KimProgram::_runQuery() {
+  Monitor monitor;
   // Loading the index.
   KmerVariantGraph kim_index(_settings);
   kim_index.freeze();
@@ -703,11 +744,197 @@ void KimProgram::_runQuery() {
   } else {
     _dumpResults(variants_map, kim_index);
   }
-
+  monitor.stop();
+  cerr << "# Resources used for this query:" << endl
+       << "# - Wallclock time (in seconds): "
+       << (monitor.getWallClockTime() / 1s) << endl
+       << "# - User CPU time (in seconds): " << (monitor.getUserTime() / 1s) << endl
+       << "# - System CPU time (in seconds): " << (monitor.getSystemTime() / 1s) << endl
+       << "# - Memory: " << Monitor::memoryWithUnit2string(monitor.getMemory() * 1000.) << endl;
 }
 
 void KimProgram::_createIndex() {
-  cerr << "Not Yet Implemented" << endl;
+
+  Monitor monitor;
+
+  VariantKmerEnumerator::init(_settings, _dna_files);
+
+  Settings fake_settings(_settings);
+  try {
+    fake_settings.unfreeze();
+    fake_settings.setIndexDirectory(_settings.getIndexDirectory(), false, true);
+  } catch (BadSettingsException &e) {
+    // The index directory already exists.
+    if (_settings.allowOverwrite()) {
+      fake_settings.setIndexDirectory(_settings.getIndexDirectory()
+                                      + "this kind of path should not exist",
+                                      false, true);
+      KmerVariantGraph fake_index(fake_settings);
+      if (_settings.warn()) {
+        cerr << "* ";
+      }
+      fake_index.removeDumpedIndex(_settings.getIndexDirectory());
+      fake_settings.unfreeze();
+      fake_settings.setIndexDirectory(_settings.getIndexDirectory(), false, true);
+    } else {
+      throw;
+    }
+  }
+
+  KmerVariantGraph kim_index(_settings);
+  kim_index.freeze();
+  assert(kim_index.frozen());
+  assert(kim_index.getNbKmerVariantEdges() == 0);
+  assert(kim_index.getNbKmers() == 0);
+  assert(kim_index.getNbVariants() == 0);
+
+  // Processing Variants files
+  for (auto const &f: _variants_files) {
+    if (_settings.warn()) {
+      cerr << "* Processing variant file '" << f << "'" << endl;
+    }
+    vcfpp::BcfReader vcf(f);
+#ifdef _OPENMP
+    vcf.setThreads(omp_get_num_threads());
+#endif
+    const vcfpp::BcfHeader &hdr = vcf.getHeader();
+    if (_settings.warn()) {
+      cerr << "  - Number of sequences: " << hdr.getSeqnames().size() << endl;
+      cerr << "  - Number of samples: " << hdr.nSamples() << " [";
+      bool first = true;
+      for (auto const &s: hdr.getSamples()) {
+        cerr << (first ? "" : ", ") << "'" << s << "'";
+      }
+      cerr << "]" << endl;
+      for (auto const &s: hdr.getSeqnames()) {
+        if (!VariantKmerEnumerator::getIndex().getSequenceID(s)) {
+          cerr << "  WARNING: Sequence '" << s << "' is not indexed."
+               << " Thus k-mer variant index may be incomplete."
+               << endl;
+        }
+      }
+    }
+
+    vcfpp::BcfRecord variant(vcf.header); // construct a variant record
+    vector<int> gt; // genotype can be of bool, char or int type
+
+    kim_index.unfreeze();
+    assert(!kim_index.frozen());
+    size_t variants_cpt = 0;
+    static const size_t variants_cpt_mask1 = (1 << 4) - 1; // arbitrarly, each 16 added variant we'll update the progress counter
+    static const size_t variants_cpt_mask2 = (1 << 20) - 1; // arbitrarly, each 1048576 added variant we'll compress the graph
+    while (vcf.getNextVariant(variant)) {
+#ifdef DEBUG
+      cerr << "Variant: '" << variant << "'" << endl;
+#endif
+      if (_variantOfInterest(variant)) {
+#ifdef DEBUG
+        cerr << "Processing variant " << variant.ID()
+             << " at pos " << variant.POS()
+             << " of sequence " << variant.CHROM()
+             << " having length " << (variant.End() - variant.Start())
+             << ": " << variant.REF() << " => " << variant.ALT() << endl;
+#endif
+        VariantKmerEnumerator vke(variant);
+        while (vke.nextVariantKmer()) {
+          KmerVariantGraph::Edge e = vke.getCurrentKmerVariantEdge();
+#ifdef DEBUG
+          cerr << "Adding edge: " << e.kmer << " -" << e.rank << "-> " << e.variant << endl;
+#endif
+          kim_index += e;
+        }
+      }
+      if (_settings.warn()) {
+        ++variants_cpt;
+        if (!(variants_cpt & variants_cpt_mask1)) {
+          cerr << "\033[s\033[B"
+               << "  - Number of indexed variants: " << variants_cpt
+               << "\033[u" << flush;
+        }
+        if (!(variants_cpt & variants_cpt_mask2)) {
+          cerr << "\033[s\033B"
+               << "  - Compressing the index"
+               << "\033[u" << flush;
+          kim_index.freeze();
+          kim_index.unfreeze();
+        }
+      }
+    }
+    if (_settings.warn()) {
+      cerr << "  - Number of indexed variants: " << variants_cpt << endl;
+      cerr << "  - Compressing the index" << endl;
+    }
+    kim_index.freeze();
+    assert(kim_index.frozen());
+  }
+  assert(kim_index.frozen());
+
+  kim_index.unfreeze();
+  assert(!kim_index.frozen());
+  for (auto const &f: _dna_files) {
+    size_t nb_kmers = 0;
+    if (_settings.warn()) {
+      const DNAFileIndex &index = VariantKmerEnumerator::getIndex();
+      nb_kmers = index.getNumberOfNucleotides(f);
+      cerr << "* Scanning file '" << f << "'"
+           << " (having " << fixed << nb_kmers << " nucleotides)"
+           <<" for existing " << _settings.k() << "-mers associated to variant(s)." << endl;
+      nb_kmers -= index.getNumberOfSequences(f) * (_settings.k() - 1);
+    }
+    DNAFileReader reader(_settings.k(), f, false);
+    size_t kmer_cpt = 0;
+    static const size_t kmer_cpt_mask = (1 << 20) - 1;
+    for (string kmer = reader.getNextKmer(true /* skip degenerate */); !kmer.empty(); kmer = reader.getNextKmer(true /* skip degenerate */)) {
+      kim_index.setInReferenceKmer(kmer);
+      if (_settings.warn() && !(++kmer_cpt & kmer_cpt_mask)) {
+        cerr << "\033[s\033[B"
+             << "  - Number of processed k-mers: " << kmer_cpt << "/" << nb_kmers
+             << "\033[u" << flush;
+      }
+    }
+    if (_settings.warn()) {
+      cerr << "\033[s\033[B"
+           << "  - Number of processed k-mers: " << nb_kmers
+           << endl;
+    }
+  }
+  monitor.stop();
+  string metadata;
+  metadata += "- Variant files:\n";
+  for (auto const &f: _variants_files) {
+    metadata += "  - ";
+    metadata += f;
+    metadata += '\n';
+  }
+  metadata += "- Reference files:\n";
+  for (auto const &f: _dna_files) {
+    metadata += "  - ";
+    metadata += f;
+    metadata += '\n';
+  }
+  metadata += "- Resources used for index creation:\n";
+  metadata += "  - Wallclock time (in seconds): ";
+  metadata += to_string(monitor.getWallClockTime() / 1s);
+  metadata += "\n";
+  metadata += "  - User CPU time (in seconds): ";
+  metadata += to_string(monitor.getUserTime() / 1s);
+  metadata += "\n";
+  metadata += "  - System CPU time (in seconds): ";
+  metadata += to_string(monitor.getSystemTime() / 1s);
+  metadata += "\n";
+  metadata += "  - Memory: ";
+  metadata += Monitor::memoryWithUnit2string(monitor.getMemory() * 1000.);
+  metadata += "\n";
+  kim_index.extraMetadata(metadata);
+  kim_index.freeze();
+  assert(kim_index.frozen());
+
+  if (_settings.warn()) {
+    cerr << "* Dumping the index to directory"
+         << " '" << _settings.getIndexDirectory() << "'"
+         << endl;
+  }
+  kim_index.dump(_settings.getIndexDirectory(), _settings.allowOverwrite());
 }
 
 int KimProgram::run() {
@@ -731,11 +958,13 @@ int KimProgram::run() {
   };
 
   if (_settings.warn()) {
-    cerr << "That's All, Folks!!!" << endl;
+    cerr << "Ending time: " << timestamp() << endl
+         << "That's All, Folks!!!" << endl;
   }
 
   return 0;
 }
+
 
 int main(int argc, char **argv) {
 

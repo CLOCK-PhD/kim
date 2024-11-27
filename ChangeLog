@@ -1,5 +1,29 @@
 2024-11-27  DoccY <alban.mancheron@lirmm.fr>
 
+	* src/kim.cpp:
+	Add index creation to the kim program.
+	
+	
+2024-11-27  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/kim.h:
+	Update kim library main header.
+	
+	
+2024-11-27  DoccY <alban.mancheron@lirmm.fr>
+
+	* Makefile.in, aclocal.m4, aminclude_static.am,
+	config/m4/ax_openmp.m4, config/version.configure.ac, configure,
+	configure.ac, coverage/Makefile.in, doc/Makefile.in,
+	packaging/Makefile.in, resources/Makefile.in, src/Makefile.in,
+	src/kmer_variant_edges_subindex.cpp, src/kmer_variant_graph.cpp,
+	src/kmer_variant_graph.h, src/variant_nodes_index.cpp,
+	src/variant_nodes_index.h, tests/Makefile.in:
+	Add OpenMP parallelization.
+	
+	
+2024-11-27  DoccY <alban.mancheron@lirmm.fr>
+
 	* src/Makefile.am, src/Makefile.in,
 	src/variant_kmer_enumerator.cpp, src/variant_kmer_enumerator.h:
 	Add an helper class to enumerate k-mers associaed to some variant.
