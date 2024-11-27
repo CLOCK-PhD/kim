@@ -270,7 +270,7 @@ am__objects_1 = libkim_debug_la-bounded_size_string.lo \
 	libkim_debug_la-kmer_nodes_subindex.lo \
 	libkim_debug_la-kmer_variant_edges_subindex.lo \
 	libkim_debug_la-kmer_variant_graph.lo \
-	libkim_debug_la-sort_helper.lo \
+	libkim_debug_la-monitor.lo libkim_debug_la-sort_helper.lo \
 	libkim_debug_la-variant_identification.lo \
 	libkim_debug_la-variant_nodes_index.lo
 am_libkim_debug_la_OBJECTS = $(am__objects_1)
@@ -289,8 +289,8 @@ am_libkim_la_OBJECTS = libkim_la-bounded_size_string.lo \
 	libkim_la-file_reader.lo libkim_la-kim_settings.lo \
 	libkim_la-kmer_nodes_subindex.lo \
 	libkim_la-kmer_variant_edges_subindex.lo \
-	libkim_la-kmer_variant_graph.lo libkim_la-sort_helper.lo \
-	libkim_la-variant_identification.lo \
+	libkim_la-kmer_variant_graph.lo libkim_la-monitor.lo \
+	libkim_la-sort_helper.lo libkim_la-variant_identification.lo \
 	libkim_la-variant_nodes_index.lo
 libkim_la_OBJECTS = $(am_libkim_la_OBJECTS)
 libkim_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -325,6 +325,7 @@ am__depfiles_remade = ./$(DEPDIR)/kim-kim.Po \
 	./$(DEPDIR)/libkim_debug_la-kmer_nodes_subindex.Plo \
 	./$(DEPDIR)/libkim_debug_la-kmer_variant_edges_subindex.Plo \
 	./$(DEPDIR)/libkim_debug_la-kmer_variant_graph.Plo \
+	./$(DEPDIR)/libkim_debug_la-monitor.Plo \
 	./$(DEPDIR)/libkim_debug_la-sort_helper.Plo \
 	./$(DEPDIR)/libkim_debug_la-variant_identification.Plo \
 	./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo \
@@ -336,6 +337,7 @@ am__depfiles_remade = ./$(DEPDIR)/kim-kim.Po \
 	./$(DEPDIR)/libkim_la-kmer_nodes_subindex.Plo \
 	./$(DEPDIR)/libkim_la-kmer_variant_edges_subindex.Plo \
 	./$(DEPDIR)/libkim_la-kmer_variant_graph.Plo \
+	./$(DEPDIR)/libkim_la-monitor.Plo \
 	./$(DEPDIR)/libkim_la-sort_helper.Plo \
 	./$(DEPDIR)/libkim_la-variant_identification.Plo \
 	./$(DEPDIR)/libkim_la-variant_nodes_index.Plo
@@ -614,6 +616,7 @@ pkginclude_HEADERS = \
   kmer_nodes_subindex.h		\
   kmer_variant_edges_subindex.h	\
   kmer_variant_graph.h		\
+  monitor.h			\
   sort_helper.h                 \
   variant_identification.h	\
   variant_nodes_index.h
@@ -641,6 +644,7 @@ libkim_la_SOURCES = \
   kmer_nodes_subindex.h kmer_nodes_subindex.cpp			\
   kmer_variant_edges_subindex.h kmer_variant_edges_subindex.cpp	\
   kmer_variant_graph.h kmer_variant_graph.cpp			\
+  monitor.h monitor.cpp						\
   sort_helper.h sort_helper.cpp					\
   variant_identification.h variant_identification.cpp		\
   variant_nodes_index.h variant_nodes_index.cpp
@@ -840,6 +844,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-kmer_nodes_subindex.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-kmer_variant_edges_subindex.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-kmer_variant_graph.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-monitor.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-sort_helper.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_identification.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo@am__quote@ # am--include-marker
@@ -851,6 +856,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-kmer_nodes_subindex.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-kmer_variant_edges_subindex.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-kmer_variant_graph.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-monitor.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-sort_helper.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_identification.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_nodes_index.Plo@am__quote@ # am--include-marker
@@ -938,6 +944,13 @@ libkim_debug_la-kmer_variant_graph.lo: kmer_variant_graph.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-kmer_variant_graph.lo `test -f 'kmer_variant_graph.cpp' || echo '$(srcdir)/'`kmer_variant_graph.cpp
 
+libkim_debug_la-monitor.lo: monitor.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-monitor.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-monitor.Tpo -c -o libkim_debug_la-monitor.lo `test -f 'monitor.cpp' || echo '$(srcdir)/'`monitor.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_debug_la-monitor.Tpo $(DEPDIR)/libkim_debug_la-monitor.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='monitor.cpp' object='libkim_debug_la-monitor.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-monitor.lo `test -f 'monitor.cpp' || echo '$(srcdir)/'`monitor.cpp
+
 libkim_debug_la-sort_helper.lo: sort_helper.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-sort_helper.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-sort_helper.Tpo -c -o libkim_debug_la-sort_helper.lo `test -f 'sort_helper.cpp' || echo '$(srcdir)/'`sort_helper.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_debug_la-sort_helper.Tpo $(DEPDIR)/libkim_debug_la-sort_helper.Plo
@@ -1014,6 +1027,13 @@ libkim_la-kmer_variant_graph.lo: kmer_variant_graph.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='kmer_variant_graph.cpp' object='libkim_la-kmer_variant_graph.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-kmer_variant_graph.lo `test -f 'kmer_variant_graph.cpp' || echo '$(srcdir)/'`kmer_variant_graph.cpp
+
+libkim_la-monitor.lo: monitor.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-monitor.lo -MD -MP -MF $(DEPDIR)/libkim_la-monitor.Tpo -c -o libkim_la-monitor.lo `test -f 'monitor.cpp' || echo '$(srcdir)/'`monitor.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-monitor.Tpo $(DEPDIR)/libkim_la-monitor.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='monitor.cpp' object='libkim_la-monitor.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-monitor.lo `test -f 'monitor.cpp' || echo '$(srcdir)/'`monitor.cpp
 
 libkim_la-sort_helper.lo: sort_helper.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-sort_helper.lo -MD -MP -MF $(DEPDIR)/libkim_la-sort_helper.Tpo -c -o libkim_la-sort_helper.lo `test -f 'sort_helper.cpp' || echo '$(srcdir)/'`sort_helper.cpp
@@ -1244,6 +1264,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kmer_nodes_subindex.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kmer_variant_edges_subindex.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kmer_variant_graph.Plo
+	-rm -f ./$(DEPDIR)/libkim_debug_la-monitor.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-sort_helper.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_identification.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo
@@ -1255,6 +1276,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libkim_la-kmer_nodes_subindex.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-kmer_variant_edges_subindex.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-kmer_variant_graph.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-monitor.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-sort_helper.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_identification.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_nodes_index.Plo
@@ -1314,6 +1336,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kmer_nodes_subindex.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kmer_variant_edges_subindex.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kmer_variant_graph.Plo
+	-rm -f ./$(DEPDIR)/libkim_debug_la-monitor.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-sort_helper.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_identification.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo
@@ -1325,6 +1348,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libkim_la-kmer_nodes_subindex.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-kmer_variant_edges_subindex.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-kmer_variant_graph.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-monitor.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-sort_helper.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_identification.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_nodes_index.Plo

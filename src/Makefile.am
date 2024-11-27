@@ -112,6 +112,7 @@ pkginclude_HEADERS =	\
   kmer_nodes_subindex.h		\
   kmer_variant_edges_subindex.h	\
   kmer_variant_graph.h		\
+  monitor.h			\
   sort_helper.h                 \
   variant_identification.h	\
   variant_nodes_index.h
@@ -144,6 +145,7 @@ libkim_la_SOURCES =						\
   kmer_nodes_subindex.h kmer_nodes_subindex.cpp			\
   kmer_variant_edges_subindex.h kmer_variant_edges_subindex.cpp	\
   kmer_variant_graph.h kmer_variant_graph.cpp			\
+  monitor.h monitor.cpp						\
   sort_helper.h sort_helper.cpp					\
   variant_identification.h variant_identification.cpp		\
   variant_nodes_index.h variant_nodes_index.cpp
