@@ -1,5 +1,27 @@
 2024-11-27  DoccY <alban.mancheron@lirmm.fr>
 
+	* src/kmer_nodes_subindex.cpp, src/kmer_variant_edges_subindex.cpp:
+	BugFix: update of external Bitmagic external library broke the existing code.
+	
+	
+2024-11-27  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/dna_file_index.cpp, src/dna_file_index.h:
+	BugFix: DNA file indexer failed to correctly restore file state.
+	Improve synchronisation when internal reader is already in the correct bookmark section.
+	Before this version, the reader cursor always goes back to the beginning of the bookmark,
+	now it stays on place if the position to reach is in the same bookmark section and is
+	after the current cursor position.
+	
+	
+2024-11-27  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/dna_file_reader.cpp:
+	Bug fix: The DNA file reader failed to reach some k-mers when consistency checking is disabled.
+	
+	
+2024-11-27  DoccY <alban.mancheron@lirmm.fr>
+
 	* src/kim.cpp, src/kim_settings.cpp, src/kim_settings.h,
 	tests/test_kim_settings.cpp:
 	Store the allow overwrite flag in settings.

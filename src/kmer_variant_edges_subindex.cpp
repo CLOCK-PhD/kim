@@ -201,7 +201,7 @@ list<KmerVariantEdgesSubindex::KmerVariantAssociation> KmerVariantEdgesSubindex:
   if (p != size_t(-1)) {
     do {
       l.emplace_back(_kmer_variant_edges[p]);
-    } while ((++p < _kmer_variant_edges.size()) && !_first_kmer_edges[p]);
+    } while ((++p < _kmer_variant_edges.size()) && !_first_kmer_edges.get_bit(p));
   }
   return l;
 }
@@ -220,7 +220,8 @@ KmerVariantEdgesSubindex &KmerVariantEdgesSubindex::add(KmerNodesSubindex::KmerN
   _KmerVariantEdge edge = { variant_node_iterator, uint16_t(rank) };
   _kmer_variant_edges.push_back(edge);
   assert(_kmer_nodes.size() > 0);
-  _first_kmer_edges[_kmer_variant_edges.size() - 1] = new_node;
+
+  _first_kmer_edges.set_bit(_kmer_variant_edges.size() - 1, new_node);
   return *this;
 }
 
@@ -265,8 +266,8 @@ KmerVariantEdgesSubindex &KmerVariantEdgesSubindex::merge(KmerVariantEdgesSubind
         _kmer_variant_edges[i + j] = idx._kmer_variant_edges[j];
         // Increasing the incoming degree of the variant node.
         _kmer_variant_edges[i + j].variant_node_iterator->second++;
-        _first_kmer_edges[i + j] = 0;
-      } while (!idx._first_kmer_edges[j]);
+        _first_kmer_edges.set_bit_no_check(i + j, 0);
+      } while (!idx._first_kmer_edges.get_bit(j));
     }
     if (j && pos1[k]) {
       // If j == 0 there is no need to move edges.
@@ -275,11 +276,11 @@ KmerVariantEdgesSubindex &KmerVariantEdgesSubindex::merge(KmerVariantEdgesSubind
         assert(i);
         --i;
         _kmer_variant_edges[i + j] = _kmer_variant_edges[i];
-        assert((i > 0) || _first_kmer_edges[i]);
-        _first_kmer_edges[i + j] = 0;
-      } while (i && !_first_kmer_edges[i]);
+        assert((i > 0) || _first_kmer_edges.get_bit(i));
+        _first_kmer_edges.set_bit_no_check(i + j, 0);
+      } while (i && !_first_kmer_edges.get_bit(i));
     }
-    _first_kmer_edges[i + j] = 1;
+    _first_kmer_edges.set_bit_no_check(i + j, 1);
   }
   assert((i == 0) || (pos1.count_range(0, i) == 1));
   assert(j == 0);
@@ -346,7 +347,7 @@ void KmerVariantEdgesSubindex::toStream(ostream &os, const string &header, const
        << "#FifthColumn[bit]: k-mer belongs to some reference sequence" << endl;
   }
   for (size_t i = 0; i < n; ++i) {
-    kmer_pos += _first_kmer_edges[i];
+    kmer_pos += _first_kmer_edges.get_bit(i);
     KmerNodesSubindex::KmerNode kmer_node = _kmer_nodes[kmer_pos - 1];
     KmerVariantAssociation edge = _kmer_variant_edges[i];
     os << kmer_node.suffix << "\t"
@@ -364,7 +365,7 @@ void KmerVariantEdgesSubindex::_updateMaxAssociations() {
   CHECK_FROZEN_STATE(!frozen(), _updateMaxAssociations);
   size_t i = 0, prev = 0, n = _kmer_variant_edges.size();
   _max_associations = (n > 0);
-  assert(_first_kmer_edges.empty() || _first_kmer_edges[0]);
+  assert((_first_kmer_edges.size() == 0) || (_first_kmer_edges.count() > 0));
   while (i < n) {
     if (i - prev > _max_associations) {
       _max_associations = i - prev;

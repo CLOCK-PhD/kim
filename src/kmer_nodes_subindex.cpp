@@ -226,9 +226,10 @@ std::vector<size_t> KmerNodesSubindex::sort() {
 bvector<> KmerNodesSubindex::unique() {
   CHECK_FROZEN_STATE(!frozen(), unique);
   size_t i = 0, j = 1, n = _suffixes.size();
-  bvector<> kept;
-  kept.resize(n);
-  kept.set();
+  bvector<> kept(n);
+  if (n) {
+    kept.set_range_no_check(0, n - 1);
+  }
   while (j < n) {
     if (_suffixes[i].compare(_suffixes[j])) {
       if (++i < j) {
