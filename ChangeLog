@@ -1,5 +1,11 @@
 2024-11-29  DoccY <alban.mancheron@lirmm.fr>
 
+	* src/dna_file_reader.cpp:
+	Bug Fix in DNA file reading.
+	
+	
+2024-11-29  DoccY <alban.mancheron@lirmm.fr>
+
 	* tests/test_kmer_variant_graph.cpp:
 	Update test using the public encode/decode functions from the kim library.
 	

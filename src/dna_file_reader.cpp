@@ -509,14 +509,12 @@ const string &DNAFileReader::getKmerAt(size_t p) {
   }
   assert((p >= getCurrentKmerRelativePosition())
          || (current_state.current_sequence_length < current_state.k));
-  if (!check_consistency) {
-    assert(p >= current_state.nb_nucleotides);
+  if (!check_consistency && (p > current_state.nb_nucleotides)) {
     while (*this && ((current_state.nb_nucleotides + 1) < p)) {
       _nextVisibleCharacter();
       ++current_state.nb_nucleotides;
     }
-    assert((current_state.nb_nucleotides == p)
-           || ((current_state.nb_nucleotides + 1) == p));
+    assert((current_state.nb_nucleotides + 1) == p);
   }
   while (*this && !current_state.start_symbol_expected && (getCurrentKmerRelativePosition() < p)) {
     (this->*_parse_mth)();
