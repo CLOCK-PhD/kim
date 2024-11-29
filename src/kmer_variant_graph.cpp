@@ -372,8 +372,13 @@ void KmerVariantGraph::_parseFile(const string &filename, size_t prefix) {
   // Reserve enouch space for the k-mer edges sub-index
   edges.reserve(nb_edges);
   // Updates the number of total k-mers.
-  _nb_kmers += nb_nodes;
-  _nb_edges += nb_edges;
+#ifdef _OPENMP
+#  pragma omp critical
+#endif
+  {
+    _nb_kmers += nb_nodes;
+    _nb_edges += nb_edges;
+  }
 
   while (ifs) {
 
@@ -388,6 +393,9 @@ void KmerVariantGraph::_parseFile(const string &filename, size_t prefix) {
 
       // Ensure that the k-mer suffix has size k2 (or set k2 on first
       // kmer suffix).
+#ifdef _OPENMP
+#  pragma omp critical
+#endif
       if (_settings.frozen()) {
         if (suffix.length() != _settings.getKmerSuffixLength()) {
           PARSE_ERROR_MSG("Badly formatted index file '" << filename
@@ -420,6 +428,7 @@ void KmerVariantGraph::_parseFile(const string &filename, size_t prefix) {
       }
     }
   }
+  edges.compact(); // At least perform recomputation of max associations.
   edges.freeze();
   kmer_nodes.freeze();
   ifs.close();
