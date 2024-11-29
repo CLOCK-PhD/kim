@@ -183,7 +183,9 @@ int BoundedSizeString::reverse_compare(const BoundedSizeString &s) const {
   if (n1 < n2) return -1;
   if (n1 > n2) return 1;
   size_t i = n1;
-  while (i-- && (_str[i] == s._str[i]));
+  do {
+    --i;
+  } while (i && (_str[i] == s._str[i]));
   return ((_str[i] > s._str[i])
           ? 1
           : ((_str[i] == s._str[i])

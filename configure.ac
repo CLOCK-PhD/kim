@@ -780,7 +780,7 @@ MISSING_AUTOMAKE_TARGETS = dvi check installcheck
 $(echo $'\t')@echo "Fake target for '\$[]@' added by the kim configure script"
 
 distclean: distclean-orig
-${tab}test -n "\$(distdir)" || rm htslib_vars.mk
+#${tab}test -n "\$(distdir)" || rm htslib_vars.mk
 
 uninstall: uninstall-\$(SHLIB_FLAVOUR)
 ${tab}@echo "Target for '\$[]@' added by the kim configure script"
