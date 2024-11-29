@@ -750,14 +750,12 @@ void KimProgram::_runQuery() {
        << (monitor.getWallClockTime() / 1s) << endl
        << "# - User CPU time (in seconds): " << (monitor.getUserTime() / 1s) << endl
        << "# - System CPU time (in seconds): " << (monitor.getSystemTime() / 1s) << endl
-       << "# - Memory: " << Monitor::memoryWithUnit2string(monitor.getMemory() * 1000.) << endl;
+       << "# - Memory: " << Monitor::memoryWithUnit2string(monitor.getMemory()) << endl;
 }
 
 void KimProgram::_createIndex() {
 
   Monitor monitor;
-
-  VariantKmerEnumerator::init(_settings, _dna_files);
 
   Settings fake_settings(_settings);
   try {
@@ -780,6 +778,8 @@ void KimProgram::_createIndex() {
       throw;
     }
   }
+
+  VariantKmerEnumerator::init(_settings, _dna_files);
 
   KmerVariantGraph kim_index(_settings);
   kim_index.freeze();
@@ -816,7 +816,6 @@ void KimProgram::_createIndex() {
     }
 
     vcfpp::BcfRecord variant(vcf.header); // construct a variant record
-    vector<int> gt; // genotype can be of bool, char or int type
 
     kim_index.unfreeze();
     assert(!kim_index.frozen());
@@ -923,7 +922,7 @@ void KimProgram::_createIndex() {
   metadata += to_string(monitor.getSystemTime() / 1s);
   metadata += "\n";
   metadata += "  - Memory: ";
-  metadata += Monitor::memoryWithUnit2string(monitor.getMemory() * 1000.);
+  metadata += Monitor::memoryWithUnit2string(monitor.getMemory());
   metadata += "\n";
   kim_index.extraMetadata(metadata);
   kim_index.freeze();
