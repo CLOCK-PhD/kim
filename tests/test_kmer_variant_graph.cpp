@@ -105,48 +105,6 @@ using namespace std;
 using namespace bm;
 using namespace kim;
 
-string decode(size_t v, size_t p) {
-  string res(p, '?');
-  while (p--) {
-    switch (v & 3) {
-    case 0:
-      res[p] = 'A';
-      break;
-    case 1:
-      res[p] = 'C';
-      break;
-    case 2:
-      res[p] = 'G';
-      break;
-    case 3:
-      res[p] = 'T';
-      break;
-    default:
-      // For prevent compiler warning
-      res[p] = '?';
-    }
-    v >>= 2;
-  }
-  return res;
-}
-
-size_t encode(const string &prefix) {
-  size_t res = 0;
-  for (size_t i = 0; i < prefix.length(); ++i) {
-    res <<= 2;
-    res += ((prefix[i] == 'A')
-            ? 0
-            : ((prefix[i] == 'C')
-               ? 1
-               : ((prefix[i] == 'G')
-                  ? 2
-                  : ((prefix[i] == 'T')
-                     ? 3
-                     : 1000))));
-  }
-  return res;
-}
-
 void check_graph_properties(const KmerVariantGraph &g, size_t nb_kmers, size_t nb_variants, size_t nb_edges, bool frozen) {
   const Settings &s = g.settings();
   cout << "Graph properties:" << endl
@@ -174,7 +132,8 @@ void check_graph_properties(const KmerVariantGraph &g, size_t nb_kmers, size_t n
 void check_subindex(const KmerVariantGraph &g, const string &p, const vector<KmerVariantGraph::Edge> e, const vector<bool> &in_ref) {
   const Settings &s = g.settings();
   assert(s.getKmerSuffixLength() == BoundedSizeString::getMaximalSize());
-  size_t v = encode(p);
+  assert(p.size() == s.getKmerPrefixLength());
+  size_t v = encode(p, s.getKmerPrefixLength());
   cout << "Checking sub-index #" << v << " associated to prefix '" << p << "'" << endl;
   const KmerVariantEdgesSubindex &edges = g.getKmerVariantEdgesIndex()[v];
   cout << "- Nb of edges: " << edges.size()

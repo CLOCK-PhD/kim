@@ -1,3 +1,34 @@
+2024-11-29  DoccY <alban.mancheron@lirmm.fr>
+
+	* tests/test_kmer_variant_graph.cpp:
+	Update test using the public encode/decode functions from the kim library.
+	
+	
+2024-11-29  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/kim.cpp:
+	In index creation mode, program now begins by handling index directory existence before trying to index sequences.
+	Indeed, it's better to stop immediatly if there is a problem with an existing index directory rather than performing a time and memory consumming computation.
+	
+	
+2024-11-29  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/kmer_variant_graph.cpp:
+	Protect shared attributes / variables (making section criticals) when multiple threads try to update them.
+	
+	
+2024-11-29  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/kmer_variant_edges_subindex.cpp:
+	Don't use OpenMP pragma when OpenMP is disabled.
+	
+	
+2024-11-29  DoccY <alban.mancheron@lirmm.fr>
+
+	* configure, configure.ac, src/bounded_size_string.cpp:
+	Valgrind complained about an invalid read (possible side effect).
+	
+	
 2024-11-27  DoccY <alban.mancheron@lirmm.fr>
 
 	* src/kim.cpp:
