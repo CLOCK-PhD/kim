@@ -187,14 +187,14 @@ check_PROGRAMS = test_bounded_size_string$(EXEEXT) \
 	test_kmer_nodes_subindex$(EXEEXT) \
 	test_kmer_variant_edges_subindex$(EXEEXT) \
 	test_kmer_variant_graph$(EXEEXT) test_sort_helper$(EXEEXT) \
-	test_variant_nodes_index$(EXEEXT)
+	test_variant_nodes_index$(EXEEXT) test_variant_filter$(EXEEXT)
 TESTS = test_bounded_size_string$(EXEEXT) \
 	test_dna_file_reader$(EXEEXT) test_dna_file_index$(EXEEXT) \
 	test_kim_exception$(EXEEXT) test_kim_settings$(EXEEXT) \
 	test_kmer_nodes_subindex$(EXEEXT) \
 	test_kmer_variant_edges_subindex$(EXEEXT) \
 	test_kmer_variant_graph$(EXEEXT) test_sort_helper$(EXEEXT) \
-	test_variant_nodes_index$(EXEEXT)
+	test_variant_nodes_index$(EXEEXT) test_variant_filter$(EXEEXT)
 subdir = tests
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_ac_append_to_file.m4 \
@@ -224,6 +224,8 @@ am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_ac_append_to_file.m4 \
 	$(top_srcdir)/config/m4/ax_git_versioning.m4 \
 	$(top_srcdir)/config/m4/ax_openmp.m4 \
 	$(top_srcdir)/config/m4/ax_package_infos.m4 \
+	$(top_srcdir)/config/m4/ax_prog_bison.m4 \
+	$(top_srcdir)/config/m4/ax_prog_bison_version.m4 \
 	$(top_srcdir)/config/m4/ax_prog_doxygen.m4 \
 	$(top_srcdir)/config/m4/ax_require_defined.m4 \
 	$(top_srcdir)/config/m4/libtool.m4 \
@@ -289,6 +291,10 @@ am_test_sort_helper_OBJECTS = test_sort_helper.$(OBJEXT)
 test_sort_helper_OBJECTS = $(am_test_sort_helper_OBJECTS)
 test_sort_helper_LDADD = $(LDADD)
 test_sort_helper_DEPENDENCIES = ../src/libkim-debug.la
+am_test_variant_filter_OBJECTS = test_variant_filter.$(OBJEXT)
+test_variant_filter_OBJECTS = $(am_test_variant_filter_OBJECTS)
+test_variant_filter_LDADD = $(LDADD)
+test_variant_filter_DEPENDENCIES = ../src/libkim-debug.la
 am_test_variant_nodes_index_OBJECTS =  \
 	test_variant_nodes_index.$(OBJEXT)
 test_variant_nodes_index_OBJECTS =  \
@@ -319,6 +325,7 @@ am__depfiles_remade = ./$(DEPDIR)/test_bounded_size_string.Po \
 	./$(DEPDIR)/test_kmer_variant_edges_subindex.Po \
 	./$(DEPDIR)/test_kmer_variant_graph.Po \
 	./$(DEPDIR)/test_sort_helper.Po \
+	./$(DEPDIR)/test_variant_filter.Po \
 	./$(DEPDIR)/test_variant_nodes_index.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
@@ -345,6 +352,7 @@ SOURCES = $(test_bounded_size_string_SOURCES) \
 	$(test_kmer_nodes_subindex_SOURCES) \
 	$(test_kmer_variant_edges_subindex_SOURCES) \
 	$(test_kmer_variant_graph_SOURCES) $(test_sort_helper_SOURCES) \
+	$(test_variant_filter_SOURCES) \
 	$(test_variant_nodes_index_SOURCES)
 DIST_SOURCES = $(test_bounded_size_string_SOURCES) \
 	$(test_dna_file_index_SOURCES) $(test_dna_file_reader_SOURCES) \
@@ -352,6 +360,7 @@ DIST_SOURCES = $(test_bounded_size_string_SOURCES) \
 	$(test_kmer_nodes_subindex_SOURCES) \
 	$(test_kmer_variant_edges_subindex_SOURCES) \
 	$(test_kmer_variant_graph_SOURCES) $(test_sort_helper_SOURCES) \
+	$(test_variant_filter_SOURCES) \
 	$(test_variant_nodes_index_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -591,6 +600,7 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BISON_VERSION = @BISON_VERSION@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -666,6 +676,9 @@ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LCOV = @LCOV@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
+LEX = @LEX@
+LEXLIB = @LEXLIB@
+LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LIBNAME = @LIBNAME@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -709,6 +722,8 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
+YACC = @YACC@
+YFLAGS = @YFLAGS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -789,6 +804,7 @@ test_kmer_variant_edges_subindex_SOURCES = test_kmer_variant_edges_subindex.cpp
 test_kmer_variant_graph_SOURCES = test_kmer_variant_graph.cpp
 test_sort_helper_SOURCES = test_sort_helper.cpp
 test_variant_nodes_index_SOURCES = test_variant_nodes_index.cpp
+test_variant_filter_SOURCES = test_variant_filter.cpp
 
 #################
 # Code Coverage #
@@ -883,6 +899,10 @@ test_sort_helper$(EXEEXT): $(test_sort_helper_OBJECTS) $(test_sort_helper_DEPEND
 	@rm -f test_sort_helper$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_sort_helper_OBJECTS) $(test_sort_helper_LDADD) $(LIBS)
 
+test_variant_filter$(EXEEXT): $(test_variant_filter_OBJECTS) $(test_variant_filter_DEPENDENCIES) $(EXTRA_test_variant_filter_DEPENDENCIES) 
+	@rm -f test_variant_filter$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_variant_filter_OBJECTS) $(test_variant_filter_LDADD) $(LIBS)
+
 test_variant_nodes_index$(EXEEXT): $(test_variant_nodes_index_OBJECTS) $(test_variant_nodes_index_DEPENDENCIES) $(EXTRA_test_variant_nodes_index_DEPENDENCIES) 
 	@rm -f test_variant_nodes_index$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_variant_nodes_index_OBJECTS) $(test_variant_nodes_index_LDADD) $(LIBS)
@@ -902,6 +922,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_kmer_variant_edges_subindex.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_kmer_variant_graph.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_sort_helper.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_variant_filter.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_variant_nodes_index.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
@@ -1200,6 +1221,13 @@ test_variant_nodes_index.log: test_variant_nodes_index$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+test_variant_filter.log: test_variant_filter$(EXEEXT)
+	@p='test_variant_filter$(EXEEXT)'; \
+	b='test_variant_filter'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 .test.log:
 	@p='$<'; \
 	$(am__set_b); \
@@ -1305,6 +1333,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/test_kmer_variant_edges_subindex.Po
 	-rm -f ./$(DEPDIR)/test_kmer_variant_graph.Po
 	-rm -f ./$(DEPDIR)/test_sort_helper.Po
+	-rm -f ./$(DEPDIR)/test_variant_filter.Po
 	-rm -f ./$(DEPDIR)/test_variant_nodes_index.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
@@ -1360,6 +1389,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/test_kmer_variant_edges_subindex.Po
 	-rm -f ./$(DEPDIR)/test_kmer_variant_graph.Po
 	-rm -f ./$(DEPDIR)/test_sort_helper.Po
+	-rm -f ./$(DEPDIR)/test_variant_filter.Po
 	-rm -f ./$(DEPDIR)/test_variant_nodes_index.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic

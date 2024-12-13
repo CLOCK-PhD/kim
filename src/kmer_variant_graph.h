@@ -560,19 +560,22 @@ namespace kim {
      *   order to always start paragraphs by "- ".
      * - Multiple lines inside a parargraph might be reformatted in
      *   order to always start by two spaces.
-     *  - Empty lines will be removed.
+     * - Empty lines will be removed.
      *
      * As an example, using the following string:
+     *
      *     "Multiple paragraphs in informations might be reformatted in\n"
      *     "order to always start paragraphs by \"- \".\n\n"
      *     "Multiple lines inside a parargraph might be reformatted in\n"
      *     "order to always start by two spaces.\n\n\n\n"
      *     "- Empty lines will be removed."
+     *
      * will be reformatted as if it was provided as:
+     *
      *     "- Multiple paragraphs in informations might be reformatted in\n"
      *     "  order to always start paragraphs by \"- \".\n\n"
      *     "- Multiple lines inside a parargraph might be reformatted in\n"
-     *     "order to always start by two spaces.\n\n"
+     *     "  order to always start by two spaces.\n\n"
      *     "- Empty lines will be removed."
      *
      * \return Returns the metadata associated to the current graph.

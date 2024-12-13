@@ -1,0 +1,174 @@
+%skeleton "lalr1.cc"
+%require  "3.8.1"
+
+%output "variant_filter_parser.cpp"
+%header "variant_filter_parser.h"
+
+%define api.token.raw
+%define api.token.constructor
+%define api.value.type variant
+%define parse.assert
+%define parse.trace
+%define parse.error detailed
+%define parse.lac full
+
+%define api.namespace {kim}
+%define api.parser.class {VariantFilterParser}
+%define api.token.prefix {TOKEN_}
+%define api.location.file none
+%locations
+
+%code requires {
+#include <variant_filter.h>
+namespace kim {
+  class VariantFilterDriver;
+  /**
+   * \class VariantFilterParser::context
+   *
+   *  The Context of VariantFilterParser.
+   */
+}
+}
+
+%param { VariantFilterDriver &driver }
+
+
+%code{
+#include "variant_filter_driver.h"
+}
+
+%token  <kim::VariantFilter::ExpressionOperator>
+  AND          "conjunction operator ('AND' or '&&')"
+  OR           "disjunction operator ('or' or '||')"
+  NOT          "negation operator ('not' or '!')"
+  BLOCK_OPEN   "opening parenthesis '('"
+  BLOCK_CLOSE  "closing parenthesis ')'"
+
+%token  <kim::VariantFilter::ComparisonOperator>
+  EQUAL             "equality operator ('=')"
+  REGEX             "regular expression match operator ('~')"
+  NOT_EQUAL         "inequality operator ('!=' or '<>')"
+  LESS_THAN         "order relationship operator '<'"
+  LESS_OR_EQUAL     "order relationship operator '<='"
+  GREATER_THAN      "order relationship operator '>'"
+  GREATER_OR_EQUAL  "order relationship operator '>='"
+
+%token  <kim::VariantFilter::FilterOperation>
+  ON_CHROM              "field attribute 'CHROM'"
+  ON_POS                "field attribute 'POS'"
+  ON_ID                 "field attribute 'ID'"
+  ON_QUAL               "field attribute 'QUAL'"
+  ON_FILTER             "field attribute 'FILTER'"
+  ON_INFO               "field attribute 'INFO'"
+  ON_PLOIDY             "status 'Ploidy'"
+  ON_SNP                "status 'SNP' (Single Nucleotide Polymorphism)"
+  ON_MULTI_ALLELIC_SNP  "status 'MSNP' (multi-allelic SNP)"
+  ON_SV                 "status 'SV' (Structural Variant)"
+  ON_INDEL              "status 'InDel' (Insertion-Deletion)"
+
+%token  <std::string>
+  STR_VALUE   "string value"
+  INFO_FIELD  "info key"
+%token  <int>     INT_VALUE  "integer value"
+%token  <double>  NUM_VALUE "number value"
+%token  <bool>    BOOL_VALUE "boolean value"
+
+%nterm  <bool>                                    filter simple_expr
+%nterm  <kim::VariantFilter::ComparisonOperator>  any_op
+%nterm  <kim::VariantFilter::StringOperator>      str_op
+%nterm  <kim::VariantFilter::NumericalOperator>   num_op
+%nterm  <kim::VariantFilter::BooleanOperator>     bool_op
+%nterm  <std::string>                             string
+%nterm  <int>                                     integer
+%nterm  <double>                                  number
+%nterm  <bool>                                    boolean
+
+%left OR
+%left AND
+%left NOT
+%left BLOCK_OPEN BLOCK_CLOSE
+
+%printer { yyo << $$; } <*>;
+
+%%
+
+%start expr;
+
+expr: filter { driver._result = $1; };
+
+filter:
+    filter AND filter { $$ = $1 && $3; }
+  | filter OR filter { $$ = $1 || $3; }
+  | NOT filter { $$ = !$2; }
+  | BLOCK_OPEN filter BLOCK_CLOSE  { $$ = $2; }
+  | simple_expr { $$ = $1; }
+  ;
+
+simple_expr:
+    ON_CHROM              str_op   string   { $$ = driver.onChrom($2, $3); }
+  | ON_POS                num_op   integer  { $$ = driver.onPos($2, $3); }
+  | ON_ID                 str_op   string   { $$ = driver.onID($2, $3); }
+  | ON_QUAL               num_op   number   { $$ = driver.onQuality($2, $3); }
+  | ON_FILTER             str_op   string   { $$ = driver.onFilter($2, $3); }
+  | ON_INFO  INFO_FIELD   any_op   string   { $$ = driver.onInfo($2, $3, $4); }
+  | ON_PLOIDY             num_op   integer  { $$ = driver.onPloidy($2, $3); }
+  | ON_SNP                bool_op  boolean  { $$ = driver.onSNP($2, $3); }
+  | ON_MULTI_ALLELIC_SNP  bool_op  boolean  { $$ = driver.onMultiAllelicSNP($2, $3); }
+  | ON_SV                 bool_op  boolean  { $$ = driver.onSV($2, $3); }
+  | ON_INDEL              bool_op  boolean  { $$ = driver.onIndel($2, $3); }
+  ;
+
+any_op:
+    EQUAL             { $$ = $1; }
+  | REGEX             { $$ = $1; }
+  | NOT_EQUAL         { $$ = $1; }
+  | LESS_THAN         { $$ = $1; }
+  | LESS_OR_EQUAL     { $$ = $1; }
+  | GREATER_THAN      { $$ = $1; }
+  | GREATER_OR_EQUAL  { $$ = $1; }
+  ;
+
+str_op:
+    EQUAL      { $$ = VariantFilter::StringOperator($1); }
+  | REGEX      { $$ = VariantFilter::StringOperator($1); }
+  | NOT_EQUAL  { $$ = VariantFilter::StringOperator($1); }
+  ;
+
+num_op:
+    EQUAL             { $$ = VariantFilter::NumericalOperator($1); }
+  | NOT_EQUAL         { $$ = VariantFilter::NumericalOperator($1); }
+  | LESS_THAN         { $$ = VariantFilter::NumericalOperator($1); }
+  | LESS_OR_EQUAL     { $$ = VariantFilter::NumericalOperator($1); }
+  | GREATER_THAN      { $$ = VariantFilter::NumericalOperator($1); }
+  | GREATER_OR_EQUAL  { $$ = VariantFilter::NumericalOperator($1); }
+  ;
+
+bool_op:
+    EQUAL      { $$ = VariantFilter::BooleanOperator($1); }
+  | NOT_EQUAL  { $$ = VariantFilter::BooleanOperator($1); }
+  ;
+
+string:
+    STR_VALUE   { $$ = $1; }
+  | INT_VALUE   { $$ = std::to_string($1); }
+  | NUM_VALUE   { $$ = std::to_string($1); }
+  | BOOL_VALUE  { $$ = $1 ? "true" : "false"; }
+  ;
+
+integer: INT_VALUE  { $$ = $1; };
+
+number:
+    INT_VALUE  { $$ = $1; }
+  | NUM_VALUE  { $$ = $1; }
+  ;
+
+boolean:
+   BOOL_VALUE  { $$ = $1; }
+ | INT_VALUE   { $$ = $1; };
+
+%%
+
+void kim::VariantFilterParser::error(const location_type &l, const std::string &msg) {
+  driver._error_message = msg;
+  driver.scanner_location = l;
+}

@@ -211,6 +211,8 @@ am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_ac_append_to_file.m4 \
 	$(top_srcdir)/config/m4/ax_git_versioning.m4 \
 	$(top_srcdir)/config/m4/ax_openmp.m4 \
 	$(top_srcdir)/config/m4/ax_package_infos.m4 \
+	$(top_srcdir)/config/m4/ax_prog_bison.m4 \
+	$(top_srcdir)/config/m4/ax_prog_bison_version.m4 \
 	$(top_srcdir)/config/m4/ax_prog_doxygen.m4 \
 	$(top_srcdir)/config/m4/ax_require_defined.m4 \
 	$(top_srcdir)/config/m4/libtool.m4 \
@@ -287,6 +289,7 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BISON_VERSION = @BISON_VERSION@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -362,6 +365,9 @@ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LCOV = @LCOV@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
+LEX = @LEX@
+LEXLIB = @LEXLIB@
+LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LIBNAME = @LIBNAME@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -405,6 +411,8 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
+YACC = @YACC@
+YFLAGS = @YFLAGS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -467,9 +475,11 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 dist_pkgdata_DATA = \
-  kim.bash_completion	\
-  test-reads.fastq	\
-  test-sequences.fasta	\
+  kim.bash_completion		\
+  test-variants.vcf		\
+  test-variants-ref.fasta	\
+  test-reads.fastq		\
+  test-sequences.fasta		\
   $(STATS_FILE)
 
 

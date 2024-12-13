@@ -335,6 +335,21 @@ AC_PROG_AWK
 AC_PROG_LN_S
 AC_PROG_EGREP
 AC_PROG_SED
+AC_PROG_LEX([noyywrap])
+AX_PROG_BISON
+BISON=${YACC}
+AX_PROG_BISON_VERSION([3.6], [], [AC_MSG_WARN([
+A (bison) parser generator version 3.6 (or greater) is needed if some built sources must be regenerated.
+])
+YACC=false
+BISON=false
+])
+AS_IF([test "${LEX}" = ":"],
+      [dnl
+       LEX=false
+       AC_MSG_WARN([
+A ([f]lex) lexical analyser generator is needed if some built sources must be regenerated.
+])])
 PKG_PROG_PKG_CONFIG([0.25])
 
 AX_DEBIAN_PACKAGE([packaging/control],
@@ -411,7 +426,7 @@ DX_INIT_DOXYGEN([${PACKAGE_PRETTY_NAME}], [doxygen.cfg], [docs])
 AS_IF([test -z "${DX_DOXYGEN}"],
       [BUILD_DOC=false
        AC_MSG_WARN([
-   The 'doxygen' program cound not be found or documentation generation has
+   The 'doxygen' program could not be found or documentation generation has
    been disable by providing the '--disable-doxygen-doc' option to the
    configure script.
    This isn't critical, but it means that you won't be able to create the
@@ -780,7 +795,10 @@ MISSING_AUTOMAKE_TARGETS = dvi check installcheck
 $(echo $'\t')@echo "Fake target for '\$[]@' added by the kim configure script"
 
 distclean: distclean-orig
-#${tab}test -n "\$(distdir)" || rm htslib_vars.mk
+${tab}test -n "\$(distdir)" || rm htslib_vars.mk
+
+htslib_vars.mk:
+${tab}git restore \$[]@
 
 uninstall: uninstall-\$(SHLIB_FLAVOUR)
 ${tab}@echo "Target for '\$[]@' added by the kim configure script"

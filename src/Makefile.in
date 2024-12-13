@@ -214,6 +214,8 @@ am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_ac_append_to_file.m4 \
 	$(top_srcdir)/config/m4/ax_git_versioning.m4 \
 	$(top_srcdir)/config/m4/ax_openmp.m4 \
 	$(top_srcdir)/config/m4/ax_package_infos.m4 \
+	$(top_srcdir)/config/m4/ax_prog_bison.m4 \
+	$(top_srcdir)/config/m4/ax_prog_bison_version.m4 \
 	$(top_srcdir)/config/m4/ax_prog_doxygen.m4 \
 	$(top_srcdir)/config/m4/ax_require_defined.m4 \
 	$(top_srcdir)/config/m4/libtool.m4 \
@@ -274,6 +276,10 @@ am__objects_1 = libkim_debug_la-bounded_size_string.lo \
 	libkim_debug_la-monitor.lo libkim_debug_la-sort_helper.lo \
 	libkim_debug_la-variant_identification.lo \
 	libkim_debug_la-variant_kmer_enumerator.lo \
+	libkim_debug_la-variant_filter.lo \
+	libkim_debug_la-variant_filter_driver.lo \
+	libkim_debug_la-variant_filter_parser.lo \
+	libkim_debug_la-variant_filter_scanner.lo \
 	libkim_debug_la-variant_nodes_index.lo
 am_libkim_debug_la_OBJECTS = $(am__objects_1)
 libkim_debug_la_OBJECTS = $(am_libkim_debug_la_OBJECTS)
@@ -294,6 +300,9 @@ am_libkim_la_OBJECTS = libkim_la-bounded_size_string.lo \
 	libkim_la-kmer_variant_graph.lo libkim_la-monitor.lo \
 	libkim_la-sort_helper.lo libkim_la-variant_identification.lo \
 	libkim_la-variant_kmer_enumerator.lo \
+	libkim_la-variant_filter.lo libkim_la-variant_filter_driver.lo \
+	libkim_la-variant_filter_parser.lo \
+	libkim_la-variant_filter_scanner.lo \
 	libkim_la-variant_nodes_index.lo
 libkim_la_OBJECTS = $(am_libkim_la_OBJECTS)
 libkim_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -330,6 +339,10 @@ am__depfiles_remade = ./$(DEPDIR)/kim-kim.Po \
 	./$(DEPDIR)/libkim_debug_la-kmer_variant_graph.Plo \
 	./$(DEPDIR)/libkim_debug_la-monitor.Plo \
 	./$(DEPDIR)/libkim_debug_la-sort_helper.Plo \
+	./$(DEPDIR)/libkim_debug_la-variant_filter.Plo \
+	./$(DEPDIR)/libkim_debug_la-variant_filter_driver.Plo \
+	./$(DEPDIR)/libkim_debug_la-variant_filter_parser.Plo \
+	./$(DEPDIR)/libkim_debug_la-variant_filter_scanner.Plo \
 	./$(DEPDIR)/libkim_debug_la-variant_identification.Plo \
 	./$(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Plo \
 	./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo \
@@ -343,6 +356,10 @@ am__depfiles_remade = ./$(DEPDIR)/kim-kim.Po \
 	./$(DEPDIR)/libkim_la-kmer_variant_graph.Plo \
 	./$(DEPDIR)/libkim_la-monitor.Plo \
 	./$(DEPDIR)/libkim_la-sort_helper.Plo \
+	./$(DEPDIR)/libkim_la-variant_filter.Plo \
+	./$(DEPDIR)/libkim_la-variant_filter_driver.Plo \
+	./$(DEPDIR)/libkim_la-variant_filter_parser.Plo \
+	./$(DEPDIR)/libkim_la-variant_filter_scanner.Plo \
 	./$(DEPDIR)/libkim_la-variant_identification.Plo \
 	./$(DEPDIR)/libkim_la-variant_kmer_enumerator.Plo \
 	./$(DEPDIR)/libkim_la-variant_nodes_index.Plo
@@ -365,6 +382,23 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
+LEXCOMPILE = $(LEX) $(AM_LFLAGS) $(LFLAGS)
+LTLEXCOMPILE = $(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(LEX) $(AM_LFLAGS) $(LFLAGS)
+AM_V_LEX = $(am__v_LEX_@AM_V@)
+am__v_LEX_ = $(am__v_LEX_@AM_DEFAULT_V@)
+am__v_LEX_0 = @echo "  LEX     " $@;
+am__v_LEX_1 = 
+YLWRAP = $(top_srcdir)/config/ylwrap
+am__yacc_c2h = sed -e s/cc$$/hh/ -e s/cpp$$/hpp/ -e s/cxx$$/hxx/ \
+		   -e s/c++$$/h++/ -e s/c$$/h/
+YACCCOMPILE = $(YACC) $(AM_YFLAGS) $(YFLAGS)
+LTYACCCOMPILE = $(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(YACC) $(AM_YFLAGS) $(YFLAGS)
+AM_V_YACC = $(am__v_YACC_@AM_V@)
+am__v_YACC_ = $(am__v_YACC_@AM_DEFAULT_V@)
+am__v_YACC_0 = @echo "  YACC    " $@;
+am__v_YACC_1 = 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -411,7 +445,9 @@ am__define_uniq_tagged_files = \
   unique=`for i in $$list; do \
     if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
   done | $(am__uniquify_input)`
-am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/config/depcomp
+am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/config/depcomp \
+	$(top_srcdir)/config/ylwrap ChangeLog \
+	variant_filter_parser.cpp variant_filter_scanner.cpp
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 pkgincludedir = $(includedir)/$(install_dirname)
 ACLOCAL = @ACLOCAL@
@@ -422,6 +458,7 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BISON_VERSION = @BISON_VERSION@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -497,6 +534,9 @@ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LCOV = @LCOV@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
+LEX = @LEX@
+LEXLIB = @LEXLIB@
+LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LIBNAME = @LIBNAME@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -540,6 +580,8 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
+YACC = @YACC@
+YFLAGS = @YFLAGS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -639,6 +681,18 @@ noinst_LTLIBRARIES =
 # kim-debug library #
 #####################
 check_LTLIBRARIES = libkim-debug.la
+BUILT_SOURCES = \
+  $(srcdir)/variant_filter_scanner.h \
+  $(srcdir)/variant_filter_scanner.cpp \
+  $(srcdir)/variant_filter_parser.h \
+  $(srcdir)/variant_filter_parser.cpp
+
+
+# Don't set AM_YFLAGS to '-d' flag (which is handled by automake to
+# generate header dependency rules) since inferred header file names
+# are not those specified in flex/bison source files. Use classic
+# dependencies Instead,
+EXTRA_DIST = $(BUILT_SOURCES)
 libkim_ladir = $(abs_srcdir)
 libkim_la_SOURCES = \
   bounded_size_string.h bounded_size_string.cpp			\
@@ -654,6 +708,10 @@ libkim_la_SOURCES = \
   sort_helper.h sort_helper.cpp					\
   variant_identification.h variant_identification.cpp		\
   variant_kmer_enumerator.h variant_kmer_enumerator.cpp		\
+  variant_filter.h variant_filter.cpp				\
+  variant_filter_driver.h variant_filter_driver.cpp		\
+  variant_filter_parser.ypp					\
+  variant_filter_scanner.lpp					\
   variant_nodes_index.h variant_nodes_index.cpp
 
 libkim_la_configdir = $(libdir)/$(install_dirname)/include
@@ -686,10 +744,11 @@ MOSTLYCLEANFILES = *~
 CLEANFILES = *~ $(GCDA_FILES) $(GCNO_FILES) $(GCOV_FILES)
 DISTCLEANFILES = *~
 MAINTAINERCLEANFILES = *~
-all: all-am
+all: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
-.SUFFIXES: .cpp .lo .o .obj
+.SUFFIXES: .cpp .lo .lpp .o .obj .ypp
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -853,6 +912,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-kmer_variant_graph.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-monitor.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-sort_helper.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_filter.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_filter_driver.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_filter_parser.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_filter_scanner.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_identification.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo@am__quote@ # am--include-marker
@@ -866,6 +929,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-kmer_variant_graph.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-monitor.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-sort_helper.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_filter.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_filter_driver.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_filter_parser.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_filter_scanner.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_identification.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_kmer_enumerator.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_nodes_index.Plo@am__quote@ # am--include-marker
@@ -981,6 +1048,34 @@ libkim_debug_la-variant_kmer_enumerator.lo: variant_kmer_enumerator.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-variant_kmer_enumerator.lo `test -f 'variant_kmer_enumerator.cpp' || echo '$(srcdir)/'`variant_kmer_enumerator.cpp
 
+libkim_debug_la-variant_filter.lo: variant_filter.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-variant_filter.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-variant_filter.Tpo -c -o libkim_debug_la-variant_filter.lo `test -f 'variant_filter.cpp' || echo '$(srcdir)/'`variant_filter.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_debug_la-variant_filter.Tpo $(DEPDIR)/libkim_debug_la-variant_filter.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_filter.cpp' object='libkim_debug_la-variant_filter.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-variant_filter.lo `test -f 'variant_filter.cpp' || echo '$(srcdir)/'`variant_filter.cpp
+
+libkim_debug_la-variant_filter_driver.lo: variant_filter_driver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-variant_filter_driver.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-variant_filter_driver.Tpo -c -o libkim_debug_la-variant_filter_driver.lo `test -f 'variant_filter_driver.cpp' || echo '$(srcdir)/'`variant_filter_driver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_debug_la-variant_filter_driver.Tpo $(DEPDIR)/libkim_debug_la-variant_filter_driver.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_filter_driver.cpp' object='libkim_debug_la-variant_filter_driver.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-variant_filter_driver.lo `test -f 'variant_filter_driver.cpp' || echo '$(srcdir)/'`variant_filter_driver.cpp
+
+libkim_debug_la-variant_filter_parser.lo: variant_filter_parser.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-variant_filter_parser.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-variant_filter_parser.Tpo -c -o libkim_debug_la-variant_filter_parser.lo `test -f 'variant_filter_parser.cpp' || echo '$(srcdir)/'`variant_filter_parser.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_debug_la-variant_filter_parser.Tpo $(DEPDIR)/libkim_debug_la-variant_filter_parser.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_filter_parser.cpp' object='libkim_debug_la-variant_filter_parser.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-variant_filter_parser.lo `test -f 'variant_filter_parser.cpp' || echo '$(srcdir)/'`variant_filter_parser.cpp
+
+libkim_debug_la-variant_filter_scanner.lo: variant_filter_scanner.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-variant_filter_scanner.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-variant_filter_scanner.Tpo -c -o libkim_debug_la-variant_filter_scanner.lo `test -f 'variant_filter_scanner.cpp' || echo '$(srcdir)/'`variant_filter_scanner.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_debug_la-variant_filter_scanner.Tpo $(DEPDIR)/libkim_debug_la-variant_filter_scanner.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_filter_scanner.cpp' object='libkim_debug_la-variant_filter_scanner.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-variant_filter_scanner.lo `test -f 'variant_filter_scanner.cpp' || echo '$(srcdir)/'`variant_filter_scanner.cpp
+
 libkim_debug_la-variant_nodes_index.lo: variant_nodes_index.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-variant_nodes_index.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-variant_nodes_index.Tpo -c -o libkim_debug_la-variant_nodes_index.lo `test -f 'variant_nodes_index.cpp' || echo '$(srcdir)/'`variant_nodes_index.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_debug_la-variant_nodes_index.Tpo $(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo
@@ -1072,6 +1167,34 @@ libkim_la-variant_kmer_enumerator.lo: variant_kmer_enumerator.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-variant_kmer_enumerator.lo `test -f 'variant_kmer_enumerator.cpp' || echo '$(srcdir)/'`variant_kmer_enumerator.cpp
 
+libkim_la-variant_filter.lo: variant_filter.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-variant_filter.lo -MD -MP -MF $(DEPDIR)/libkim_la-variant_filter.Tpo -c -o libkim_la-variant_filter.lo `test -f 'variant_filter.cpp' || echo '$(srcdir)/'`variant_filter.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-variant_filter.Tpo $(DEPDIR)/libkim_la-variant_filter.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_filter.cpp' object='libkim_la-variant_filter.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-variant_filter.lo `test -f 'variant_filter.cpp' || echo '$(srcdir)/'`variant_filter.cpp
+
+libkim_la-variant_filter_driver.lo: variant_filter_driver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-variant_filter_driver.lo -MD -MP -MF $(DEPDIR)/libkim_la-variant_filter_driver.Tpo -c -o libkim_la-variant_filter_driver.lo `test -f 'variant_filter_driver.cpp' || echo '$(srcdir)/'`variant_filter_driver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-variant_filter_driver.Tpo $(DEPDIR)/libkim_la-variant_filter_driver.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_filter_driver.cpp' object='libkim_la-variant_filter_driver.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-variant_filter_driver.lo `test -f 'variant_filter_driver.cpp' || echo '$(srcdir)/'`variant_filter_driver.cpp
+
+libkim_la-variant_filter_parser.lo: variant_filter_parser.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-variant_filter_parser.lo -MD -MP -MF $(DEPDIR)/libkim_la-variant_filter_parser.Tpo -c -o libkim_la-variant_filter_parser.lo `test -f 'variant_filter_parser.cpp' || echo '$(srcdir)/'`variant_filter_parser.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-variant_filter_parser.Tpo $(DEPDIR)/libkim_la-variant_filter_parser.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_filter_parser.cpp' object='libkim_la-variant_filter_parser.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-variant_filter_parser.lo `test -f 'variant_filter_parser.cpp' || echo '$(srcdir)/'`variant_filter_parser.cpp
+
+libkim_la-variant_filter_scanner.lo: variant_filter_scanner.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-variant_filter_scanner.lo -MD -MP -MF $(DEPDIR)/libkim_la-variant_filter_scanner.Tpo -c -o libkim_la-variant_filter_scanner.lo `test -f 'variant_filter_scanner.cpp' || echo '$(srcdir)/'`variant_filter_scanner.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-variant_filter_scanner.Tpo $(DEPDIR)/libkim_la-variant_filter_scanner.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_filter_scanner.cpp' object='libkim_la-variant_filter_scanner.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-variant_filter_scanner.lo `test -f 'variant_filter_scanner.cpp' || echo '$(srcdir)/'`variant_filter_scanner.cpp
+
 libkim_la-variant_nodes_index.lo: variant_nodes_index.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-variant_nodes_index.lo -MD -MP -MF $(DEPDIR)/libkim_la-variant_nodes_index.Tpo -c -o libkim_la-variant_nodes_index.lo `test -f 'variant_nodes_index.cpp' || echo '$(srcdir)/'`variant_nodes_index.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-variant_nodes_index.Tpo $(DEPDIR)/libkim_la-variant_nodes_index.Plo
@@ -1092,6 +1215,12 @@ kim-kim.obj: kim.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='kim.cpp' object='kim-kim.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(kim_CXXFLAGS) $(CXXFLAGS) -c -o kim-kim.obj `if test -f 'kim.cpp'; then $(CYGPATH_W) 'kim.cpp'; else $(CYGPATH_W) '$(srcdir)/kim.cpp'; fi`
+
+.lpp.cpp:
+	$(AM_V_LEX)$(am__skiplex) $(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)
+
+.ypp.cpp:
+	$(AM_V_YACC)$(am__skipyacc) $(SHELL) $(YLWRAP) $< y.tab.c $@ y.tab.h `echo $@ | $(am__yacc_c2h)` y.output $*.output -- $(YACCCOMPILE)
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -1227,7 +1356,8 @@ distdir-am: $(DISTFILES)
 	done
 check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) $(check_LTLIBRARIES)
-check: check-am
+check: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) check-am
 all-am: Makefile $(PROGRAMS) $(LTLIBRARIES) $(DATA) $(HEADERS)
 install-binPROGRAMS: install-libLTLIBRARIES
 
@@ -1237,8 +1367,10 @@ installdirs:
 	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" "$(DESTDIR)$(libkim_la_configdir)" "$(DESTDIR)$(pkgincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: install-am
-install-exec: install-exec-am
+install: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-am
+install-exec: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
 
@@ -1270,6 +1402,9 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-rm -f variant_filter_parser.cpp
+	-rm -f variant_filter_scanner.cpp
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-am
 
@@ -1289,6 +1424,10 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kmer_variant_graph.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-monitor.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-sort_helper.Plo
+	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_filter.Plo
+	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_filter_driver.Plo
+	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_filter_parser.Plo
+	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_filter_scanner.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_identification.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo
@@ -1302,6 +1441,10 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libkim_la-kmer_variant_graph.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-monitor.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-sort_helper.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-variant_filter.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-variant_filter_driver.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-variant_filter_parser.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-variant_filter_scanner.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_identification.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_kmer_enumerator.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_nodes_index.Plo
@@ -1363,6 +1506,10 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kmer_variant_graph.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-monitor.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-sort_helper.Plo
+	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_filter.Plo
+	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_filter_driver.Plo
+	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_filter_parser.Plo
+	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_filter_scanner.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_identification.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo
@@ -1376,6 +1523,10 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libkim_la-kmer_variant_graph.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-monitor.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-sort_helper.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-variant_filter.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-variant_filter_driver.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-variant_filter_parser.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-variant_filter_scanner.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_identification.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_kmer_enumerator.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_nodes_index.Plo
@@ -1399,7 +1550,8 @@ uninstall-am: uninstall-binPROGRAMS uninstall-libLTLIBRARIES \
 	uninstall-libkim_la_configDATA uninstall-pkgincludeHEADERS
 	@$(NORMAL_INSTALL)
 	$(MAKE) $(AM_MAKEFLAGS) uninstall-hook
-.MAKE: check-am install-am install-data-am install-strip uninstall-am
+.MAKE: all check check-am install install-am install-data-am \
+	install-exec install-strip uninstall-am
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles check check-am clean \
 	clean-binPROGRAMS clean-checkLTLIBRARIES clean-generic \
@@ -1423,6 +1575,14 @@ uninstall-am: uninstall-binPROGRAMS uninstall-libLTLIBRARIES \
 
 .PRECIOUS: Makefile
 
+
+$(srcdir)/variant_filter_scanner.h: $(srcdir)/variant_filter_scanner.cpp
+	@test -f "$@" || rm -f "$^"
+	@test -f "$@" || $(MAKE) $(AM_MAKEFLAGS) "$^"
+
+$(srcdir)/variant_filter_parser.h: $(srcdir)/variant_filter_parser.cpp
+	@test -f "$@" || rm -f "$^"
+	@test -f "$@" || $(MAKE) $(AM_MAKEFLAGS) "$^"
 
 #########################
 # Dependencies handling #

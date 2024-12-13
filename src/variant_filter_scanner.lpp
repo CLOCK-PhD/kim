@@ -1,0 +1,171 @@
+%{
+
+#include <cerrno>
+#include <climits>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+
+#include "variant_filter_driver.h"
+#include "variant_filter_parser.h"
+
+using parser = kim::VariantFilterParser;
+using expr_op = kim::VariantFilter::ExpressionOperator;
+using comp_op = kim::VariantFilter::ComparisonOperator;
+using filter_op = kim::VariantFilter::FilterOperation;
+
+%}
+
+%option nodefault
+%option noyywrap
+%option nounput
+%option noinput
+%option batch
+%option debug
+%option warn
+%option header-file="variant_filter_scanner.h"
+%option outfile="variant_filter_scanner.cpp"
+
+%{
+  parser::symbol_type make_INT_VALUE(const std::string &s, const parser::location_type &loc);
+  parser::symbol_type make_NUM_VALUE(const std::string &s, const parser::location_type &loc);
+  parser::symbol_type make_BOOL_VALUE(const std::string &s, const parser::location_type &loc);
+  parser::symbol_type make_STR_VALUE(const std::string &s, const parser::location_type &loc);
+%}
+
+%{
+// Each time a pattern is matched, the location is updated.
+#define YY_USER_ACTION loc.columns(yyleng);
+%}
+
+/* Regex aliases */
+
+and_operator     (?i:and)|("&&")
+or_operator      (?i:or)|("||")
+not_operator     (?i:not)|("!")
+block_open       "("
+block_close      ")"
+
+equal            "="
+regex            "~"
+not_equal        (("!=")|("<>"))
+less_than        "<"
+greater_than     ">"
+less_or_equal    "<="
+greater_or_equal ">="
+
+chrom            (?i:chrom)
+pos              (?i:pos)
+id               (?i:id)
+qual             (?i:qual)
+filter           (?i:filter)
+info             (?i:info:)
+info_field       (([[:alpha:]_][[:alnum:]_\.]*)|("1000G"))
+ploidy           (?i:ploidy)
+SNP              (?i:snp)
+MSNP             (?i:msnp)
+SV               (?i:sv)
+indel            (?i:indel)
+number           [+-]?(([0-9]+\.[0-9]*)|([0-9]*\.[0-9]+))([eE][+-]?[0-9]+)?
+integer          [+-]?[0-9]+
+boolean          (?i:(true)|(false))
+string           (\"([^"\\]|\\.)*\")|('([^'\\]|\\.)*')
+
+/* Declares INFO condition which has exclusive rules */
+%x INFO
+
+%%
+
+%{
+  kim::location &loc = driver.scanner_location;
+  // A call to yylex() is a step
+  loc.step();
+%}
+
+<*>\n+                   loc.lines(yyleng);
+<*>[[:space:]]           loc.step();
+
+<INFO>{info_field}       {
+                            BEGIN(INITIAL);
+                            return parser::make_INFO_FIELD(yytext, loc);
+                         }
+
+{and_operator}           return parser::make_AND(expr_op::AND, loc);
+{or_operator}            return parser::make_OR(expr_op::OR, loc);
+{not_operator}           return parser::make_NOT(expr_op::NOT, loc);
+{block_open}             return parser::make_BLOCK_OPEN(expr_op::BLOCK_OPEN, loc);
+{block_close}            return parser::make_BLOCK_CLOSE(expr_op::BLOCK_CLOSE, loc);
+
+{chrom}                  return parser::make_ON_CHROM(filter_op::ON_CHROM, loc);
+{pos}                    return parser::make_ON_POS(filter_op::ON_POS, loc);
+{id}                     return parser::make_ON_ID(filter_op::ON_ID, loc);
+{qual}                   return parser::make_ON_QUAL(filter_op::ON_QUAL, loc);
+{filter}                 return parser::make_ON_FILTER(filter_op::ON_FILTER, loc);
+{info}                   {
+                           BEGIN(INFO);
+                           return parser::make_ON_INFO(filter_op::ON_INFO, loc);
+                         }
+{ploidy}                 return parser::make_ON_PLOIDY(filter_op::ON_PLOIDY, loc);
+{SNP}                    return parser::make_ON_SNP(filter_op::ON_SNP, loc);
+{MSNP}                   return parser::make_ON_MULTI_ALLELIC_SNP(filter_op::ON_MULTI_ALLELIC_SNP, loc);
+{SV}                     return parser::make_ON_SV(filter_op::ON_SV, loc);
+{indel}                  return parser::make_ON_INDEL(filter_op::ON_INDEL, loc);
+
+<*>{equal}               return parser::make_EQUAL(comp_op::EQUAL, loc);
+<*>{regex}               return parser::make_REGEX(comp_op::REGEX, loc);
+<*>{not_equal}           return parser::make_NOT_EQUAL(comp_op::NOT_EQUAL, loc);
+<*>{less_or_equal}       return parser::make_LESS_OR_EQUAL(comp_op::LESS_OR_EQUAL, loc);
+<*>{less_than}           return parser::make_LESS_THAN(comp_op::LESS_THAN, loc);
+<*>{greater_or_equal}    return parser::make_GREATER_THAN(comp_op::GREATER_OR_EQUAL, loc);
+<*>{greater_than}        return parser::make_GREATER_OR_EQUAL(comp_op::GREATER_THAN, loc);
+
+<*>{number}              return make_NUM_VALUE(yytext, loc);
+<*>{integer}             return make_INT_VALUE(yytext, loc);
+<*>{boolean}             return make_BOOL_VALUE(yytext, loc);
+<*>{string}              return make_STR_VALUE(yytext, loc);
+
+<*>.                     throw parser::syntax_error(loc, "unexpected character: " + std::string(yytext));
+<<EOF>>                  return parser::make_YYEOF(loc);
+
+%%
+
+parser::symbol_type make_INT_VALUE(const std::string &s, const parser::location_type &loc) {
+  errno = 0;
+  long int v = strtol(s.c_str(), NULL, 10);
+  if (errno) {
+    throw strerror(errno);
+  }
+  return parser::make_INT_VALUE(v, loc);
+}
+
+parser::symbol_type make_NUM_VALUE(const std::string &s, const parser::location_type &loc) {
+  errno = 0;
+  double v = strtod(s.c_str(), NULL);
+  if (errno) {
+    throw strerror(errno);
+  }
+  return parser::make_NUM_VALUE(v, loc);
+}
+
+parser::symbol_type make_BOOL_VALUE(const std::string &s, const parser::location_type &loc) {
+  return parser::make_BOOL_VALUE((s[0] == 't') || (s[0] == 'T'), loc);
+}
+
+parser::symbol_type make_STR_VALUE(const std::string &s, const parser::location_type &loc) {
+  assert(s.size() >= 2);
+#ifndef NDEBUG
+  char delim = s[0];
+#endif
+  size_t n = s.size();
+  assert(s[n - 1] == delim);
+  std::string res;
+  res.reserve(n);
+  for (size_t i = 1; i < n - 1; ++i) {
+    if (s[i] == '\\') {
+      res += "\\\\";
+    } else {
+      res += s[i];
+    }
+  }
+  return parser::make_STR_VALUE(res, loc);
+}

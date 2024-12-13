@@ -92,10 +92,12 @@
 # Global configuration #
 ########################
 
-dist_pkgdata_DATA =	\
-  kim.bash_completion	\
-  test-reads.fastq	\
-  test-sequences.fasta	\
+dist_pkgdata_DATA =		\
+  kim.bash_completion		\
+  test-variants.vcf		\
+  test-variants-ref.fasta	\
+  test-reads.fastq		\
+  test-sequences.fasta		\
   $(STATS_FILE)
 
 @CODE_STATISTICS_RULES@

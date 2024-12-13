@@ -997,7 +997,11 @@ EXCLUDE                = "@abs_top_srcdir@/external/" \
                          "@abs_top_builddir@/external/" \
                          "@top_builddir@/external/" \
                          "@abs_top_builddir@/@PACKAGE@-@VERSION@/" \
-                         "@top_builddir@/@PACKAGE@-@VERSION@/"
+                         "@top_builddir@/@PACKAGE@-@VERSION@/" \
+                         "@abs_top_srcdir@/src/variant_filter_scanner.h" \
+                         "@top_srcdir@/src/variant_filter_scanner.h" \
+                         "@abs_top_srcdir@/src/variant_filter_parser.h" \
+                         "@top_srcdir@/src/variant_filter_parser.h"
                          
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or

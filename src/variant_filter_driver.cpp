@@ -1,6 +1,6 @@
 /******************************************************************************
 *                                                                             *
-*  Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM                           *
+*  Copyright © 2024      -- IGH / LIRMM / CNRS / UM                           *
 *                           (Institut de Génétique Humaine /                  *
 *                           Laboratoire d'Informatique, de Robotique et de    *
 *                           Microélectronique de Montpellier /                *
@@ -87,32 +87,109 @@
 *                                                                             *
 ******************************************************************************/
 
-#ifndef __KIM_H__
-#define __KIM_H__
+#include "variant_filter_driver.h"
+#include "variant_filter_scanner.h"
 
-#ifdef HAVE_CONFIG_H
-#  include <config.h>
-#endif
-#include <bounded_size_string.h>
-#include <dna_file_index.h>
-#include <dna_file_reader.h>
-#include <file_reader.h>
-#include <kim_exception.h>
-#include <kim_settings.h>
-#include <kmer_nodes_subindex.h>
-#include <kmer_variant_edges_subindex.h>
-#include <kmer_variant_graph.h>
-#include <monitor.h>
-#include <sort_helper.h>
-#include <variant_filter.h>
-#include <variant_filter_driver.h>
-#include <variant_filter_parser.h>
-#include <variant_filter_scanner.h>
-#include <variant_identification.h>
-#include <variant_kmer_enumerator.h>
-#include <variant_nodes_index.h>
+#include "config.h"
 
-#endif
-// Local Variables:
-// mode:c++
-// End:
+#include <cassert>
+
+using namespace std;
+
+extern int yy_flex_debug;
+
+BEGIN_KIM_NAMESPACE
+
+VariantFilterDriverException::VariantFilterDriverException(const VariantFilterDriver &driver):Exception()
+{
+  const string filter = driver._filter;
+  const location &loc = driver.scanner_location;
+  _msg += "Filter expression parse error: ";
+  _msg += driver._error_message;
+  _msg += ".\n";
+  bool prepend_line_numbers = ((loc.begin.line != 1) || (loc.end.line != 1));
+  size_t nb_digits = (prepend_line_numbers ? to_string(loc.end.line).size() : 0);
+  size_t first_pos = 0;
+  size_t n = filter.size();
+  int nb_l = 0;
+  while (first_pos < n) {
+    ++nb_l;
+    if ((nb_l >= loc.begin.line) and (nb_l <= loc.end.line)) {
+      _msg += ">";
+    } else {
+      _msg += " ";
+    }
+    _msg += " ";
+    if (prepend_line_numbers) {
+      string num = to_string(nb_l);
+      assert(nb_digits >= num.size());
+      _msg += string(nb_digits - num.size(), ' ');
+      _msg += num;
+      _msg += ": ";
+    }
+    size_t last_pos = filter.find_first_of("\n", first_pos);
+    if (last_pos == string::npos) {
+      last_pos = n;
+    }
+    assert(first_pos <= last_pos);
+    assert(last_pos <= n);
+    _msg += filter.substr(first_pos, last_pos - first_pos);
+    _msg += "\n";
+    if ((nb_l >= loc.begin.line) and (nb_l <= loc.end.line)) {
+      size_t padding_length = nb_digits + 2 + 2 * prepend_line_numbers;
+      size_t mark_length = 0;
+      if (loc.begin.line == loc.end.line) {
+        assert(loc.begin.column > 0);
+        padding_length += loc.begin.column - 1;
+        assert(loc.begin.column <= loc.end.column);
+        mark_length += loc.end.column - loc.begin.column;
+      } else {
+        if (nb_l == loc.begin.line) {
+          padding_length += loc.begin.column - 1;
+          assert(last_pos - first_pos + 1 >= size_t(loc.begin.column));
+          mark_length += last_pos - first_pos - loc.begin.column + 1;
+        } else {
+          if (nb_l == loc.end.line) {
+            assert(loc.end.column > 0);
+            mark_length += loc.end.column - 1;
+          } else {
+            assert(last_pos >= first_pos);
+            mark_length += last_pos - first_pos;
+          }
+        }
+      }
+      mark_length += !mark_length; // mark_length is at least 1 ;-)
+      assert(mark_length > 0);
+      _msg += string(padding_length, ' ');
+      _msg += string(mark_length, '^');
+      _msg += "\n";
+    }
+    first_pos = last_pos + 1;
+  }
+}
+
+VariantFilterDriver::VariantFilterDriver(vcfpp::BcfRecord &variant):
+  VariantFilter(variant),
+  _filter(), _result(true), _error_message(),
+  debug_parsing(false), debug_scanning(false), scanner_location()
+{}
+
+bool VariantFilterDriver::apply(const std::string &filter) {
+  _filter = filter;
+  _result = true;
+  _error_message.clear();
+  scanner_location.begin.line = scanner_location.end.line = 1;
+  scanner_location.begin.column = scanner_location.end.column = 1;
+  YY_BUFFER_STATE state = yy_scan_string(filter.c_str());
+  yy_flex_debug = debug_scanning;
+  VariantFilterParser parse(*this);
+  parse.set_debug_level(debug_parsing);
+  int res = parse();
+  yy_delete_buffer(state);
+  if (res) {
+    throw VariantFilterDriverException(*this);
+  }
+  return _result;
+}
+
+END_KIM_NAMESPACE

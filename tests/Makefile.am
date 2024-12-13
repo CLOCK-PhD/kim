@@ -204,6 +204,16 @@ TESTS          += test_variant_nodes_index
 test_variant_nodes_index_SOURCES = test_variant_nodes_index.cpp
 
 
+##########################################
+# kim::VariantFilter* class test program #
+##########################################
+
+check_PROGRAMS += test_variant_filter
+TESTS          += test_variant_filter
+
+test_variant_filter_SOURCES = test_variant_filter.cpp
+
+
 #########################
 # Dependencies handling #
 #########################

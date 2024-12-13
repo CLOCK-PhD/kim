@@ -128,6 +128,27 @@ noinst_LTLIBRARIES =
 check_LTLIBRARIES =
 bin_PROGRAMS =
 
+BUILT_SOURCES = \
+  $(srcdir)/variant_filter_scanner.h \
+  $(srcdir)/variant_filter_scanner.cpp \
+  $(srcdir)/variant_filter_parser.h \
+  $(srcdir)/variant_filter_parser.cpp
+
+# Don't set AM_YFLAGS to '-d' flag (which is handled by automake to
+# generate header dependency rules) since inferred header file names
+# are not those specified in flex/bison source files. Use classic
+# dependencies Instead,
+
+EXTRA_DIST = $(BUILT_SOURCES)
+
+$(srcdir)/variant_filter_scanner.h: $(srcdir)/variant_filter_scanner.cpp
+	@test -f "$@" || rm -f "$^"
+	@test -f "$@" || $(MAKE) $(AM_MAKEFLAGS) "$^"
+
+$(srcdir)/variant_filter_parser.h: $(srcdir)/variant_filter_parser.cpp
+	@test -f "$@" || rm -f "$^"
+	@test -f "$@" || $(MAKE) $(AM_MAKEFLAGS) "$^"
+
 
 ###############
 # kim library #
@@ -150,6 +171,10 @@ libkim_la_SOURCES =						\
   sort_helper.h sort_helper.cpp					\
   variant_identification.h variant_identification.cpp		\
   variant_kmer_enumerator.h variant_kmer_enumerator.cpp		\
+  variant_filter.h variant_filter.cpp				\
+  variant_filter_driver.h variant_filter_driver.cpp		\
+  variant_filter_parser.ypp					\
+  variant_filter_scanner.lpp					\
   variant_nodes_index.h variant_nodes_index.cpp
 
 libkim_la_configdir   = $(libdir)/$(install_dirname)/include

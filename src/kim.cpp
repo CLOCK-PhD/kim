@@ -179,6 +179,7 @@ private:
     FORCE_OPT,
     INDEX_DIRECTORY_OPT,
     CREATE_INDEX_OPT,
+    VARIANT_FILTER_OPT,
     KMER_LENGTH_OPT,
     KMER_PREFIX_LENGTH_OPT,
     REFERENCE_OPT,
@@ -196,6 +197,7 @@ private:
   string _progname;
   Settings _settings;
   _RunningMode _running_mode;
+  vector<string> _variant_filters;
   vector<string> _dna_files;
   vector<string> _variants_files;
   string _output_file;
@@ -204,10 +206,10 @@ private:
   ~KimProgram();
 
   void _processOptions(_OptionHandler &_opts);
+  bool _variantOfInterest(vcfpp::BcfRecord &v) const;
   void _runQuery();
   void _createIndex();
 
-  static bool _variantOfInterest(vcfpp::BcfRecord &v);
   static bool _isURL(const string &f);
   static bool _checkIfFileExists(const string &f);
   static void _assertFileExists(const string &f);
@@ -302,6 +304,11 @@ const option::Descriptor KimProgram::_usage[] =
      " files (see option --reference). The variants file must be VCF of BCF"
      " formatted (compressed with gzip or not). You also can provide URL "
      "instead of some local file name." },
+   { VARIANT_FILTER_OPT,       0, "F", "variant-filter",     Arg::Required,
+     "  -F | --variant-filter <expr> \tFilter variants according to the"
+     " given expression. When this option is provided multiple time, each"
+     " expression must be satisfyed for the variant to be added into the"
+     " index. See filter syntax explanation below for additional details." },
    ////////////////////////////////////////////////////////////////////////
    { UNKNOWN_OPT,              0, "" , "",                   Arg::None,
      "\n"
@@ -319,7 +326,11 @@ const option::Descriptor KimProgram::_usage[] =
      "- The second one is to analyse some given input files (containing raw"
      " biological data from some experiment) and to query an existing index"
      " to exhibit variants that are present in the input data.\n"
-     "\nTo create an index, the kim program needs a (set of) reference"
+     "\n"
+     "INDEX CREATION\n"
+     "==============\n"
+     "\n"
+     "To create an index, the kim program needs a (set of) reference"
      " genome(s) or transcriptome(s) and the variant tof interest (in VCF"
      " format). An example of command line to create an index is:\n"
      "\n  kim --create-index \\"
@@ -328,14 +339,119 @@ const option::Descriptor KimProgram::_usage[] =
      "\n      --variants variants_file.vcf \\"
      "\n      --index-dir /where/to/store/index/"
      "\n"
-     "\nTo query an existing index, the kim program needs an index and some"
-     " files to analyse. An example of command line to query some index is:\n"
-     "\n  kim --index-dir /path/to/my/index/ file1.fastq file2.fastq"
      "\n"
-     "\nOf course, it is possible to create the index then query it in a"
-     " unique command by combining the necessary options."
-     "\nThe biological sequence files (input files to analyse and"
-     " references) must be either fasta or fastq formatted."
+     "The biological sequence files must be either fasta or fastq formatted.\n"
+     "\n"
+     "Variant Filtering\n"
+     "-----------------\n"
+     "\n"
+     "The filter can be a simple expression of the form:\n"
+     "   '<attribute> <comparator> <value>'\n"
+     "or a more complex expression using logical operators.\n\n"
+     "Accepted (case insensive) operators are:\n"
+     "  'not', '!' (shortcut for 'not'),\n"
+     "  'and', '&&' (shortcut for 'and'),\n"
+     "  'or' and '||' (shortcut for 'or').\n"
+     "\n"
+     "The conjunction ('and') has priority over the disjunction ('or') and the"
+     " negation ('not') has priority over the conjunction. It is possible to use"
+     " parenthesis to enclose an expression in order to give it a higher priority."
+     " For example '<expr1> or not <expr2> and <expr3>' evaluates exactly as"
+     " '(<expr1> or (not(<expr2>) and <expr3>))'.\n"
+     "\n"
+     "The possible <attribute>s can be either VCF fields or some variant status:\n"
+     "- Handled (case insensive) VCF fields are:\n"
+     "  'CHROM', 'ID', 'POS', 'FILTER' and 'QUAL'.\n"
+     "- It can also be some (CASE SENSIVE) key of the 'INFO' field.\n"
+     "  The syntax of the <attribute> is then 'INFO:KEY'.\n"
+     "- The following (case insensive) variant properties are also accepted:\n"
+     "  'Ploidy', 'SNP', 'MSNP', 'SV' and 'Indel'.\n"
+     "\n"
+     "The available <comparator>s depends on the type of the attribute.\n"
+     "\n"
+     "If the attribute has a boolean value ('SNP', 'mSNP', 'SV', 'Indel' and some"
+     " info tags like 'INFO:1000G' of 'INFO:R3' for example), then only '=' and"
+     " '!=' (or '<>') are accepted.\n"
+     "\n"
+     "If the attribute has a string value ('CHROM', 'ID', 'FILTER' and some"
+     " info tags like 'info:VC' for example), then only '=', '~', '!=' (or '<>')"
+     " are accepted. The '~' is a regex comparison whereas the other operators"
+     " expect exact (in)equality.\n"
+     "\n"
+     "If the attribute has a numeric value ('POS', 'QUAL', 'Ploidy' and some"
+     " INFO tags like 'info:RS' for example), then available operators are"
+     " '=', '!=' (or '<>'), '<', '<=', '>', '>='.\n"
+     "\n"
+     "The compared <value> must be of the correct type according to the"
+     "attribute. For boolean values, only 'true', '1' (shortcut for 'true'),"
+     " 'false', '0' (shortcut for 'false') are accepted (case insensive).\n"
+     "\n"
+     "String values must be enclosed by either single quotes (in such case,"
+     " inner single quotes must be escaped uising '\\') or by double quotes"
+     " (in such case, inner double quotes must be escaped using '\\').\n"
+     "\n"
+     "Numeric values are either integer like -3, +54, 42, ... or reals"
+     " (possibly using a scientific notation) like -3., +5.12, .18, 1.2e-3,"
+     " ...\n"
+     "\n"
+     "Let us illustate filters using some examples:\n"
+     "\n"
+     "- Filter 'Chrom~\".*\"' accepts all variants (since any name"
+     " is accepted for the 'CHROM' attribute.\n"
+     "\n"
+     "- Filter 'Chrom=\"B\"' accepts only variants on the sequence named 'B'.\n"
+     "\n"
+     "- Filter 'Pos>123' accepts any variants located after position 123"
+     " (starting from 1) in any sequence.\n"
+     "\n"
+     "- Filter 'SNP=1' accepts only variants that are SNPs (multi-allelic SNP\n"
+     " are not accepted).\n"
+     "\n"
+     "- Filter 'SNP=1 or MSNP=true' accepts only variants that are SNPs,"
+     " including multi-allelic SNP.\n"
+     "\n"
+     "- Filter 'info:RS>=35' accepts variants having the key 'RS' in the info\n"
+     "field with a value greater or equalt to 35."
+     "\n"
+     "- Filter 'info:VC=\"INS\"' accepts variants having the key 'VC' (variant"
+     " category) in the info field with an exact value of 'INS' (insertion).\n"
+     "\n"
+     "- Filter 'Chrom=\"D\" and (pos < 50 or pos > 100)' accepts only variants"
+     " located on sequence 'D' before position 50 or after position 100.\n"
+     "\n"
+     "- Filter 'not (Chrom~\"[A-C]\" or pos >= 50 and pos <= 100)' accepts"
+     " variants that are located in any sequence except sequences 'A', 'B' and 'C'."
+     " It also accepts any variants located between positions 50 and 100 on any"
+     " sequence. The 'and' operator has the priority over the 'or' operator.\n"
+     "\n"
+     "Notice that there is no lazy evaluation nor optimization of the complex"
+     " filters. Thus all parts of a complex filter are evaluated. For example,"
+     " let us consider the filter expression:\n"
+     "  '<expr1> and (<expr2> or <expr3>)'\n"
+     "\n"
+     "Both '<expr3>' and '<expr4>' are evaluated even if '<expr1>' is false. This"
+     " may lead to waste of time and resources. Since multiple filters can be"
+     " provided, it is more efficient to provide two simpler filters on command"
+     " line:\n"
+     "  --variant-filter '<expr1>' --variant-filter '<expr2> or <expr3>'\n"
+     "\n"
+     "Since all --variant-filter options must be satisfied, the variant filtering"
+     " process is interrupted as soon as some filter discard a variant.\n"
+     "\n"
+     "In the end, even if the kim program makes possible to filter variants on the"
+     " fly while creating the index, it should be more efficient to create the"
+     " filtered VCF file(s) first by using any third party software of your choice,"
+     " then use this(these) filtered VCF file(s) to create the index.\n"
+     "\n"
+     "INDEX QUERY\n"
+     "===========\n"
+     "\n"
+     "To query an existing index, the kim program needs an index and some"
+     " files to analyse. An example of command line to query some index is:\n"
+     "\n  kim --index-dir /path/to/my/index/ file1.fastq file2.fastq\n"
+     "\n"
+     "As for the index creation, the biological sequence files must be either"
+     " fasta or fastq formatted."
      "\n" },
      {0, 0, 0, 0, 0, 0}
   };
@@ -359,6 +475,7 @@ KimProgram::~KimProgram() {
 KimProgram::KimProgram(int argc, char **argv):
   _progname(basename(argv[0])),
   _settings(), _running_mode(UNDEFINED_MODE),
+  _variant_filters(),
   _dna_files(), _variants_files(), _output_file()
 {
   _settings.setIndexDirectory(KIM_DEFAULT_INDEX_DIRECTORY);
@@ -449,6 +566,27 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
     // Ensure that at least one variant file is provided
     if (_opts.options[VARIANTS_OPT].count() < 1) {
       throw Exception("At least one variant file must be provided for index creation.");
+    }
+
+    // Check if all given variant files are readable and fill the
+    // variant_files vector with their filenames.
+    _variant_filters.reserve(_opts.options[VARIANT_FILTER_OPT].count());
+    vcfpp::BcfWriter bcf("/dev/null", "VCF4.3");
+    bcf.header.addFORMAT("GT", "1", "String", "Genotype");
+    bcf.header.addINFO("AF", "A", "Float", "Estimated allele frequency in the range (0,1)");
+    bcf.header.addContig("A"); // add chromosome
+    vcfpp::BcfRecord r(bcf.header);
+    r.setCHR("A");
+    r.setPOS(2);
+    r.setID("fake");
+    r.setRefAlt("A,C");
+    r.setQUAL('@');
+    r.setFILTER("PASS");
+    for (option::Option* opt = _opts.options[VARIANT_FILTER_OPT]; opt; opt = opt->next()) {
+      VariantFilterDriver drv(r);
+      string filter = opt->arg;
+      drv.apply(filter);// If filter is not syntaxically correct, an exception is thrown.
+      _variant_filters.push_back(filter);
     }
 
     // Check if all given reference files are readable and fill the
@@ -565,25 +703,15 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
 
 }
 
-bool KimProgram::_variantOfInterest(vcfpp::BcfRecord &v) {
-  return true;
-  cerr << "Processing variant '" << v.ID() << "':" << endl
-       << "- CHROM: " << v.CHROM() << endl
-       << "- POS: " << v.POS() << endl
-       << "- PLOIDY: " << v.ploidy() << endl
-       << "- START: " << v.Start() << endl
-       << "- END: " << v.End() << endl
-       << "- REF: " << v.REF() << endl
-       << "- ALT: " << v.ALT() << endl
-       << "- QUAL: " << v.QUAL() << endl
-       << "- FILTER: " << v.FILTER() << endl
-       << "- INFOS: " << v.allINFO() << endl;
-  if (v.isSNP()) cerr << "- TYPE: SNP" << endl;
-  if (v.isSV()) cerr << "- TYPE: SV" << endl;
-  if (v.isIndel()) cerr << "- TYPE: INDEL" << endl;
-  if (v.isMultiAllelics()) cerr << "- TYPE: MultiAllelics" << endl;
-  if (v.isMultiAllelicSNP()) cerr << "- TYPE: MultiAllelicsSNP" << endl;
-  return true;
+bool KimProgram::_variantOfInterest(vcfpp::BcfRecord &v) const {
+  bool res = true;
+  vector<string>::const_iterator it = _variant_filters.begin();
+  VariantFilterDriver drv(v);
+  while (res && it != _variant_filters.end()) {
+    res = drv.apply(*it);
+    ++it;
+  }
+  return res;
 }
 
 bool KimProgram::_isURL(const string &f) {
@@ -705,6 +833,7 @@ void KimProgram::_runQuery() {
   Monitor monitor;
   // Loading the index.
   KmerVariantGraph kim_index(_settings);
+
   kim_index.freeze();
   map<string, VariantIdentification> variants_map;
   // Process each input file
@@ -904,6 +1033,14 @@ void KimProgram::_createIndex() {
     metadata += "  - ";
     metadata += f;
     metadata += '\n';
+  }
+  if (!_variant_filters.empty()) {
+    metadata += "- Variant filter(s):\n";
+    for (auto const &f: _variant_filters) {
+      metadata += "  - ";
+      metadata += f;
+      metadata += '\n';
+    }
   }
   metadata += "- Reference files:\n";
   for (auto const &f: _dna_files) {

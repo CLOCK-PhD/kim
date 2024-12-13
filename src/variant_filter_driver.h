@@ -1,6 +1,6 @@
 /******************************************************************************
 *                                                                             *
-*  Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM                           *
+*  Copyright © 2024      -- IGH / LIRMM / CNRS / UM                           *
 *                           (Institut de Génétique Humaine /                  *
 *                           Laboratoire d'Informatique, de Robotique et de    *
 *                           Microélectronique de Montpellier /                *
@@ -87,30 +87,120 @@
 *                                                                             *
 ******************************************************************************/
 
-#ifndef __KIM_H__
-#define __KIM_H__
+#ifndef __VARIANT_FILTER_DRIVER_H__
+#define __VARIANT_FILTER_DRIVER_H__
 
-#ifdef HAVE_CONFIG_H
-#  include <config.h>
-#endif
-#include <bounded_size_string.h>
-#include <dna_file_index.h>
-#include <dna_file_reader.h>
-#include <file_reader.h>
+#include <string>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include <vcfpp.h>
+#pragma GCC diagnostic pop
+
 #include <kim_exception.h>
-#include <kim_settings.h>
-#include <kmer_nodes_subindex.h>
-#include <kmer_variant_edges_subindex.h>
-#include <kmer_variant_graph.h>
-#include <monitor.h>
-#include <sort_helper.h>
 #include <variant_filter.h>
-#include <variant_filter_driver.h>
 #include <variant_filter_parser.h>
-#include <variant_filter_scanner.h>
-#include <variant_identification.h>
-#include <variant_kmer_enumerator.h>
-#include <variant_nodes_index.h>
+
+// Give Flex the prototype of yylex
+#ifdef YY_DECL
+#  undef YY_DECL
+#endif
+#define YY_DECL kim::VariantFilterParser::symbol_type yylex(kim::VariantFilterDriver &driver)
+
+// Declare it for the parser's sake.
+YY_DECL;
+
+namespace kim {
+
+  class VariantFilterScanner;
+
+  /**
+   * Exception associated to variant filter parse error.
+   */
+  class VariantFilterDriverException: public Exception {
+
+  public:
+
+    /**
+     * Create a parse error exception associated to some variant
+     * filter expression.
+     *
+     * \param driver The variant filter expression scanning and
+     * parsing driver throwing this.
+     */
+    VariantFilterDriverException(const VariantFilterDriver &driver);
+
+  };
+
+  /**
+   * Conducting the whole scanning and parsing of some filters to a
+   * given Variant.
+   */
+  class VariantFilterDriver: public VariantFilter {
+
+  private:
+
+    /**
+     * The filter expression string
+     */
+    std::string _filter;
+
+    /**
+     * The last (successfully) applied filter result.
+     *
+     * If no filter was applied, then this member is true.
+     */
+    bool _result;
+
+    /**
+     * The parsing error message if any
+     */
+    std::string _error_message;
+
+    friend VariantFilterDriverException;
+    friend VariantFilterParser;
+
+  public:
+
+    /**
+     * Handles filters for a specific variant.
+     *
+     * \param variant The variant to apply filter on.
+     */
+    VariantFilterDriver(vcfpp::BcfRecord &variant);
+
+    /**
+     * Apply the given filter string to the handled variant.
+     *
+     * \param filter The filter expression to apply to the handled variant.
+     *
+     * \return Returns true if the variant successfully pass the given
+     * filter and false otherwise. The returned value is also stored
+     * in the result member attriubte. If filter expression is
+     * syntaxically invalid or requires too much memory to be handled
+     * (this situation should never occur), then an exception is
+     * thrown.
+     */
+    bool apply(const std::string &filter);
+
+    /**
+     * Whether to generate parser debug traces or not.
+     */
+    bool debug_parsing;
+
+    /**
+     * Whether to generate scanner debug traces.
+     */
+    bool debug_scanning;
+
+    /**
+     * The token's location used by the scanner.
+     */
+    location scanner_location;
+
+  };
+
+}
 
 #endif
 // Local Variables:

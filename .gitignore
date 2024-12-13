@@ -40,6 +40,7 @@ tests/test_kmer_nodes_subindex
 tests/test_kmer_variant_edges_subindex
 tests/test_kmer_variant_graph
 tests/test_sort_helper
+tests/test_variant_filter
 tests/test_variant_nodes_index
 
 */ChangeLog
