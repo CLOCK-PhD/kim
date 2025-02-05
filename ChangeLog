@@ -1,5 +1,11 @@
 2025-02-05  DoccY <alban.mancheron@lirmm.fr>
 
+	* .gitlab-ci.yml:
+	Adding gitlab CI/CD.
+	
+	
+2025-02-05  DoccY <alban.mancheron@lirmm.fr>
+
 	* .gitignore, .gitmodules, Makefile.am, Makefile.in, README.md,
 	aminclude_static.am, config/config.h.in, config/fix-timestamp.sh,
 	config/git-release, config/git-version-gen,

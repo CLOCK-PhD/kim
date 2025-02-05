@@ -1,0 +1,420 @@
+###############################################################################
+#                                                                             #
+#  Copyright © 2023-2025 -- LIRMM/UM/CNRS                                     #
+#                           (Laboratoire d'Informatique, de Robotique et de   #
+#                           Microélectronique de Montpellier /                #
+#                           Université de Montpellier /                       #
+#                           Centre National de la Recherche Scientifique)     #
+#                                                                             #
+#  Auteurs/Authors: Alban MANCHERON  <alban.mancheron@lirmm.fr>               #
+#                                                                             #
+#  -------------------------------------------------------------------------  #
+#                                                                             #
+#  Ce fichier  fait partie des outils de devops  que j'ai développé pour mes  #
+#  contributions.                                                             #
+#                                                                             #
+#  Ce logiciel est régi  par la licence CeCILL  soumise au droit français et  #
+#  respectant les principes  de diffusion des logiciels libres.  Vous pouvez  #
+#  utiliser, modifier et/ou redistribuer ce programme sous les conditions de  #
+#  la licence CeCILL  telle que diffusée par le CEA,  le CNRS et l'INRIA sur  #
+#  le site "http://www.cecill.info".                                          #
+#                                                                             #
+#  En contrepartie de l'accessibilité au code source et des droits de copie,  #
+#  de modification et de redistribution accordés par cette licence, il n'est  #
+#  offert aux utilisateurs qu'une garantie limitée.  Pour les mêmes raisons,  #
+#  seule une responsabilité  restreinte pèse  sur l'auteur du programme,  le  #
+#  titulaire des droits patrimoniaux et les concédants successifs.            #
+#                                                                             #
+#  À  cet égard  l'attention de  l'utilisateur est  attirée sur  les risques  #
+#  associés  au chargement,  à  l'utilisation,  à  la modification  et/ou au  #
+#  développement  et à la reproduction du  logiciel par  l'utilisateur étant  #
+#  donné  sa spécificité  de logiciel libre,  qui peut le rendre  complexe à  #
+#  manipuler et qui le réserve donc à des développeurs et des professionnels  #
+#  avertis  possédant  des  connaissances  informatiques  approfondies.  Les  #
+#  utilisateurs  sont donc  invités  à  charger  et  tester  l'adéquation du  #
+#  logiciel  à leurs besoins  dans des conditions  permettant  d'assurer  la  #
+#  sécurité de leurs systêmes et ou de leurs données et,  plus généralement,  #
+#  à l'utiliser et l'exploiter dans les mêmes conditions de sécurité.         #
+#                                                                             #
+#  Le fait  que vous puissiez accéder  à cet en-tête signifie  que vous avez  #
+#  pris connaissance  de la licence CeCILL,  et que vous en avez accepté les  #
+#  termes.                                                                    #
+#                                                                             #
+#  -------------------------------------------------------------------------  #
+#                                                                             #
+#  This file is part of the DevOps tools I developed for my contributions.    #
+#                                                                             #
+#  This software is governed by the CeCILL license under French law and       #
+#  abiding by the rules of distribution of free software. You can use,        #
+#  modify and/ or redistribute the software under the terms of the CeCILL     #
+#  license as circulated by CEA, CNRS and INRIA at the following URL          #
+#  "http://www.cecill.info".                                                  #
+#                                                                             #
+#  As a counterpart to the access to the source code and rights to copy,      #
+#  modify and redistribute granted by the license, users are provided only    #
+#  with a limited warranty and the software's author, the holder of the       #
+#  economic rights, and the successive licensors have only limited            #
+#  liability.                                                                 #
+#                                                                             #
+#  In this respect, the user's attention is drawn to the risks associated     #
+#  with loading, using, modifying and/or developing or reproducing the        #
+#  software by the user in light of its specific status of free software,     #
+#  that may mean that it is complicated to manipulate, and that also          #
+#  therefore means that it is reserved for developers and experienced         #
+#  professionals having in-depth computer knowledge. Users are therefore      #
+#  encouraged to load and test the software's suitability as regards their    #
+#  requirements in conditions enabling the security of their systems and/or   #
+#  data to be ensured and, more generally, to use and operate it in the same  #
+#  conditions as regards security.                                            #
+#                                                                             #
+#  The fact that you are presently reading this means that you have had       #
+#  knowledge of the CeCILL license and that you accept its terms.             #
+#                                                                             #
+###############################################################################
+
+# Serial: 2
+
+###################
+# Global Settings #
+###################
+.setup:
+  project:
+    base_url: "https://gite.lirmm.fr/doccy"
+    basename: kim
+    directories:
+      doc_builddir: doc
+      stats_builddir: resources
+      code_coverage_builddir: coverage
+      deb_package_builddir: packaging
+      doc_installdir: /usr/local/share/doc/kim
+      artifacts: artifacts
+      pages: public
+  pre_configuration:
+    - config/fix-timestamp.sh
+
+##########
+# Stages #
+##########
+stages:
+  - .pre
+  - build
+  - test
+  - deploy
+  - release
+
+####################
+# Global Variables #
+####################
+variables:
+  GITLAB_URL:             !reference [.setup, project, base_url]
+  PROJECT_BASENAME:       !reference [.setup, project, basename]
+  DOC_BUILDDIR:           !reference [.setup, project, directories, doc_builddir]
+  STATS_BUILDDIR:         !reference [.setup, project, directories, stats_builddir]
+  CODE_COVERAGE_BUILDDIR: !reference [.setup, project, directories, code_coverage_builddir]
+  DEB_PACKAGE_BUILDDIR:   !reference [.setup, project, directories, deb_package_builddir]
+  DOC_INSTALLDIR:         !reference [.setup, project, directories, doc_installdir]
+  ARTIFACTS_DESTDIR:      !reference [.setup, project, directories, artifacts]
+  PAGES_DESTDIR:          !reference [.setup, project, directories, pages]
+  GIT_SUBMODULE_STRATEGY: recursive
+  BUILD_ENV_IMAGE:        ${CI_REGISTRY_IMAGE}/build-env:latest
+
+####################
+# Default settings #
+####################
+default:
+  # Docker image to use
+  image: ${BUILD_ENV_IMAGE}
+  # System Initialisation
+  before_script:
+    - !reference [.setup, pre_configuration]
+    - ./configure
+    - mkdir -p "${ARTIFACTS_DESTDIR}"
+  # System cleaning
+  after_script:
+    - make -j distclean
+  # Max running time for a task
+  timeout: 2 hours
+
+#############################################
+# Prepare the project specific docker image #
+#############################################
+prepare docker image:
+  stage: .pre
+  image:
+    # The kaniko executor image is based on scratch and doesn't
+    # contain a shell. The debug image consists of the kaniko executor
+    # image along with a busybox shell to enter.
+    name: gcr.io/kaniko-project/executor:v1.16.0-debug
+    entrypoint: [""]
+  before_script:
+    - echo "Start docker image creation dedicated to ${PROJECT_BASENAME} CI/CD."
+  script:
+    - |
+      cat <<EOF > Dockerfile
+      FROM debian:latest
+      RUN echo "Package list update" \
+          && apt-get -qq update \
+          && echo "Compilation tools installation" \
+          && apt-get -qq install -y git sed dpkg \
+          && apt-get -qq install -y build-essential libc6 libc6-dev \
+          && apt-get -qq install -y gcc g++ flex bison make autoconf \
+             autoconf-archive automake libtool pkg-config m4 \
+          && echo "Graphviz & LaTeX suite installation" \
+          && apt-get -qq install -y graphviz texlive-latex-base \
+             texlive-latex-recommended texlive-latex-extra \
+             texlive-binaries ghostscript texlive-extra-utils \
+             texlive-font-utils texlive-fonts-recommended \
+             texlive-plain-generic \
+          && echo "Code analysis tools installation" \
+          && apt-get -qq install -y ohcount cloc lcov doxygen \
+          && echo "Latest gcovr program installation (packaged one is too old)" \
+          && apt-get -qq install -y python3-pip \
+          && pip install --break-system-packages gcovr \
+          && echo "Cleaning packages lists" \
+          && rm -rf /var/lib/apt/lists/*
+      EOF
+    - /kaniko/executor --context "${CI_PROJECT_DIR}" --destination "${BUILD_ENV_IMAGE}"
+  after_script:
+    - echo "End of docker image creation."
+
+########################
+# Building the library #
+########################
+build:
+  stage: build
+  needs:
+    - prepare docker image
+  script:
+    - make -j
+
+##############
+# Check code #
+##############
+check:
+  stage: test
+  needs:
+    - build
+  script:
+    - make -j
+    - make -j check
+
+#########################
+# Test (un)installation #
+#########################
+install:
+  stage: test
+  needs:
+    - build
+  script:
+    - make -j install
+    - make -j uninstall
+
+################################
+# Build HTML API documentation #
+################################
+pages:
+  stage: deploy
+  needs:
+    - check
+    - install
+  script:
+    - make -j -C "${DOC_BUILDDIR}"
+    - make -j -C "${DOC_BUILDDIR}" install
+    - cp -R "${DOC_INSTALLDIR}/html" "${PAGES_DESTDIR}"
+  artifacts:
+    name: "API documentation"
+    paths:
+      - "${PAGES_DESTDIR}"
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+
+###############################
+# Build PDF API documentation #
+###############################
+pdf API documentation:
+  stage: deploy
+  needs:
+    - check
+    - install
+  script:
+    - make -j -C "${DOC_BUILDDIR}"
+    - make -j -C "${DOC_BUILDDIR}" install
+    - cp -R "${DOC_INSTALLDIR}/${PROJECT_BASENAME}.pdf" "${ARTIFACTS_DESTDIR}/"
+    - info_file="${ARTIFACTS_DESTDIR}/pdf.infos"
+    - echo "info_file='${info_file}'"
+    - echo "JOB_URL:${CI_JOB_URL}" | tee "${info_file}"
+    - echo "NAME:API documentation" | tee -a "${info_file}"
+    - echo "LINK_TYPE:other" | tee -a "${info_file}"
+    - echo -n "FILE:" | tee -a "${info_file}"
+    - ls "${ARTIFACTS_DESTDIR}/${PROJECT_BASENAME}.pdf" | tee -a "${info_file}"
+  artifacts:
+    name: "API documentation"
+    paths:
+      - "${ARTIFACTS_DESTDIR}/"
+    expire_in: never
+  rules:
+    - if: $CI_COMMIT_TAG
+
+###########################
+# Get the code statistics #
+###########################
+code statistics:
+  stage: deploy
+  needs:
+    - check
+    - install
+  script:
+    - make -j -C "${STATS_BUILDDIR}"
+    - stat_file=$(ls --sort=version "${STATS_BUILDDIR}/${PROJECT_BASENAME}-"*.stats | tail -n1)
+    - echo "stat_file is '${stat_file}'"
+    - cp "${stat_file}" "${ARTIFACTS_DESTDIR}/"
+    - info_file="${ARTIFACTS_DESTDIR}/stats.infos"
+    - echo "info_file='${info_file}'"
+    - echo "JOB_URL:${CI_JOB_URL}" | tee "${info_file}"
+    - echo "NAME:Code statistics" | tee -a "${info_file}"
+    - echo "LINK_TYPE:other" | tee -a "${info_file}"
+    - echo -n "FILE:" | tee -a "${info_file}"
+    - echo "${ARTIFACTS_DESTDIR}/${stat_file##*/}" | tee -a "${info_file}"
+  artifacts:
+    name: "Code statistics"
+    paths:
+      - "${ARTIFACTS_DESTDIR}/"
+    expire_in: never
+  rules:
+    - if: $CI_COMMIT_TAG
+
+#########################
+# Get the code coverage #
+#########################
+code coverage:
+  stage: deploy
+  needs:
+    - check
+    - install
+  before_script:
+    - !reference [.setup, pre_configuration]
+    - ./configure --enable-code-coverage --disable-doxygen-doc
+    - mkdir -p "${ARTIFACTS_DESTDIR}"
+  script:
+    - make -j
+    - make -j check
+    - make -j -C "${CODE_COVERAGE_BUILDDIR}" coverage-summary
+    - coverage_dir=$(ls --directory --sort=version "${CODE_COVERAGE_BUILDDIR}/${PROJECT_BASENAME}-"*-coverage | tail -n1)
+    - echo "coverage_dir is '${coverage_dir}'"
+    - cat "${coverage_dir}/summary.txt"
+    - cp -R "${coverage_dir}/summary.txt" "${ARTIFACTS_DESTDIR}/"
+    - make -j  -C "${CODE_COVERAGE_BUILDDIR}" coverage-cobertura
+    - cp -R "${coverage_dir}/cobertura-report.xml" "${ARTIFACTS_DESTDIR}/"
+  coverage: /^lines:\s*\d+.\d+\%/
+  artifacts:
+    name: "Code coverage"
+    paths:
+      - "${ARTIFACTS_DESTDIR}/"
+    expire_in: never
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: "${ARTIFACTS_DESTDIR}/cobertura-report.xml"
+
+########################
+# Build source archive #
+########################
+sources archive:
+  stage: deploy
+  needs:
+    - check
+    - install
+  script:
+    - make -j distcheck
+    - mv "${PROJECT_BASENAME}-"*.tar.gz "${ARTIFACTS_DESTDIR}/"
+    - info_file="${ARTIFACTS_DESTDIR}/sources.infos"
+    - echo "info_file='${info_file}'"
+    - echo "JOB_URL:${CI_JOB_URL}" | tee "${info_file}"
+    - echo "NAME:Complete code source archive" | tee -a "${info_file}"
+    - echo "LINK_TYPE:package" | tee -a "${info_file}"
+    - echo -n "FILE:" | tee -a "${info_file}"
+    - ls "${ARTIFACTS_DESTDIR}/${PROJECT_BASENAME}-"*.tar.gz | tee -a "${info_file}"
+  artifacts:
+    name: "Source archive"
+    paths:
+      - "${ARTIFACTS_DESTDIR}/"
+    expire_in: never
+  rules:
+    - if: $CI_COMMIT_TAG
+
+########################
+# Build debian package #
+########################
+debian package:
+  stage: deploy
+  timeout: 3 hours
+  needs:
+    - sources archive
+  script:
+    - make -j -C "${DEB_PACKAGE_BUILDDIR}" deb
+    - deb_file=$(ls --sort=version "${DEB_PACKAGE_BUILDDIR}/${PROJECT_BASENAME}_"*.deb | tail -n1)
+    - echo "deb_file is '${deb_file}'"
+    - dpkg -i "${deb_file}"
+    - mv "${deb_file}" "${ARTIFACTS_DESTDIR}/"
+    - info_file="${ARTIFACTS_DESTDIR}"/deb.infos
+    - echo "info_file='${info_file}'"
+    - echo "JOB_URL:${CI_JOB_URL}" | tee "${info_file}"
+    - echo "NAME:Debian package" | tee -a "${info_file}"
+    - echo "LINK_TYPE:package" | tee -a "${info_file}"
+    - echo -n "FILE:" | tee -a "${info_file}"
+    - echo "${ARTIFACTS_DESTDIR}/${deb_file##*/}" | tee -a "${info_file}"
+  artifacts:
+    name: "Debian package"
+    paths:
+      - "${ARTIFACTS_DESTDIR}/"
+    expire_in: never
+  rules:
+    - if: $CI_COMMIT_TAG
+
+#################
+# Build release #
+#################
+release:
+  stage: release
+  needs:
+    - code statistics
+    - code coverage
+    - sources archive
+    - debian package
+    - pdf API documentation
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  before_script:
+    - echo "Preparation of the ${CI_COMMIT_TAG} release"
+    - apk add git
+    - PREVIOUS_TAG=$(git describe --always --tags --abbrev=0 @^)
+    - echo "### Changes from ${PREVIOUS_TAG} to ${CI_COMMIT_TAG}" | tee description.txt
+    - git log --pretty="format:%B" "${PREVIOUS_TAG}"..HEAD | tee -a description.txt
+    - |
+      ASSETS_STR=$(git submodule status | while read hash lib tag; do
+        tag=${tag//[()]/}
+        echo -n " --assets-link '{\"name\":\"${lib} ${tag}\",\"url\":\"${GITLAB_URL}/${lib}/-/releases/${tag}\",\"link_type\":\"package\"}'"
+      done)
+    - |
+      for f in stats sources deb pdf; do
+        job_url=$(grep "^JOB_URL:" "${ARTIFACTS_DESTDIR}"/${f}.infos | cut -d':' -f2-)
+        name=$(grep "^NAME:" "${ARTIFACTS_DESTDIR}"/${f}.infos | cut -d':' -f2-)
+        link_type=$(grep "^LINK_TYPE:" "${ARTIFACTS_DESTDIR}"/${f}.infos | cut -d':' -f2-)
+        file=$(grep "^FILE:" "${ARTIFACTS_DESTDIR}"/${f}.infos | cut -d':' -f2-)
+        direct_path="/${link_type}/${f}"
+        ASSETS_STR="${ASSETS_STR} --assets-link '{\"name\":\"${name}\",\"url\":\"${job_url}/artifacts/raw/${file}\",\"link_type\":\"${link_type}\",\"filepath\":\"${direct_path}\"}'"
+      done
+    - RELEASE_CLI_CMD="release-cli create"
+    - RELEASE_CLI_CMD="${RELEASE_CLI_CMD} --name \"Release ${CI_COMMIT_TAG}\""
+    - RELEASE_CLI_CMD="${RELEASE_CLI_CMD} --tag-name \"${CI_COMMIT_TAG}\""
+    - RELEASE_CLI_CMD="${RELEASE_CLI_CMD} --description \"description.txt\""
+    - RELEASE_CLI_CMD="${RELEASE_CLI_CMD} ${ASSETS_STR}"
+  script:
+    - echo "Creating a new release for version ${CI_COMMIT_TAG}:"
+    - echo "${RELEASE_CLI_CMD}"
+    - eval "${RELEASE_CLI_CMD}"
+  after_script:
+    - echo "End of release ${CI_COMMIT_TAG} task"
+  rules:
+    - if: $CI_COMMIT_TAG
