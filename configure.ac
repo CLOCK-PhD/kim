@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-dnl Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM
+dnl Copyright © 2023-2025 -- IGH / LIRMM / CNRS / UM
 dnl                          (Institut de Génétique Humaine /
 dnl                          Laboratoire d'Informatique, de Robotique et de
 dnl                          Microélectronique de Montpellier /
@@ -110,7 +110,7 @@ AX_PACKAGE_INFOS(
   [FULL_DESCRIPTION:],
   [AUTHORS:Remy COSTA <remy.costa@igh.cnrs.fr>, William RITCHIE <william.ritchie@igh.cnrs.fr> and Alban MANCHERON  <alban.mancheron@lirmm.fr>],
   [LICENSE:CeCILL],
-  [COPYRIGHT_DATE:2023-2024])dnl
+  [COPYRIGHT_DATE:2023-2025])dnl
 
 AC_REVISION([GV_REVISION])
 
@@ -120,7 +120,7 @@ AC_DEFINE_UNQUOTED([END_KIM_NAMESPACE], [}], [Ends the kim namespace.])
 AC_COPYRIGHT([
 ###############################################################################
 #                                                                             #
-#  Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM                           #
+#  Copyright © 2023-2025 -- IGH / LIRMM / CNRS / UM                           #
 #                           (Institut de Génétique Humaine /                  #
 #                           Laboratoire d'Informatique, de Robotique et de    #
 #                           Microélectronique de Montpellier /                #
@@ -217,7 +217,7 @@ AC_CONFIG_HEADERS([config/config.h])
 AH_TOP([
 /******************************************************************************
 *                                                                             *
-*  Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM                           *
+*  Copyright © 2023-2025 -- IGH / LIRMM / CNRS / UM                           *
 *                           (Institut de Génétique Humaine /                  *
 *                           Laboratoire d'Informatique, de Robotique et de    *
 *                           Microélectronique de Montpellier /                *
@@ -554,7 +554,7 @@ dnl #                          Checking for libraries                         #
 dnl ###########################################################################
 
 
-dnl =================================== HTSlib ==================================
+dnl ================================= HTSlib ==================================
 
 HTSlib_MIN_VERSION=1.17
 AC_SUBST(HTSlib_MIN_VERSION)
@@ -619,7 +619,7 @@ AS_IF([test "x${with_included_HTSlib}" = "xyes"],
    This is fine for us, but it means that you won't be able to build releases.
 ])])
 
-dnl =============================== End of HTSlib ===============================
+dnl ============================== End of HTSlib ==============================
 
 
 dnl ###########################################################################
@@ -627,7 +627,7 @@ dnl #                         Checking for header files                       #
 dnl ###########################################################################
 
 
-dnl =================================== vcfpp ===================================
+dnl ================================== vcfpp ==================================
 
 AX_EXTERNAL_INCLUDED_CPP_HEADER_DETECTION([vcfpp], [external/vcfpp], [vcfpp.h])
 
@@ -654,7 +654,7 @@ dnl compiler/linker flag updates at the end of the configure script,
 dnl before generating the Makefiles using AC_CONFIG_COMMANDS_PRE()
 AC_CONFIG_COMMANDS_PRE([CPPFLAGS="${CPPFLAGS} ${vcfpp_CPPFLAGS}"])
 
-dnl =============================== End of vcfpp ================================
+dnl ============================== End of vcfpp ===============================
 
 
 dnl ================================ BitMagic =================================
@@ -684,7 +684,7 @@ dnl compiler/linker flag updates at the end of the configure script,
 dnl before generating the Makefiles using AC_CONFIG_COMMANDS_PRE()
 AC_CONFIG_COMMANDS_PRE([CPPFLAGS="${CPPFLAGS} ${BitMagic_CPPFLAGS}"])
 
-dnl ============================ End of BitMagic ==============================
+dnl ============================= End of BitMagic =============================
 
 
 dnl ============================== optionparser ===============================
@@ -715,6 +715,40 @@ dnl before generating the Makefiles using AC_CONFIG_COMMANDS_PRE()
 AC_CONFIG_COMMANDS_PRE([CPPFLAGS="${CPPFLAGS} ${optionparser_CPPFLAGS}"])
 
 dnl =========================== End of optionparser ===========================
+
+
+dnl ================================ gzstream =================================
+
+AC_SEARCH_LIBS([gzread], [z], [], [AC_MSG_ERROR([Library 'zlib' not found.])])
+AC_SEARCH_LIBS([BZ2_bzRead], [bz2], [], [AC_MSG_ERROR([Library 'bz2' not found.])])
+
+
+AX_EXTERNAL_INCLUDED_CPP_HEADER_DETECTION([gzstream], [external/gzstream/include], [gzstream.h])
+
+dnl Don't use neither AX_APPEND_COMPILE_FLAGS() nor
+dnl AX_APPEND_LINK_FLAGS() since:
+dnl
+dnl   1. The AX_EXTERNAL_INCLUDED_CPP_HEADER_DETECTION(), the
+dnl      AX_EXTERNAL_INCLUDED_C_LIBRARY_DETECTION() and the
+dnl      AX_EXTERNAL_INCLUDED_CXX_LIBRARY_DETECTION() macros already
+dnl      check for validity when using already installed
+dnl      library/headers.
+dnl
+dnl   2. If using the included library/headers, the
+dnl      (pre)compiler/linker flags may not be correctly appended
+dnl      since the library/header is most probably not already
+dnl      available
+dnl
+dnl An acceptable option is to update the (pre)compiler/linker by
+dnl appending the computed flags if no more test involving compilation
+dnl is executed hereafter.
+dnl
+dnl A more secure (and recommended) strategy is to defer the
+dnl compiler/linker flag updates at the end of the configure script,
+dnl before generating the Makefiles using AC_CONFIG_COMMANDS_PRE()
+AC_CONFIG_COMMANDS_PRE([CPPFLAGS="${CPPFLAGS} ${gzstream_CPPFLAGS}"])
+
+dnl ============================= End of gzstream =============================
 
 
 AC_CHECK_INCLUDES_DEFAULT
@@ -779,7 +813,8 @@ program on your system.
                       else
                         sed -i 's,^distclean\( .*\)\?:,distclean-orig\1:,' "${FILE_TOPATCH}"
                         sed -i 's,^check\( .*\)\?:,check-disabled\1:,' "${FILE_TOPATCH}"
-                        sed -i 's,\btar -c\b.*|,\$\${TAR-tar} chof - . |,' "${FILE_TOPATCH}"
+                        sed -i 's,\(-rm -f .*\)\bhtscodecs.mk\b,\1,' "${FILE_TOPATCH}"
+                        sed -i 's,\btar -c\b.*|,( cd "\$(srcdir)" \&\& \$\${TAR-tar} chof - --exclude="autom4te.cache/*" --exclude=".git*" . ) |,' "${FILE_TOPATCH}"
                         sed -i 's,\btar -x\b,\$\${TAR-tar} xo,' "${FILE_TOPATCH}"
                         sed -i 's,^\(\t+cd \$(distdir) && \$(MAKE)\),\1 srcdir="\$(CURDIR)/\$(srcdir)",' "${FILE_TOPATCH}"
                         tab="$(echo $'\t')"
@@ -795,10 +830,24 @@ MISSING_AUTOMAKE_TARGETS = dvi check installcheck
 $(echo $'\t')@echo "Fake target for '\$[]@' added by the kim configure script"
 
 distclean: distclean-orig
-${tab}test -n "\$(distdir)" || rm htslib_vars.mk
+${tab}test -n "\$(distdir)" \\
+${tab}|| test '\$(srcdir)' = '.' \\
+${tab}|| rm htslib_vars.mk htscodecs.mk htslib.mk Makefile
 
 htslib_vars.mk:
-${tab}git restore \$[]@
+${tab}@if test "\$(realpath \$(CURDIR))" = "\$(realpath \$(srcdir))"; then \\
+${tab}  if test -e ".git"; then \\
+${tab}    echo "Restoring '\$[]@' from git"; \\
+${tab}    git restore "\$[]@"; \\
+${tab}  else \\
+${tab}    echo "Unable to restore '\$[]@'"; \\
+${tab}    false; \\
+${tab}  fi; \\
+${tab}else \\
+${tab}  echo "Rebuild '\$[]@' from source directory (\$(srcdir))"; \\
+${tab}  cd "\$(srcdir)" && \$(MAKE) \$(AM_MAKEFLAGS) "\$[]@"; \\
+${tab}  cp --force "\$(srcdir)/\$[]@" "\$[]@"; \\
+${tab}fi
 
 uninstall: uninstall-\$(SHLIB_FLAVOUR)
 ${tab}@echo "Target for '\$[]@' added by the kim configure script"

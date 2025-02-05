@@ -16,7 +16,7 @@
 
 ###############################################################################
 #                                                                             #
-#  Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM                           #
+#  Copyright © 2023-2025 -- IGH / LIRMM / CNRS / UM                           #
 #                           (Institut de Génétique Humaine /                  #
 #                           Laboratoire d'Informatique, de Robotique et de    #
 #                           Microélectronique de Montpellier /                #
@@ -577,7 +577,7 @@ dist_pkgdata_DATA = \
 EXTRA_DIST = COPYING INSTALL NEWS config/fix-timestamp.sh \
 	config/git-release config/git-version-gen config/version \
 	config/version.configure.ac external/BitMagic \
-	external/optionparser external/vcfpp
+	external/gzstream external/optionparser external/vcfpp
 ACLOCAL_AMFLAGS = -I config/m4
 
 ####################

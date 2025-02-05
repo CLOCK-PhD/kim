@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-#  Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM                           #
+#  Copyright © 2023-2025 -- IGH / LIRMM / CNRS / UM                           #
 #                           (Institut de Génétique Humaine /                  #
 #                           Laboratoire d'Informatique, de Robotique et de    #
 #                           Microélectronique de Montpellier /                #
@@ -94,6 +94,7 @@
 
 AM_CXXFLAGS =				\
   -I$(top_srcdir)/src			\
+  -I$(top_builddir)/src			\
   -DCXX="\"$(CXX)\""			\
   -DARCH="\"$(build_cpu)\""		\
   -DOS="\"$(build_os)\""		\
@@ -104,6 +105,7 @@ LDADD = ../src/libkim-debug.la
 
 check_PROGRAMS =
 TESTS =
+
 
 #############################################
 # kim::BoundedSizeString class test program #
@@ -133,6 +135,16 @@ check_PROGRAMS += test_dna_file_index
 TESTS          += test_dna_file_index
 
 test_dna_file_index_SOURCES = test_dna_file_index.cpp
+
+
+######################################
+# kim::FileReader class test program #
+######################################
+
+check_PROGRAMS += test_file_reader
+TESTS          += test_file_reader
+
+test_file_reader_SOURCES = test_file_reader.cpp
 
 
 #####################################

@@ -1,6 +1,6 @@
 /******************************************************************************
 *                                                                             *
-*  Copyright © 2024      -- IGH / LIRMM / CNRS / UM                           *
+*  Copyright © 2024-2025 -- IGH / LIRMM / CNRS / UM                           *
 *                           (Institut de Génétique Humaine /                  *
 *                           Laboratoire d'Informatique, de Robotique et de    *
 *                           Microélectronique de Montpellier /                *
@@ -511,7 +511,6 @@ int main() {
 
   tester.check();
 
-
   DNAFileReader::FileState saved_state;
 
   for (size_t i = 1; i <= 18; ++i) {
@@ -548,7 +547,7 @@ int main() {
   cout << "Expecting to be in state " << saved_state << endl;
   assert(current_state == saved_state);
 
-  // Going to Sequence_5 at position 20 (starting from pos 1)
+  // Going to Sequence_4 at position 20 (starting from pos 1)
   tester.testSet("Sequence_4", 20, 4, DNAFileIndex::SUCCESS);
 
   // Going to Sequence_1 at position 1 (starting from pos 1)
@@ -645,6 +644,27 @@ int main() {
     // Sequence_1 to Sequence_6
     tester.testIndexCurrentSeq(DNAFileIndex::SEQUENCE_NAME_DUPLICATED);
   }
+
+  tester.clear();
+
+  tester.testIndexFile("test-sequences.fasta.gz", DNAFileReader::FASTA_FORMAT);
+
+  tester.check();
+
+  tester.setFilename("test-sequences.fasta.gz", DNAFileReader::FASTA_FORMAT);
+
+  // Going to Sequence_3 at position 22 (starting from pos 1) [no bad symbols]
+  tester.testSet("Sequence_3", 22, 3, DNAFileIndex::SUCCESS);
+
+  tester.gotoNextSequence();
+  cout << "After going to the next sequence, ID is " << tester.getReader().getCurrentSequenceID() << " (expecting 4)"
+       << endl
+       << "It starts at line " << tester.getReader().getFileLineNumber() << " (expecting 16)"
+       << " and column " << tester.getReader().getFileColumnNumber() << " (expecting 108)."
+       << endl;
+  assert(tester.getReader().getCurrentSequenceID() == 4);
+  assert(tester.getReader().getFileLineNumber() == 16);
+  assert(tester.getReader().getFileColumnNumber() == 108);
 
   cout << "That's All, Folk!!!" << endl;
   return 0;

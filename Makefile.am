@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-#  Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM                           #
+#  Copyright © 2023-2025 -- IGH / LIRMM / CNRS / UM                           #
 #                           (Institut de Génétique Humaine /                  #
 #                           Laboratoire d'Informatique, de Robotique et de    #
 #                           Microélectronique de Montpellier /                #
@@ -117,6 +117,8 @@ EXTRA_DIST = \
   config/version config/version.configure.ac
 
 EXTRA_DIST += external/BitMagic
+
+EXTRA_DIST += external/gzstream
 
 EXTRA_DIST += external/optionparser
 

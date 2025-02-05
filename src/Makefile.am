@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-#  Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM                           #
+#  Copyright © 2023-2025 -- IGH / LIRMM / CNRS / UM                           #
 #                           (Institut de Génétique Humaine /                  #
 #                           Laboratoire d'Informatique, de Robotique et de    #
 #                           Microélectronique de Montpellier /                #
@@ -93,10 +93,13 @@
 ########################
 
 AM_CXXFLAGS =				\
+  -I$(srcdir)				\
+  -I$(top_builddir)/src			\
   -DCXX="\"$(CXX)\""			\
   -DARCH="\"$(build_cpu)\""		\
   -DOS="\"$(build_os)\""		\
-  -DPACKAGE_DATADIR="\"$(pkgdatadir)\""
+  -DPACKAGE_DATADIR="\"$(pkgdatadir)\""	\
+  -DSRCDIR="\"$(abs_srcdir)\""
 
 install_dirname = $(PACKAGE_NAME)-$(PACKAGE_VERSION)
 pkgincludedir = $(includedir)/$(install_dirname)
@@ -129,26 +132,44 @@ check_LTLIBRARIES =
 bin_PROGRAMS =
 
 BUILT_SOURCES = \
-  $(srcdir)/variant_filter_scanner.h \
-  $(srcdir)/variant_filter_scanner.cpp \
-  $(srcdir)/variant_filter_parser.h \
-  $(srcdir)/variant_filter_parser.cpp
+  variant_filter_scanner.h \
+  variant_filter_scanner.cpp \
+  variant_filter_parser.h \
+  variant_filter_parser.cpp
 
 # Don't set AM_YFLAGS to '-d' flag (which is handled by automake to
 # generate header dependency rules) since inferred header file names
 # are not those specified in flex/bison source files. Use classic
 # dependencies Instead,
 
-EXTRA_DIST = $(BUILT_SOURCES)
+variant_filter_scanner.h: variant_filter_scanner.cpp
+	$(AM_V_at)test -f '$(srcdir)/$(@F)' \
+	|| ( echo "Rebuild '$(srcdir)/$(<F)' and '$(srcdir)/$(@F)'" \
+	     && rm -f '$(srcdir)/$(<F)' \
+	     && $(MAKE) $(AM_MAKEFLAGS) '$(srcdir)/$(<F)' )
+	$(AM_V_at)test -f '$(builddir)/$(@F)' \
+	|| ( echo "Copying '$(builddir)/$(<F)' and '$(builddir)/$(@F)'" \
+	     && cp -p '$(srcdir)/$(<F)' '$(builddir)/$(<F)' \
+	     && cp -p '$(srcdir)/$(@F)' '$(builddir)/$(@F)' )
 
-$(srcdir)/variant_filter_scanner.h: $(srcdir)/variant_filter_scanner.cpp
-	@test -f "$@" || rm -f "$^"
-	@test -f "$@" || $(MAKE) $(AM_MAKEFLAGS) "$^"
+variant_filter_parser.h: variant_filter_parser.cpp
+	$(AM_V_at)test -f '$(srcdir)/$(@F)' \
+	|| ( echo "Rebuild '$(srcdir)/$(<F)' and '$(srcdir)/$(@F)'" \
+	     && rm -f '$(srcdir)/$(<F)' \
+	     && $(MAKE) $(AM_MAKEFLAGS) '$(srcdir)/$(<F)' )
+	$(AM_V_at)test -f '$(builddir)/$(@F)' \
+	|| ( echo "Copying '$(builddir)/$(<F)' and '$(builddir)/$(@F)'" \
+	     && cp -p '$(srcdir)/$(<F)' '$(builddir)/$(<F)' \
+	     && cp -p '$(srcdir)/$(@F)' '$(builddir)/$(@F)' )
 
-$(srcdir)/variant_filter_parser.h: $(srcdir)/variant_filter_parser.cpp
-	@test -f "$@" || rm -f "$^"
-	@test -f "$@" || $(MAKE) $(AM_MAKEFLAGS) "$^"
+clean-local:
+	test '$(srcdir)' = '$(builddir)' \
+	|| for f in $(BUILT_SOURCES); do \
+	     test ! -f "$(builddir)/$${f}" \
+	     || rm  "$(builddir)/$${f}"; \
+	   done
 
+EXTRA_DIST = variant_filter_scanner.h variant_filter_parser.h
 
 ###############
 # kim library #
@@ -179,9 +200,8 @@ libkim_la_SOURCES =						\
 
 libkim_la_configdir   = $(libdir)/$(install_dirname)/include
 libkim_la_config_DATA = $(CONFIG_HEADER)
-libkim_la_LDFLAGS     = -version-info "$(LIB_VERSION)" $(AM_LDFLAGS)
+libkim_la_LDFLAGS     = -version-info '$(LIB_VERSION)' $(AM_LDFLAGS)
 libkim_la_CXXFLAGS = $(AM_CXXFLAGS)
-
 
 #####################
 # kim-debug library #
@@ -219,18 +239,19 @@ kim_DEPENDENCIES = $(kim_LDADD)
 force-rebuild:
 
 $(top_builddir)/external/%: force-rebuild
-	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) "$(@F)" -C "$(@D)"
+	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) '$(@F)' -C '$(@D)'
 
 
 #################
 # Code Coverage #
 #################
 
-GCDA_FILES = $(patsubst %.cpp,%.gcda,$(filter %.cpp %.c,$(SOURCES)))
-GCDA_FILES += $(kim_OBJECTS:.o=.gcda)
-GCDA_FILES += $(libkim_la_OBJECTS:.lo=.gcda)
-GCDA_FILES += $(libkim_debug_la_OBJECTS:.lo=.gcda)
+GCDA_FILES = $(patsubst %.cpp,%.gcda,$(filter %.cpp,$(SOURCES)))
+GCDA_FILES += $(patsubst %.cpp,%.gcda,$(filter %.cpp,$(BUILT_SOURCES)))
 GCNO_FILES = $(GCDA_FILES:.gcda=.gcno)
+GCDA_FILES += $(patsubst %.lo,%.gcno,$(libkim_la_OBJECTS))
+GCDA_FILES += $(patsubst %.lo,%.gcno,$(libkim_debug_la_OBJECTS))
+GCDA_FILES += $(patsubst %.o,%.gcno,$(kim_OBJECTS))
 GCOV_FILES = $(GCDA_FILES:.gcda=.gcov)
 
 

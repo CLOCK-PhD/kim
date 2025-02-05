@@ -1,6 +1,6 @@
 /******************************************************************************
 *                                                                             *
-*  Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM                           *
+*  Copyright © 2023-2025 -- IGH / LIRMM / CNRS / UM                           *
 *                           (Institut de Génétique Humaine /                  *
 *                           Laboratoire d'Informatique, de Robotique et de    *
 *                           Microélectronique de Montpellier /                *
@@ -94,6 +94,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <cstdint>
 
 using namespace std;
 
@@ -126,7 +127,28 @@ FileReaderParseError::FileReaderParseError(FileReader &reader):
     throw error;                                \
   } while (0)
 
-FileReader::FileReader(const string &filename, bool warn): warn(warn) {
+
+FileReader::FileState::FileState():
+  filename(),
+  line(-1), column(-1), pos(-1),
+  compression_algorithm(FileReader::NO_COMPRESSION),
+  current_char(-1), next_char(-1)
+{}
+
+FileReader::FileReader(const string &filename, bool warn):
+  warn(warn), _state(),
+  _ifs_bz2(), _ifs_gzip(), _ifs_none()
+{
+  assert(_state.filename.empty());
+  assert(_state.line == (size_t) -1);
+  assert(_state.column == (size_t) -1);
+  assert(_state.pos == -1);
+  assert(_state.compression_algorithm == CompressionAlgorithm::NO_COMPRESSION);
+  assert(_state.current_char == -1);
+  assert(_state.next_char == -1);
+  assert(!_ifs_bz2.is_open());
+  assert(!_ifs_gzip.is_open());
+  assert(!_ifs_none.is_open());
   if (!filename.empty()){
     open(filename);
   }
@@ -136,37 +158,92 @@ FileReader::~FileReader() {
   close();
 }
 
+bool FileReader::good() const {
+  bool ok = false;
+  switch (getState().compression_algorithm) {
+  case CompressionAlgorithm::NO_COMPRESSION:
+    assert(!ok);
+    assert(!_ifs_gzip.is_open());
+    assert(!_ifs_bz2.is_open());
+    ok = _ifs_none.good();
+    break;
+  case CompressionAlgorithm::GZIP:
+    assert(!ok);
+    assert(!_ifs_none.is_open());
+    assert(!_ifs_bz2.is_open());
+    ok = _ifs_gzip.good();
+    break;
+  case CompressionAlgorithm::BZ2:
+    assert(!ok);
+    assert(!_ifs_none.is_open());
+    assert(!_ifs_gzip.is_open());
+    ok = _ifs_bz2.good();
+    break;
+  }
+  return ok;
+}
+
+void FileReader::clear() {
+  FileState &current_state = _getState();
+  switch (current_state.compression_algorithm) {
+  case CompressionAlgorithm::NO_COMPRESSION:
+    _ifs_none.clear();
+    break;
+  case CompressionAlgorithm::GZIP:
+    _ifs_gzip.clear();
+    break;
+  case CompressionAlgorithm::BZ2:
+    _ifs_bz2.clear();
+    break;
+  }
+}
+
 void FileReader::open(const string &filename) {
   close();
+  assert(!_ifs_bz2.is_open());
+  assert(!_ifs_gzip.is_open());
+  assert(!_ifs_none.is_open());
   FileState &current_state = _getState();
   current_state.filename = filename;
-  _ifs.open(current_state.filename.c_str());
-  if (!*this) {
+  _ifs_none.open(current_state.filename.c_str());
+  if (*this) {
+    current_state.line = current_state.column = 0;
+    _detectCompressionAlgorithm();
+    _onOpen();
+  } else {
     current_state.filename = "";
     if (warn) {
       cerr << "Unable to open file '" << filename << "'." << endl;
     }
   }
-  _onOpen();
 }
 
 void FileReader::close() {
-  if (_ifs.is_open()) {
-    _ifs.close();
-  }
-  _getState().filename = "";
+  if (_ifs_none.is_open()) _ifs_none.close();
+  if (_ifs_gzip.is_open()) _ifs_gzip.close();
+  if (_ifs_bz2.is_open()) _ifs_bz2.close();
+  assert(!_ifs_none.is_open());
+  assert(!_ifs_gzip.is_open());
+  assert(!_ifs_bz2.is_open());
+  FileState &current_state = _getState();
+  current_state = FileState();
   reset();
   _onClose();
+  assert(!_ifs_none.is_open());
+  assert(!_ifs_gzip.is_open());
+  assert(!_ifs_bz2.is_open());
 }
 
 void FileReader::reset() {
-  _ifs.clear();
-  if (_ifs) {
-    _ifs.seekg(0);
-  }
   FileState &current_state = _getState();
-  current_state.pos = _ifs.tellg();
-  current_state.line = current_state.column = 0;
+  bool is_open = false;
+  clear();
+  _seekg(0);
+  is_open = _is_open();
+  current_state.current_char = -1;
+  current_state.next_char = -1;
+  current_state.pos = (is_open ? 0 : -1);
+  current_state.line = current_state.column = (is_open ? 0 : -1);
   _onReset();
 }
 
@@ -179,39 +256,163 @@ bool FileReader::setState(const FileState &s) {
       open(s.filename);
     }
   }
-  ok = (s.filename == current_state.filename);
+
+  ok &= (s.filename == current_state.filename);
+  ok &= (s.compression_algorithm == current_state.compression_algorithm);
   if (ok) {
-    _ifs.clear();
     current_state.line = s.line;
     current_state.column = s.column;
-    _ifs.seekg(s.pos);
-    current_state.pos = _ifs.tellg();
+    clear();
+#ifndef NDEBUG
+    ifstream::pos_type p =
+#endif
+      _seekg(s.pos);
+    assert(p == s.pos);
+    current_state.pos = s.pos;
+    current_state.current_char = s.current_char;
+    current_state.next_char = s.next_char;
+    if (current_state.next_char != -1) {
+      _loadNextChar();
+    }
   }
   return ok;
 }
 
-char FileReader::_nextVisibleCharacter() {
-  int c = -1;
+void FileReader::_detectCompressionAlgorithm() {
+  if (!_ifs_none.is_open()) return;
   FileState &current_state = _getState();
-  while (*this && ((c = _ifs.get()) <= 32)) {
+  assert(current_state.line == 0);
+  assert(current_state.column == 0);
+  unsigned char magic[2] = { 0, 0 };
+  _ifs_none.read((char *)magic, sizeof(magic));
+  current_state.compression_algorithm = CompressionAlgorithm::NO_COMPRESSION;
+  if ((magic[0] == 0x1f) && (magic[1] == 0x8b)) {
+    current_state.compression_algorithm = CompressionAlgorithm::GZIP;
+    assert(!_ifs_gzip.is_open());
+    _ifs_gzip.open(current_state.filename.c_str());
+    assert(_ifs_gzip.is_open());
+    assert(_ifs_gzip.good());
+    _ifs_none.close();
+    assert(!_ifs_none.is_open());
+  } else if ((magic[0] == 0x42) && (magic[1] == 0x5a)) {
+    current_state.compression_algorithm = CompressionAlgorithm::BZ2;
+    assert(!_ifs_bz2.is_open());
+    _ifs_bz2.open(current_state.filename.c_str());
+    assert(_ifs_bz2.is_open());
+    assert(_ifs_bz2.good());
+    _ifs_none.close();
+    assert(!_ifs_none.is_open());
+  }
+  reset();
+}
+
+void FileReader::_loadNextChar() {
+  assert(good());
+  FileState &current_state = _getState();
+  switch (current_state.compression_algorithm) {
+  case CompressionAlgorithm::NO_COMPRESSION:
+    assert(_ifs_none.is_open());
+    current_state.next_char = _ifs_none.get();
+   break;
+  case CompressionAlgorithm::BZ2:
+    assert(_ifs_bz2.is_open());
+    current_state.next_char = _ifs_bz2.get();
+    break;
+  case CompressionAlgorithm::GZIP:
+    assert(_ifs_gzip.is_open());
+    current_state.next_char = _ifs_gzip.get();
+    break;
+  }
+}
+
+int FileReader::peek() {
+  FileState &current_state = _getState();
+  if ((current_state.next_char == -1) && good()) {
+    _loadNextChar();
+  }
+  return current_state.next_char;
+}
+
+int FileReader::get() {
+  FileState &current_state = _getState();
+  switch (current_state.current_char) {
+  case '\n':
+    ++current_state.line;
+    current_state.column = 0;
+    /* FALLTHROUGH */
+  case -1:
+    break;
+  default:
+    ++current_state.column;
+  }
+  current_state.current_char = peek();
+  current_state.next_char = -1;
+  current_state.pos += 1;
+
+  return current_state.current_char;
+}
+
+
+string FileReader::getline(const char delim) {
+  string res;
+  int c;
+  while (good() && ((c = get()) != delim)) {
+    if (c != -1) {
+      res += c;
+    }
+  }
+  return res;
+}
+
+size_t FileReader::ignore(const char delim) {
+  FileState &current_state = _getState();
+  ifstream::pos_type p = current_state.pos;
+  while (good() && (get() != delim));
+  return current_state.pos - p + 1;
+}
+
+ifstream::pos_type FileReader::_seekg(ifstream::pos_type p) {
+  FileState &current_state = _getState();
+  switch (current_state.compression_algorithm) {
+  case CompressionAlgorithm::NO_COMPRESSION:
+    _ifs_none.seekg(p);
+    break;
+  case CompressionAlgorithm::BZ2:
+    _ifs_bz2.seekg(p);
+    break;
+  case CompressionAlgorithm::GZIP:
+    _ifs_gzip.seekg(p);
+    break;
+  }
+  return p;
+}
+
+ifstream::pos_type FileReader::_tellg() {
+  FileState &current_state = _getState();
+  return current_state.pos;
+}
+
+char FileReader::_nextVisibleCharacter(bool stop_before) {
+  int c = -1;
+  while (*this && (peek() <= 32)) {
+    c = get();
     switch (c) {
     case '\t':
     case ' ':
-      ++current_state.column;
-      break;
     case '\n':
-      ++current_state.line;
-      current_state.column = 0;
+    case -1:
       break;
     default:
-      if (*this) {
-        WARNING_MSG("Unexpected non printable character (code " << c << ")");
-      }
+      WARNING_MSG("Unexpected non printable character (code " << c << ")");
     }
   }
-  ++current_state.column;
-  current_state.pos = _ifs.tellg();
-  return ((c != -1) ? c : 0);
+
+  if (stop_before) {
+    c = peek();
+  } else {
+    c = get();
+  }
+  return ((c == -1) ? 0 : c);
 }
 
 const char *FileReader::_search_directories[] = {

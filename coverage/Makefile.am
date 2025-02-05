@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-#  Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM                           #
+#  Copyright © 2023-2025 -- IGH / LIRMM / CNRS / UM                           #
 #                           (Institut de Génétique Humaine /                  #
 #                           Laboratoire d'Informatique, de Robotique et de    #
 #                           Microélectronique de Montpellier /                #
@@ -95,22 +95,23 @@
 @GCOVR_CODE_COVERAGE_RULES@
 
 # Ignore external libraries/headers in coverage reports.
-GCOVR_CORE_OPTS = 				\
-  --root "$(top_builddir)"			\
-  --exclude-unreachable-branches		\
-  --exclude '^$(GCOVR_TESTS_DIRECTORY)/'	\
-  --exclude '^(.*/)?external/'	\
-  --filter '^(.*/)?src/'
+GCOVR_CORE_OPTS = 							\
+  --root "$(top_builddir)"						\
+  --exclude-unreachable-branches					\
+  --exclude '$(GCOVR_TESTS_DIRECTORY)/'					\
+  --exclude '/(.*/)?external/'						\
+  --exclude '/(.*/)?variant_filter_((scanner)|(parser)).((cpp)|(h))'	\
+  --filter '/(.*/)?src/'
 
 CODE_COVERAGE_LCOV_RMOPTS_DEFAULT  = /usr/* $(GCOVR_TESTS_DIRECTORY) */external/*
 
 # Ignore (and suppress) `unused` and `deprecated` warnings emitted by
 # the `lcov` program.
-CODE_COVERAGE_LCOV_SHOPTS = $(CODE_COVERAGE_LCOV_SHOPTS_DEFAULT) --ignore-errors unused,unused,deprecated,deprecated,inconsistent,inconsistent,mismatch
+CODE_COVERAGE_LCOV_SHOPTS = $(CODE_COVERAGE_LCOV_SHOPTS_DEFAULT) --ignore-errors unused,unused,deprecated,deprecated,inconsistent,inconsistent,mismatch,mismatch
 
 # Ignore (and suppress) `deprecated` warnings emitted by the `genhtml`
 # program.
-CODE_COVERAGE_GENHTML_OPTIONS = $(CODE_COVERAGE_GENHTML_OPTIONS_DEFAULT) --ignore-errors deprecated,deprecated
+CODE_COVERAGE_GENHTML_OPTIONS = $(CODE_COVERAGE_GENHTML_OPTIONS_DEFAULT) --ignore-errors deprecated,deprecated,inconsistent,inconsistent,range,range
 
 include $(top_srcdir)/aminclude_static.am
 

@@ -1,6 +1,6 @@
 /******************************************************************************
 *                                                                             *
-*  Copyright © 2024      -- IGH / LIRMM / CNRS / UM                           *
+*  Copyright © 2024-2025 -- IGH / LIRMM / CNRS / UM                           *
 *                           (Institut de Génétique Humaine /                  *
 *                           Laboratoire d'Informatique, de Robotique et de    *
 *                           Microélectronique de Montpellier /                *
@@ -160,6 +160,11 @@ namespace kim {
       size_t column;
 
       /**
+       * The current char (needed to correctly set line and column numbers).
+       */
+      int current_char;
+
+      /**
        * Builds a bookmark entry.
        *
        * \param state The file state to register.
@@ -242,16 +247,6 @@ namespace kim {
        * The format of the handled file.
        */
       DNAFileReader::Format format;
-
-      /**
-       * Position of the first sequence in the file.
-       */
-      FileReader::FileState start_pos;
-
-      /**
-       * Last known position in the file.
-       */
-      FileReader::FileState last_pos;
 
       /**
        * Number of total nucleotides in the file until last_pos.

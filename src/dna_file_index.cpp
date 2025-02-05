@@ -1,6 +1,6 @@
 /******************************************************************************
 *                                                                             *
-*  Copyright © 2024      -- IGH / LIRMM / CNRS / UM                           *
+*  Copyright © 2024-2025 -- IGH / LIRMM / CNRS / UM                           *
 *                           (Institut de Génétique Humaine /                  *
 *                           Laboratoire d'Informatique, de Robotique et de    *
 *                           Microélectronique de Montpellier /                *
@@ -99,7 +99,7 @@ using namespace std;
 BEGIN_KIM_NAMESPACE
 
 ostream &operator<<(ostream &os, const FileReader::FileState &s) {
-  os << "'" << s.filename << ":" << s.line << ":" << s.column;
+  os << "'" << s.filename << ":" << s.line << ":" << s.column << "(" << s.pos << ")";
   return os;
 }
 
@@ -133,8 +133,6 @@ ostream &operator<<(ostream &os, const DNAFileIndex &index) {
       const DNAFileIndex::_File &file = index._files[f];
       os << "- Filename: '" << file.filename << "'" << endl
          << "  Format: " << file.format << endl
-         << "  Start position: " << file.start_pos << endl
-         << "  Last position: " << file.last_pos << endl
          << "  Number of nucleotides: " << file.nb_nucleotides << endl
          << "  Completed: " << (file.completed ? "true" : "false") << endl
          << "  Sequences:" << endl;
@@ -202,7 +200,7 @@ ostream &operator<<(ostream &os, const DNAFileIndex &index) {
 #endif
 
 DNAFileIndex::_Bookmark::_Bookmark(const FileReader::FileState &state):
-  pos(state.pos), line(state.line), column(state.column) {
+  pos(state.pos), line(state.line), column(state.column), current_char(state.current_char) {
 }
 
 DNAFileIndex::_Sequence::_Sequence(const string &description, const string &name):
@@ -212,7 +210,6 @@ DNAFileIndex::_Sequence::_Sequence(const string &description, const string &name
 
 DNAFileIndex::_File::_File(const DNAFileReader::FileState &state):
   filename(state.filename), format(state.format),
-  start_pos(state.sequence_start_file_state), last_pos(state.sequence_start_file_state),
   nb_nucleotides(0),
   sequences(), sequence_locations(),
   completed(false) {
@@ -310,7 +307,6 @@ bool DNAFileIndex::_addNewBookmark() {
       ++_current_bookmark_pos;
       assert(_current_bookmark_pos + 1 == bookmarks.size());
     }
-    file.last_pos = state;
 #ifndef NDEBUG
   } else {
     // The sequence lenght is known, thus there shouldn't have any new bookmark to add.
@@ -376,24 +372,27 @@ void DNAFileIndex::_syncReaderWithCurrentBookmark(size_t position) const {
     state.sequence_start_file_state.pos = first_bookmark.pos;
     state.sequence_start_file_state.line = first_bookmark.line;
     state.sequence_start_file_state.column = first_bookmark.column;
+    state.sequence_start_file_state.current_char = first_bookmark.current_char;
+    state.sequence_start_file_state.next_char = -1;
 
     // Informations derived from current bookmark of the current sequence
     state.pos = bookmark.pos;
     state.line = bookmark.line;
     state.column = bookmark.column;
+    state.current_char = bookmark.current_char;
 
     // Information that can't be retrieved.
     state.kmer = state.kmer_aux = string(state.k, '?');
+    state.next_char = -1;
 
     // Now set the reader to the wanted bookmark.
     _reader.setState(state);
   }
-  assert(_reader.getState().pos != -1); // TEMP
+  assert(_reader.getState().pos != -1);
 
 }
 
 void DNAFileIndex::_loadLastBookmark() {
-
   assert(!_files.empty());
   if (_current_file_pos == (size_t) -1) {
     assert(_current_sequence_pos == (size_t) -1);
@@ -431,7 +430,7 @@ DNAFileIndex::Status DNAFileIndex::_newSequence() {
     assert(!file.completed);
 
     if (_reader.gotoNextSequence()) {
-      assert(_reader.getState().pos != -1); // TEMP
+      assert(_reader.getState().pos != -1);
 
       const DNAFileReader::FileState &state = _reader.getState();
 
@@ -460,7 +459,6 @@ DNAFileIndex::Status DNAFileIndex::_newSequence() {
         status = SEQUENCE_NAME_DUPLICATED;
         _current_sequence_pos = _current_bookmark_pos = (size_t) -1;
       }
-      file.last_pos = state;
     } else {
       file.completed = true;
       status = SEQUENCE_NOT_FOUND;

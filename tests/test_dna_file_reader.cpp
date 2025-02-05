@@ -1,6 +1,6 @@
 /******************************************************************************
 *                                                                             *
-*  Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM                           *
+*  Copyright © 2023-2025 -- IGH / LIRMM / CNRS / UM                           *
 *                           (Institut de Génétique Humaine /                  *
 *                           Laboratoire d'Informatique, de Robotique et de    *
 *                           Microélectronique de Montpellier /                *
@@ -237,13 +237,13 @@ vector<size_t> test_DNAFileReader_sequence_analysis(DNAFileReader &reader, size_
           cout << "- Sequence length is " << v << endl;
           sequence_length.push_back(v);
           v = stoi(matches[4]);
-          cout << "- Starting line is " << v << " (expecting " << (reader.getFileLineNumber() - 1) << ")" << endl;
-          assert(size_t(v) == (reader.getFileLineNumber() - 1));
+          cout << "- Starting line is " << v << " (expecting " << reader.getFileLineNumber() << ")" << endl;
+          assert(size_t(v) == reader.getFileLineNumber());
 
           DNAFileReader::FileState s1 = reader.getState();
           cout << "Before computing the sequence length, it should be not known... (expecting " << (ssize_t) reader.getCurrentSequenceLength() << ")" << endl;
           cout << "Sequence cursor is at " << reader.getFilename() << ":" << reader.getFileLineNumber() << ":" << reader.getFileColumnNumber() << endl;
-          cout << "Start sequence cursor is at " << reader.getFilename() << ":" << s1.sequence_start_file_state.line << ":" << s1.sequence_start_file_state.column << "(" << s1.sequence_start_file_state.pos << ")" << endl;
+          cout << "Start sequence cursor is at " << reader.getFilename() << ":" << (s1.sequence_start_file_state.line + 1) << ":" << (s1.sequence_start_file_state.column + 1) << "(" << s1.sequence_start_file_state.pos << ")" << endl;
           assert(reader.getCurrentSequenceLength() == size_t(-1));
           size_t length = reader.computeCurrentSequenceLength();
           cout << "After computation, the length of the sequence is " << length << endl;
@@ -683,6 +683,16 @@ int main() {
   _fill_list(degenerated_kmers[5], 35, 43);
   _fill_list(degenerated_kmers[5], 55, 60);
   _fill_list(degenerated_kmers[17], 0, 26);
+  test_DNAFileReader_kmer_extraction(reader, true /* skip degenerated k-mers */, sequence_length, bad_sequences, degenerated_kmers);
+  test_DNAFileReader_kmer_extraction(reader, false /* don't skip degenerated k-mers */, sequence_length, bad_sequences, degenerated_kmers);
+  test_DNAFileReader_indexation(reader, bad_sequences);
+
+  test_DNAFileReader_init("test-reads.fastq.gz", reader, DNAFileReader::FASTQ_FORMAT);
+  test_DNAFileReader_kmer_extraction(reader, true /* skip degenerated k-mers */, sequence_length, bad_sequences, degenerated_kmers);
+  test_DNAFileReader_kmer_extraction(reader, false /* don't skip degenerated k-mers */, sequence_length, bad_sequences, degenerated_kmers);
+  test_DNAFileReader_indexation(reader, bad_sequences);
+
+  test_DNAFileReader_init("test-reads.fastq.bz2", reader, DNAFileReader::FASTQ_FORMAT);
   test_DNAFileReader_kmer_extraction(reader, true /* skip degenerated k-mers */, sequence_length, bad_sequences, degenerated_kmers);
   test_DNAFileReader_kmer_extraction(reader, false /* don't skip degenerated k-mers */, sequence_length, bad_sequences, degenerated_kmers);
   test_DNAFileReader_indexation(reader, bad_sequences);

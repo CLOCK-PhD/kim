@@ -1,6 +1,6 @@
 /******************************************************************************
 *                                                                             *
-*  Copyright © 2024      -- IGH / LIRMM / CNRS / UM                           *
+*  Copyright © 2024-2025 -- IGH / LIRMM / CNRS / UM                           *
 *                           (Institut de Génétique Humaine /                  *
 *                           Laboratoire d'Informatique, de Robotique et de    *
 *                           Microélectronique de Montpellier /                *
@@ -267,18 +267,21 @@ int main() {
     /* The last array entry must be NULL */
     NULL
   };
-  const string fname = FileReader::findFile("test-variants.vcf", dirs);
 
-  for (const auto &fr: filter_and_res) {
-    testFilter(fname, fr.filter, fr.to_keep);
-  }
+  for (const char *f: {"test-variants.vcf", "test-variants.vcf.gz"}) {
+    const string fname = FileReader::findFile(f, dirs);
 
-  for (const auto &fr: bad_filters) {
-    try {
+    for (const auto &fr: filter_and_res) {
       testFilter(fname, fr.filter, fr.to_keep);
-    } catch (const VariantFilterDriverException &e) {
-      cout << "The following exception is an expected result:" << endl;
-      cout << e.what() << endl;
+    }
+
+    for (const auto &fr: bad_filters) {
+      try {
+        testFilter(fname, fr.filter, fr.to_keep);
+      } catch (const VariantFilterDriverException &e) {
+        cout << "The following exception is an expected result:" << endl;
+        cout << e.what() << endl;
+      }
     }
   }
 

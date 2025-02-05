@@ -1,6 +1,6 @@
 ###############################################################################
 #                                                                             #
-#  Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM                           #
+#  Copyright © 2023-2025 -- IGH / LIRMM / CNRS / UM                           #
 #                           (Institut de Génétique Humaine /                  #
 #                           Laboratoire d'Informatique, de Robotique et de    #
 #                           Microélectronique de Montpellier /                #
@@ -95,9 +95,14 @@
 dist_pkgdata_DATA =		\
   kim.bash_completion		\
   test-variants.vcf		\
+  test-variants.vcf.gz		\
   test-variants-ref.fasta	\
   test-reads.fastq		\
+  test-reads.fastq.bz2		\
+  test-reads.fastq.gz		\
   test-sequences.fasta		\
+  test-sequences.fasta.bz2	\
+  test-sequences.fasta.gz	\
   $(STATS_FILE)
 
 @CODE_STATISTICS_RULES@

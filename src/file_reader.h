@@ -1,6 +1,6 @@
 /******************************************************************************
 *                                                                             *
-*  Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM                           *
+*  Copyright © 2023-2025 -- IGH / LIRMM / CNRS / UM                           *
 *                           (Institut de Génétique Humaine /                  *
 *                           Laboratoire d'Informatique, de Robotique et de    *
 *                           Microélectronique de Montpellier /                *
@@ -91,7 +91,9 @@
 #define __FILE_READER_H__
 
 #include <string>
-#include <fstream>
+#include <fstream.h>
+#include <gzstream.h>
+#include <bzstream.h>
 
 #include <kim_exception.h>
 #include <kim_settings.h>
@@ -124,6 +126,15 @@ namespace kim {
   public:
 
     /**
+     * The compression algorithm FileReader instances can read.
+     */
+    enum CompressionAlgorithm {
+      NO_COMPRESSION, /**< File using no compression (plain files). */
+      GZIP,           /**< File compressed with gzip. */
+      BZ2             /**< File compressed with bzip2. */
+    };
+
+    /**
      * A simple structure that stores essential informations to save a
      * file state on some position and allows to restore the file
      * reader to the correct state.
@@ -153,6 +164,30 @@ namespace kim {
        */
       std::ifstream::pos_type pos;
 
+      /**
+       * The input stream compression algorithm
+       */
+      CompressionAlgorithm compression_algorithm;
+
+      /**
+       * The ASCII code of the current character (-1 if unknown).
+       */
+      int current_char;
+
+      /**
+       * The ASCII code of the next coming character (-1 if unknown).
+       */
+      int next_char;
+
+      /**
+       * Creates a default FileState.
+       *
+       * The line, column, current_char, next_char, and pos are set to
+       * -1, the compression_algorithm is set to NO_COMPRESSION and
+       * filename to the empty string.
+       */
+      FileState();
+
     };
 
     /**
@@ -167,13 +202,57 @@ namespace kim {
      */
     FileState _state;
 
-  protected:
+    /**
+     * The current input stream associated to the current processed
+     * file if compressed with BZ2.
+     */
+    compression::ifstream<bz::streambuf> _ifs_bz2;
+
+    /**
+     * The current input stream associated to the current processed
+     * file if compressed with GZIP.
+     */
+    compression::ifstream<gz::streambuf> _ifs_gzip;
 
     /**
      * Thus current input stream associated to the current processed
-     * file.
+     * file if not compressed.
      */
-    std::ifstream _ifs;
+    std::ifstream _ifs_none;
+
+    /**
+     * Load the next character of file (and updates _state attribute).
+     */
+    void _loadNextChar();
+
+  protected:
+
+    /**
+     * Get the current input stream internal position.
+     *
+     * \return Returns the position of the (virtual) stream internal
+     * cursor (th enumber of bytes from the beginning).
+     */
+    std::ifstream::pos_type _tellg();
+
+    /**
+     * Set the current input stream position.
+     *
+     * \param p The stream position to set.
+     *
+     * \return Returns the position of the current input stream.
+     */
+    std::ifstream::pos_type _seekg(std::ifstream::pos_type p);
+
+    /**
+     * Test if this reader is associated to an open file.
+     *
+     * \return Returns true if exactly one of the input stream is
+     * open.
+     */
+    inline bool _is_open() const {
+      return (_ifs_none.is_open() != _ifs_bz2.is_open()) != _ifs_gzip.is_open();
+    }
 
     /**
      * Since some derived class may want to extend the file state
@@ -211,6 +290,12 @@ namespace kim {
     inline virtual void _onReset() {}
 
     /**
+     * Detect the compression algorithm used for the current input
+     * file.
+     */
+    void _detectCompressionAlgorithm();
+
+    /**
      * Get the next visible character (ASCII code > 32) from the
      * input stream.
      *
@@ -220,10 +305,16 @@ namespace kim {
      * tabulation or newline, a warning may be emitted (according to
      * the settings).
      *
+     * \param stop_before If true, the reading cursor is stopped
+     * before the next visible characer (and is available through
+     * _state.next_char and/or the peek() method). Otherwise, the next
+     * visible character is "consumed" (and is available through
+     * _state.current_char).
+     *
      * \return Returns the next visible character or nul if an error
      * occured or if the end of the stream is reached.
      */
-    char _nextVisibleCharacter();
+    char _nextVisibleCharacter(bool stop_before = false);
 
     /**
      * The directories to lookup for some filename by default.
@@ -251,6 +342,45 @@ namespace kim {
     virtual ~FileReader();
 
     /**
+     * Get the character at the current reading cursor position.
+     *
+     * \return Returns the ASCII code of the character or -1 if some
+     * error occurs (i.e., end of file).
+     */
+    int get();
+
+    /**
+     * Get the character next to the current reading cursor position.
+     *
+     * \return Returns the ASCII code of the character or -1 if some
+     * error occurs (i.e., end of file).
+     */
+    int peek();
+
+    /**
+     * Get the string from the current reading cursor position and the
+     * given delimiter character.
+     *
+     * \param delim The character used to denote the "end of line".
+     *
+     * \return Returns the string from the current reading cursor
+     * position and the given delimiter character (or the end of
+     * file).
+     */
+    std::string getline(const char delim = '\n');
+
+    /**
+     * Skip the content from the current reading cursor position and
+     * the given delimiter character.
+     *
+     * \param delim The character used to denote the "end of line".
+     *
+     * \return Returns the number of ignored bytes (including the
+     * delimiter character).
+     */
+    size_t ignore(const char delim = '\n');
+
+    /**
      * Get the filename associated to this reader.
      *
      * \return Returns the associated filename.
@@ -267,6 +397,19 @@ namespace kim {
      * \param filename The name of the file to read.
      */
     void open(const std::string &filename);
+
+    /**
+     * Get this reader status.
+     *
+     * \return Returns true if the reader has exactly one of its
+     * internal stream correctly opened and with a good status.
+     */
+    bool good() const;
+
+    /**
+     * Clear the current input stream.
+     */
+    void clear();
 
     /**
      * Close the current input stream if it is opened.
@@ -291,7 +434,7 @@ namespace kim {
      * 0 if no file is opened.
      */
     inline size_t getFileLineNumber() const {
-      return _ifs.is_open() ? getState().line + 1 : 0;
+      return _is_open() ? getState().line + 1 : 0;
     }
 
     /**
@@ -301,7 +444,7 @@ namespace kim {
      * or 0 if no file is opened.
      */
     inline size_t getFileColumnNumber() const {
-      return _ifs.is_open() ? getState().column + 1 : 0;
+      return _is_open() ? getState().column + 1 : 0;
     }
 
     /**
@@ -310,6 +453,9 @@ namespace kim {
      * If the current file differs from the file defined in the state
      * parameter, then the current file is closed and the file defined
      * in the state parameter is opened.
+     *
+     * \note This may lead to poor performances if input file is
+     * compressed.
      *
      * \param s State of the file reader to restore.
      *
@@ -334,7 +480,7 @@ namespace kim {
      * in good() state and is associated to some file.
      */
     inline operator bool() const {
-      return _ifs.good() && _ifs.is_open();
+      return good() && _is_open();
     }
 
     /**

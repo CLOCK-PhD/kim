@@ -34,6 +34,7 @@ tests/test_bounded_size_string
 tests/test_dna_file_index
 tests/test_dna_file_reader
 tests/test_fastq_file_reader
+tests/test_file_reader
 tests/test_kim_exception
 tests/test_kim_settings
 tests/test_kmer_nodes_subindex

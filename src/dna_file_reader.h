@@ -1,6 +1,6 @@
 /******************************************************************************
 *                                                                             *
-*  Copyright © 2023-2024 -- IGH / LIRMM / CNRS / UM                           *
+*  Copyright © 2023-2025 -- IGH / LIRMM / CNRS / UM                           *
 *                           (Institut de Génétique Humaine /                  *
 *                           Laboratoire d'Informatique, de Robotique et de    *
 *                           Microélectronique de Montpellier /                *
@@ -110,24 +110,24 @@ namespace kim {
      */
     enum Format {
 
-                 /** The Fasta file format defined by Pearson for its eponym software. */
-                 FASTA_FORMAT,
+      /** The Fasta file format defined by Pearson for its eponym software. */
+      FASTA_FORMAT,
 
-                 /** The Fastq file format initially developer by the
-                     Wellcome Trust Sanger Institute and as fully
-                     describer in the Cock & al article entitled "The
-                     Sanger FASTQ file format for sequences with
-                     quality scores, and the Solexa/Illumina FASTQ
-                     variants", published in Nucleic Acids Res. 2010
-                     Apr. 38(6):1767-71 (doi: 10.1093/nar/gkp1137) */
-                 FASTQ_FORMAT,
+      /** The Fastq file format initially developer by the
+          Wellcome Trust Sanger Institute and as fully
+          describer in the Cock & al article entitled "The
+          Sanger FASTQ file format for sequences with
+          quality scores, and the Solexa/Illumina FASTQ
+          variants", published in Nucleic Acids Res. 2010
+          Apr. 38(6):1767-71 (doi: 10.1093/nar/gkp1137) */
+      FASTQ_FORMAT,
 
-                 /**
-                  * The undefined format (an undefined formatted file
-                  * is either closed or doesn't allow to extract
-                  * k-mers).
-                  */
-                 UNDEFINED_FORMAT,
+      /**
+       * The undefined format (an undefined formatted file
+       * is either closed or doesn't allow to extract
+       * k-mers).
+       */
+      UNDEFINED_FORMAT,
     };
 
     /**
