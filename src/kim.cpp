@@ -183,6 +183,7 @@ private:
     VARIANT_FILTER_OPT,
     KMER_LENGTH_OPT,
     KMER_PREFIX_LENGTH_OPT,
+    KMER_FILTER_OPT,
     REFERENCE_OPT,
     VARIANTS_OPT,
     CONSISTENCY_CHECKING_OPT,
@@ -198,6 +199,7 @@ private:
   string _progname;
   Settings _settings;
   _RunningMode _running_mode;
+  vector<pair<string, regex>>  _kmer_filters;
   vector<string> _variant_filters;
   vector<string> _dna_files;
   vector<fs::path> _variants_files;
@@ -299,6 +301,13 @@ const option::Descriptor KimProgram::_usage[] =
    { KMER_PREFIX_LENGTH_OPT,   0, "p", "kmer-prefix-length", Arg::Numeric,
      "  -p | --kmer-prefix-length <length> \tLength of the k-mers prefix"
      " (default: " stringify(KIM_DEFAULT_KMER_PREFIX_LENGTH) ")." },
+   { KMER_FILTER_OPT,          0, "E", "exclude-kmer",       Arg::Required,
+     "  -E | --exclude-kmer <expr> \tFilter out k-mers matching the given"
+     " expression. When this option is provided multiple time, any k-mer"
+     " that matches some of the given expression is filtered out from the"
+     " index. For example, to ignore poly-A and poly-T k-mers, you can"
+     " provide either the expression '^(A+)|(T+)$' or provide the two"
+     " separate expressions '^A+$' and '^T+$'. The former is less efficient." },
    { REFERENCE_OPT,            0, "R", "reference",          Arg::Required,
      "  -r | --reference <file> \tReference sequence from which k-mers are"
      " built. It is possible to use several references and at least one"
@@ -484,6 +493,7 @@ KimProgram::~KimProgram() {
 KimProgram::KimProgram(int argc, char **argv):
   _progname(basename(argv[0])),
   _settings(), _running_mode(UNDEFINED_MODE),
+  _kmer_filters(),
   _variant_filters(),
   _dna_files(), _variants_files(), _output_dir()
 {
@@ -575,6 +585,14 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
     // Ensure that at least one variant file is provided
     if (_opts.options[VARIANTS_OPT].count() < 1) {
       throw Exception("At least one variant file must be provided for index creation.");
+    }
+
+    // Reserve memory for k-mer exclusion filters, then fill the
+    // _kmer_filters vector.
+    _kmer_filters.reserve(_opts.options[KMER_FILTER_OPT].count());
+    for (option::Option* opt = _opts.options[KMER_FILTER_OPT]; opt; opt = opt->next()) {
+      regex filter(opt->arg, regex::optimize);
+      _kmer_filters.emplace_back(pair(opt->arg, filter));
     }
 
     // Reserve memory for variant filters.
@@ -1046,10 +1064,27 @@ void KimProgram::_createIndex() {
         VariantKmerEnumerator vke(variant);
         while (vke.nextVariantKmer()) {
           KmerVariantGraph::Edge e = vke.getCurrentKmerVariantEdge();
+          bool skip = false;
+          vector<pair<string, regex>>::const_iterator it = _kmer_filters.begin();
+          while (!skip && (it != _kmer_filters.end())) {
+            skip = regex_search(e.kmer, it->second);
+            if (!skip) {
+              ++it;
+            }
+          }
+          if (skip) {
+            if (_settings.warn()) {
+              cerr << "    - "
+                   << "Skipping k-mer '" << e.kmer << "'"
+                   << " since it matches the /" << it->first << "/"
+                   << " exclude regular expression." << endl;
+            }
+          } else {
 #ifdef DEBUG
-          cerr << "Adding edge: " << e.kmer << " -" << e.rank << "-> " << e.variant << endl;
+            cerr << "Adding edge: " << e.kmer << " -" << e.rank << "-> " << e.variant << endl;
 #endif
-          kim_index += e;
+            kim_index += e;
+          }
         }
       }
       if (_settings.warn()) {
@@ -1120,6 +1155,14 @@ void KimProgram::_createIndex() {
       metadata += "  - ";
       metadata += f;
       metadata += '\n';
+    }
+  }
+  if (!_kmer_filters.empty()) {
+    metadata += "- k-mer exclude filter(s):\n";
+    for (auto const &f: _kmer_filters) {
+      metadata += "  - /";
+      metadata += f.first;
+      metadata += "/\n";
     }
   }
   metadata += "- Reference files:\n";

@@ -1,5 +1,11 @@
 2025-02-05  DoccY <alban.mancheron@lirmm.fr>
 
+	* src/kim.cpp:
+	Add k-mer filter option in order to exclude k-mer matching given regex.
+	
+	
+2025-02-05  DoccY <alban.mancheron@lirmm.fr>
+
 	* src/kim.cpp, src/kim_settings.cpp, src/kim_settings.h:
 	Change query results. Now there is one result file by file input query and they are stored inside a dedicated directory.
 	
