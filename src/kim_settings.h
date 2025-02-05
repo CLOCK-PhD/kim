@@ -295,12 +295,10 @@ namespace kim {
      * \param must_exist If true, the index directory must already
      * exists.
      *
-     * \param must_not_exist IF true, the index directory must not
+     * \param must_not_exist If true, the index directory must not
      * already exists.
      *
-     * \note Obvisouly, setting a directory with both must_exist and
-     * must_not_exist set to true necessarily leads to a
-     * BadSettingsException.
+     * \see validateDirectory().
      */
     void setIndexDirectory(const std::string &path, bool must_exist = false, bool must_not_exist = false);
 
@@ -401,6 +399,22 @@ namespace kim {
      * this parameter is set to true.
      */
     void allowOverwrite(bool status);
+
+    /**
+     * Check whether the given directory meets expected status.
+     *
+     * \param path The directory to use.
+     *
+     * \param must_exist If true, the directory must already exists.
+     *
+     * \param must_not_exist If true, the directory must not already
+     * exists.
+     *
+     * \note Obvisouly, a directory with both must_exist and
+     * must_not_exist set to true necessarily leads to a
+     * BadSettingsException.
+     */
+    static void validateDirectory(const std::string &path, bool must_exist = false, bool must_not_exist = false);
 
   };
 

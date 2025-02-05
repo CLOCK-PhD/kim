@@ -173,14 +173,13 @@ void Settings::setKmerPrefixLength(size_t p) {
   _s = _k - _p;
 }
 
-void Settings::setIndexDirectory(const string &path, bool must_exist, bool must_not_exist) {
-  CHECK_FROZEN_STATE(!frozen(), setIndexDirectory);
+void Settings::validateDirectory(const string &path, bool must_exist, bool must_not_exist) {
   if (must_exist || must_not_exist) {
     fs::file_status s = fs::status(path);
     if (must_exist) {
       if (!fs::is_directory(s)) {
         BadSettingsException e;
-        e << "The index directory '" << path << "' doesn't exist or you don't have enough access rights";
+        e << "The directory '" << path << "' doesn't exist or you don't have enough access rights";
         throw e;
       }
 
@@ -192,17 +191,22 @@ void Settings::setIndexDirectory(const string &path, bool must_exist, bool must_
           && ((permissions & grx) != grx)    // permissions doesn't match 'd...r.x...'
           && ((permissions & orx) != orx)) { // permissions doesn't match 'd......r.x'
         BadSettingsException e;
-        e << "The index directory '" << path << "' is not readable";
+        e << "The directory '" << path << "' is not readable";
         throw e;
       }
     }
 
     if (must_not_exist && fs::exists(s)) {
       BadSettingsException e;
-      e << "The index directory '" << path << "' already exists";
+      e << "The directory '" << path << "' already exists";
       throw e;
     }
   }
+}
+
+void Settings::setIndexDirectory(const string &path, bool must_exist, bool must_not_exist) {
+  CHECK_FROZEN_STATE(!frozen(), setIndexDirectory);
+  validateDirectory(path, must_exist, must_not_exist);
   _index_directory = path;
 }
 

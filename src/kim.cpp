@@ -96,6 +96,7 @@
 #include <vcfpp.h>
 #pragma GCC diagnostic pop
 
+#include <filesystem>
 #include <iostream>
 #include <map>
 #include <regex>
@@ -106,7 +107,7 @@
 
 using namespace std;
 using namespace kim;
-
+namespace fs = std::filesystem;
 
 struct Arg: public option::Arg {
 
@@ -199,8 +200,8 @@ private:
   _RunningMode _running_mode;
   vector<string> _variant_filters;
   vector<string> _dna_files;
-  vector<string> _variants_files;
-  string _output_file;
+  vector<fs::path> _variants_files;
+  fs::path _output_dir;
 
   KimProgram(int argv, char **argc);
   ~KimProgram();
@@ -209,15 +210,20 @@ private:
   bool _variantOfInterest(vcfpp::BcfRecord &v) const;
   void _runQuery();
   void _createIndex();
+  fs::path _buildResultFile(const fs::path &f) const;
+  void _dumpResults(const map<string, VariantIdentification> &results,
+                    const KmerVariantGraph &index,
+                    const string &input_fname,
+                    Monitor &monitor,
+                    ostream &os = cout) const;
 
   static bool _isURL(const string &f);
-  static bool _checkIfFileExists(const string &f);
-  static void _assertFileExists(const string &f);
-  static void _dumpFile(const string &filename, size_t n = size_t(-1), ostream &os = cout);
-  static void _dumpResults(const map<string, VariantIdentification> &results,
-                            const KmerVariantGraph &index,
-                            ostream &os = cout);
+  static bool _checkIfFileIsReadable(const fs::path &f);
+  static void _assertFileIsReadable(const fs::path &f);
+  static void _dumpFile(const fs::path &filename, size_t n = size_t(-1), ostream &os = cout);
   static void _showCopyright(bool full);
+  static fs::path _commonPathPrefix(const vector<string> &files);
+
 
 public:
 
@@ -235,6 +241,7 @@ public:
 };
 
 #define KIM_DEFAULT_INDEX_DIRECTORY     "kim_index"
+#define KIM_DEFAULT_RESULT_EXTENSION    ".kyr" // Kim Yaml Result
 #define KIM_DEFAULT_KMER_LENGTH         27
 #define KIM_DEFAULT_KMER_PREFIX_LENGTH  6
 
@@ -269,9 +276,8 @@ const option::Descriptor KimProgram::_usage[] =
      "  -q | --quiet \tDon't produce warning or extra informations on"
      " standard error channel." },
    { FORCE_OPT,                0, "f", "force",              Arg::None,
-     "  -f | --force \tForce overwriting existing index directory (on index"
-     " creation) or output file (on querying). This is dangerous, you are"
-     " advertised." },
+     "  -f | --force \tForce overwriting existing index directory. "
+     " This is dangerous, you are advertised." },
    { INDEX_DIRECTORY_OPT,      0, "d", "index-dir",          Arg::Required,
      "  -d | --index-dir <dir> \tDirectory containing the index files"
      " (default: " KIM_DEFAULT_INDEX_DIRECTORY ")." },
@@ -293,13 +299,13 @@ const option::Descriptor KimProgram::_usage[] =
    { KMER_PREFIX_LENGTH_OPT,   0, "p", "kmer-prefix-length", Arg::Numeric,
      "  -p | --kmer-prefix-length <length> \tLength of the k-mers prefix"
      " (default: " stringify(KIM_DEFAULT_KMER_PREFIX_LENGTH) ")." },
-   { REFERENCE_OPT,            0, "r", "reference",          Arg::Required,
+   { REFERENCE_OPT,            0, "R", "reference",          Arg::Required,
      "  -r | --reference <file> \tReference sequence from which k-mers are"
      " built. It is possible to use several references and at least one"
      " reference file must be provided (see option --variants). The given"
      " reference file must be fasta or fastq formatted." },
-   { VARIANTS_OPT,             0, "v", "variants",           Arg::Required,
-     "  -v | --variants <file> \tVariants to index. The sequence name of"
+   { VARIANTS_OPT,             0, "V", "variants",           Arg::Required,
+     "  -V | --variants <file> \tVariants to index. The sequence name of"
      " each variant must be defined in exactly one of the provided reference"
      " files (see option --reference). The variants file must be VCF of BCF"
      " formatted (compressed with gzip or not). You also can provide URL "
@@ -313,9 +319,12 @@ const option::Descriptor KimProgram::_usage[] =
    { UNKNOWN_OPT,              0, "" , "",                   Arg::None,
      "\n"
      "Options available only for Index querying:" },
-   { OUTPUT_OPT,               0, "o", "output",             Arg::Required,
-     "-o | --output <file> \tPath to the filename where results are stored"
-     " (instead of being prompted to the standard output)." },
+   { OUTPUT_OPT,               0, "o", "output-dir",         Arg::Required,
+     "-o | --output-dir <dir> \tPath to the directory where results are "
+     " stored (instead of being prompted to the standard output). One "
+     "result file is created by input file with the "
+     "'" KIM_DEFAULT_RESULT_EXTENSION "' extension."
+     " appended." },
    ////////////////////////////////////////////////////////////////////////
    { UNKNOWN_OPT,              0, "" ,  "",                  Arg::None,
      "\n"
@@ -476,9 +485,9 @@ KimProgram::KimProgram(int argc, char **argv):
   _progname(basename(argv[0])),
   _settings(), _running_mode(UNDEFINED_MODE),
   _variant_filters(),
-  _dna_files(), _variants_files(), _output_file()
+  _dna_files(), _variants_files(), _output_dir()
 {
-  _settings.setIndexDirectory(KIM_DEFAULT_INDEX_DIRECTORY);
+  _settings.setIndexDirectory(fs::weakly_canonical(KIM_DEFAULT_INDEX_DIRECTORY));
 
   argc -= (argc > 0);
   argv += (argc > 0); // skip program name argv[0] if present
@@ -549,7 +558,7 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
   }
 
   if (_opts.options[INDEX_DIRECTORY_OPT]) {
-    _settings.setIndexDirectory(_opts.options[INDEX_DIRECTORY_OPT].arg,
+    _settings.setIndexDirectory(fs::weakly_canonical(_opts.options[INDEX_DIRECTORY_OPT].arg),
                                 !_opts.options[CREATE_INDEX_OPT],
                                 _opts.options[CREATE_INDEX_OPT] && !_settings.allowOverwrite());
   }
@@ -568,9 +577,11 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
       throw Exception("At least one variant file must be provided for index creation.");
     }
 
-    // Check if all given variant files are readable and fill the
-    // variant_files vector with their filenames.
+    // Reserve memory for variant filters.
     _variant_filters.reserve(_opts.options[VARIANT_FILTER_OPT].count());
+
+    // Check if all given variant fitler are valid then fill the
+    // _variant_filters vector.
     vcfpp::BcfWriter bcf("/dev/null", "VCF4.3");
     bcf.header.addFORMAT("GT", "1", "String", "Genotype");
     bcf.header.addINFO("AF", "A", "Float", "Estimated allele frequency in the range (0,1)");
@@ -593,15 +604,16 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
     // dna_files vector with their filenames.
     _dna_files.reserve(_opts.options[REFERENCE_OPT].count());
     for (option::Option* opt = _opts.options[REFERENCE_OPT]; opt; opt = opt->next()) {
-      _assertFileExists(opt->arg);
-      _dna_files.push_back(opt->arg);
+      fs::path p = opt->arg;
+      _assertFileIsReadable(p);
+      _dna_files.push_back(fs::canonical(p));
     }
 
     // Check if all given variant files are readable and fill the
     // variant_files vector with their filenames.
     _variants_files.reserve(_opts.options[VARIANTS_OPT].count());
     for (option::Option* opt = _opts.options[VARIANTS_OPT]; opt; opt = opt->next()) {
-      if (!_isURL(opt->arg)) _assertFileExists(opt->arg);
+      if (!_isURL(opt->arg)) _assertFileIsReadable(opt->arg);
       _variants_files.push_back(opt->arg);
     }
 
@@ -645,31 +657,17 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
     // dna_files vector with their filenames.
     _dna_files.reserve(_opts.parse.nonOptionsCount());
     for (int i = 0; i < _opts.parse.nonOptionsCount(); ++i) {
-      _assertFileExists(_opts.parse.nonOption(i));
-      _dna_files.push_back(_opts.parse.nonOption(i));
+      fs::path p = _opts.parse.nonOption(i);
+      _assertFileIsReadable(p);
+      _dna_files.push_back(fs::canonical(p));
     }
 
-    // Ensure that given output filename (if provided) is writable.
+    // Ensure that given output directory (if provided) is writable.
     if (_opts.options[OUTPUT_OPT]) {
-      _output_file = _opts.options[OUTPUT_OPT].arg;
-      if (!_settings.allowOverwrite()) {
-        if (_checkIfFileExists(_output_file)) {
-          Exception e;
-          e << "File '" << _output_file << "'"
-            << " already exists.\n"
-            << "Please use another file name or use option '--force'.";
-          throw e;
-        }
-      }
-
-      ofstream ofs(_output_file);
-      if (ofs) {
-        ofs.close();
-      } else {
-        Exception e;
-        e << "Unable to open '" << _output_file << "' file to print results.";
-        throw e;
-      }
+      _output_dir = _opts.options[OUTPUT_OPT].arg;
+      fs::create_directories(_output_dir);
+      Settings::validateDirectory(_output_dir, true);
+      _output_dir = fs::canonical(_output_dir);
     }
 
     // Prevent using options defined for other mode(s) than index
@@ -719,7 +717,7 @@ bool KimProgram::_isURL(const string &f) {
   return regex_match(f, url_regex);
 }
 
-bool KimProgram::_checkIfFileExists(const string &f) {
+bool KimProgram::_checkIfFileIsReadable(const fs::path &f) {
   bool res = false;
   ifstream ifs(f);
   if (ifs) {
@@ -729,8 +727,8 @@ bool KimProgram::_checkIfFileExists(const string &f) {
   return res;
 }
 
-void KimProgram::_assertFileExists(const string &f) {
-  if (!_checkIfFileExists(f)) {
+void KimProgram::_assertFileIsReadable(const fs::path &f) {
+  if (!_checkIfFileIsReadable(f)) {
     Exception e;
     e << "Unable to find or open the file '" << f << "'.";
     throw e;
@@ -739,7 +737,7 @@ void KimProgram::_assertFileExists(const string &f) {
 
 // Dump the file content (up to the number of given characters) to the
 // given stream.
-void KimProgram::_dumpFile(const string &filename, size_t n, ostream &os) {
+void KimProgram::_dumpFile(const fs::path &filename, size_t n, ostream &os) {
   ifstream ifs(filename);
   static const size_t buffer_size = 1024;
   char buffer[buffer_size + 1];
@@ -764,10 +762,15 @@ void KimProgram::_dumpFile(const string &filename, size_t n, ostream &os) {
 }
 
 void KimProgram::_dumpResults(const map<string, VariantIdentification> &results,
-                               const KmerVariantGraph &index,
-                               ostream &os) {
+                              const KmerVariantGraph &index,
+                              const string &input_fname,
+                              Monitor &monitor,
+                              ostream &os) const {
   os << "---" << endl
-     << "SNPs:" << endl;
+     << "Informations:" << endl
+     << "  File: " << input_fname << endl
+     << "  Index: " << _settings.getIndexDirectory() << endl
+     << "SNPs:" << (results.empty() ? " []" : "") << endl;
   for (map<string, VariantIdentification>::const_iterator it = results.cbegin();
        it != results.cend();
        ++it) {
@@ -782,6 +785,11 @@ void KimProgram::_dumpResults(const map<string, VariantIdentification> &results,
          << endl;
     }
   }
+  os << "Monitoring:" << endl
+     << "  Wallclock time: "
+     << (monitor.getWallClockTime() / 1s) << "s" << endl
+     << "  User CPU time: " << (monitor.getUserTime() / 1s) << "s" << endl
+     << "  System CPU time: " << (monitor.getSystemTime() / 1s) << "s" << endl;
 }
 
 void KimProgram::_showCopyright(bool full) {
@@ -829,15 +837,71 @@ void KimProgram::_showCopyright(bool full) {
        << endl;
 }
 
+fs::path KimProgram::_commonPathPrefix(const vector<string> &files) {
+  fs::path p;
+  if (!files.empty()) {
+    p = fs::path(files[0]).parent_path();
+    for (size_t i = 1; i < files.size(); ++i) {
+      fs::path q = fs::path(files[i]).parent_path();
+      fs::path::iterator p_it = p.begin();
+      fs::path::iterator q_it = q.begin();
+      fs::path new_p;
+      while ((p_it != p.end()) && (q_it != q.end()) && (*p_it == *q_it)) {
+        new_p /= *p_it;
+        ++p_it;
+        ++q_it;
+      }
+      p = new_p;
+    }
+  }
+  return p;
+}
+
+fs::path KimProgram::_buildResultFile(const fs::path &f) const {
+  assert(!f.empty());
+  assert(f.is_absolute());
+  fs::path p = f.relative_path();
+  p.replace_extension(KIM_DEFAULT_RESULT_EXTENSION);
+  fs::path out_file = _output_dir / "";
+  string sep = "";
+  for (fs::path::iterator it = p.begin(); it != p.end(); ++it) {
+    out_file += sep;
+    out_file += *it;
+    sep = "_";
+  }
+
+  if (_checkIfFileIsReadable(out_file)) {
+    if (_settings.allowOverwrite()) {
+      cerr << "File " << out_file << " already exist and will be overwritten." << endl;
+    } else {
+      Exception e;
+      e << "File " << out_file << " already exist. You should either provide a new output directory using the --output-dir option (recommanded) or use the --force flag (dangerous)" << endl;
+      throw e;
+    }
+  }
+  return out_file;
+}
+
+
+
 void KimProgram::_runQuery() {
   Monitor monitor;
   // Loading the index.
   KmerVariantGraph kim_index(_settings);
 
+  size_t common_path_prefix_size = _commonPathPrefix(_dna_files).string().size();
+
   kim_index.freeze();
-  map<string, VariantIdentification> variants_map;
+
+#ifdef _OPENMP
+#  pragma omp parallel for
+#endif
   // Process each input file
   for (auto const &f: _dna_files) {
+
+    Monitor one_file_monitor;
+
+    map<string, VariantIdentification> variants_map;
     if (_settings.warn()) {
       cerr << "Processing file '" << f << "'" << endl;
     }
@@ -854,27 +918,43 @@ void KimProgram::_runQuery() {
         //      << " by the k-mer at position " << reader.getCurrentKmerRelativePosition()
         //      << " in the read" << endl;
         VariantIdentification &v_ident = variants_map[it->variant_node.variant];
-        v_ident.add(reader.getCurrentSequenceDescription(), reader.getCurrentKmerRelativePosition());
+        v_ident.add(reader.getCurrentSequenceID(), reader.getCurrentKmerRelativePosition());
       }
+    }
+
+    one_file_monitor.stop();
+
+    // Write the result to output stream
+    if (!_output_dir.empty()) {
+      fs::path out_file = _buildResultFile(f.substr(common_path_prefix_size));
+      if (_checkIfFileIsReadable(out_file)) {
+        if (_settings.allowOverwrite()) {
+          cerr << "File " << out_file << " already exist and will be overwritten." << endl;
+        } else {
+          Exception e;
+          e << "File " << out_file << " already exist. You should either provide a new output directory using the --output-dir option (recommanded) or use the --force flag (dangerous)" << endl;
+          throw e;
+        }
+      }
+      ofstream ofs(out_file);
+      if (ofs) {
+        _dumpResults(variants_map, kim_index, f, one_file_monitor, ofs);
+        ofs.close();
+      } else {
+        Exception e;
+        e << "Unable to open '" << _output_dir << "' file to print results.";
+        throw e;
+      }
+    } else {
+#ifdef _OPENMP
+# pragma omp critical
+#endif
+      _dumpResults(variants_map, kim_index, f, one_file_monitor);
     }
   }
 
-  // Write the results
-  if (!_output_file.empty()) {
-    ofstream ofs(_output_file);
-    if (ofs) {
-      _dumpResults(variants_map, kim_index, ofs);
-      ofs.close();
-    } else {
-      Exception e;
-      e << "Unable to open '" << _output_file << "' file to print results.";
-      throw e;
-    }
-  } else {
-    _dumpResults(variants_map, kim_index);
-  }
   monitor.stop();
-  cerr << "# Resources used for this query:" << endl
+  cerr << "# Resources used for querying the index:" << endl
        << "# - Wallclock time (in seconds): "
        << (monitor.getWallClockTime() / 1s) << endl
        << "# - User CPU time (in seconds): " << (monitor.getUserTime() / 1s) << endl
