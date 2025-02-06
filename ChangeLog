@@ -1,3 +1,22 @@
+2025-02-06  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/Makefile.am, src/Makefile.in:
+	BugFix in code coverage generation while main program is built inside a subdirectory.
+	
+	
+2025-02-06  DoccY <alban.mancheron@lirmm.fr>
+
+	* aminclude_static.am, config/version.configure.ac,
+	coverage/Makefile.in, external/vcfpp:
+	Update vcfpp submobule.
+	
+	
+2025-02-06  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitmodules, external/gzstream:
+	Change gzstream external module to the cloned repository that fix some issues.
+	
+	
 2025-02-05  DoccY <alban.mancheron@lirmm.fr>
 
 	* src/kim.cpp:

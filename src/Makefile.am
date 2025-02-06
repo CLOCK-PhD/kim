@@ -142,28 +142,32 @@ BUILT_SOURCES = \
 # are not those specified in flex/bison source files. Use classic
 # dependencies Instead,
 
-variant_filter_scanner.h: variant_filter_scanner.cpp
-	$(AM_V_at)test -f '$(srcdir)/$(@F)' \
-	|| ( echo "Rebuild '$(srcdir)/$(<F)' and '$(srcdir)/$(@F)'" \
-	     && rm -f '$(srcdir)/$(<F)' \
-	     && $(MAKE) $(AM_MAKEFLAGS) '$(srcdir)/$(<F)' )
-	$(AM_V_at)test -f '$(builddir)/$(@F)' \
-	|| ( echo "Copying '$(builddir)/$(<F)' and '$(builddir)/$(@F)'" \
-	     && cp -p '$(srcdir)/$(<F)' '$(builddir)/$(<F)' \
-	     && cp -p '$(srcdir)/$(@F)' '$(builddir)/$(@F)' )
 
-variant_filter_parser.h: variant_filter_parser.cpp
-	$(AM_V_at)test -f '$(srcdir)/$(@F)' \
-	|| ( echo "Rebuild '$(srcdir)/$(<F)' and '$(srcdir)/$(@F)'" \
-	     && rm -f '$(srcdir)/$(<F)' \
-	     && $(MAKE) $(AM_MAKEFLAGS) '$(srcdir)/$(<F)' )
-	$(AM_V_at)test -f '$(builddir)/$(@F)' \
-	|| ( echo "Copying '$(builddir)/$(<F)' and '$(builddir)/$(@F)'" \
-	     && cp -p '$(srcdir)/$(<F)' '$(builddir)/$(<F)' \
-	     && cp -p '$(srcdir)/$(@F)' '$(builddir)/$(@F)' )
+# The 'variant_filter_scanner.h' and 'variant_filter_scanner.cpp'
+# files (resp. 'variant_filter_parser.h' and
+# 'variant_filter_parser.cpp') are built sources coming from
+# 'variant_filter_scanner.lpp'
+# (resp. (variant_filter_parser.ypp').
+#
+# All those files should exist in the source tree.
+#
+# Unfortunatly, gcov produces errors while computing statistics when
+# the $(builddir) differs from the $(srcdir) unless the files are
+# built in the $(builddir).
+#
+# The following hacks just set as last modification time the one of
+# the 'variant_filter_scanner.lpp' (resp. 'variant_filter_parser.ypp')
+# minus 1 second, ensuring not creating files if they are missing.
+variant_filter_scanner.h: variant_filter_scanner.cpp force-rebuild
+	$(AM_V_at)test '$(srcdir)' = '$(builddir)' \
+	|| touch --no-create --reference='$(srcdir)/$(<F:.cpp=.lpp)' --date='-1 second' '$(srcdir)/$(<F)' '$(srcdir)/$(@F)'
 
-clean-local:
-	test '$(srcdir)' = '$(builddir)' \
+variant_filter_parser.h: variant_filter_parser.cpp force-rebuild
+	$(AM_V_at)test '$(srcdir)' = '$(builddir)' \
+	|| touch --no-create --reference='$(srcdir)/$(<F:.cpp=.ypp)' --date='-1 second' '$(srcdir)/$(<F)' '$(srcdir)/$(@F)'
+
+distclean-local:
+	$(AM_V_at)test '$(srcdir)' = '$(builddir)' \
 	|| for f in $(BUILT_SOURCES); do \
 	     test ! -f "$(builddir)/$${f}" \
 	     || rm  "$(builddir)/$${f}"; \
