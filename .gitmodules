@@ -9,4 +9,4 @@
 	url = https://github.com/Zilong-Li/vcfpp.git
 [submodule "external/gzstream"]
 	path = external/gzstream
-	url = https://github.com/iananass/gzstream/
+	url = https://github.com/Mancheron/gzstream.git
