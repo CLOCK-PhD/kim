@@ -13,5 +13,5 @@ Maintainer:	DoccY <@PACKAGE_BUGREPORT@>
 Provides:	@PACKAGE@
 Description:	@PACKAGE_SHORT_DESCRIPTION@
  .
- More detailed description will be coming later.
+@PACKAGE_FULL_DESCRIPTION@
  .
