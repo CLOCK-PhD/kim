@@ -2,7 +2,7 @@
 #  https://https://gite.lirmm.fr/doccy-dev-tools/autoconf
 # ===========================================================================
 #
-# Serial 2
+# Serial 3
 #
 # SYNOPSIS
 #
@@ -98,7 +98,7 @@
 #
 # LICENSE
 #
-#   Copyright © 2017-2024 -- LIRMM / CNRS / UM
+#   Copyright © 2017-2025 -- LIRMM / CNRS / UM
 #                            (Laboratoire d'Informatique, de Robotique et de
 #                            Microélectronique de Montpellier /
 #                            Centre National de la Recherche Scientifique /
@@ -214,7 +214,7 @@ code_statistics_rules+="
 filelist: \$(LIST_FILE)
 
 git_ls_tree = \$(git_ls_tree_${AM_V})
-git_ls_tree_ = \$(git_ls_tree_${AM_DEFAULT_V})
+git_ls_tree_ = \$(git_ls_tree_${AM_DEFAULT_VERBOSITY})
 git_ls_tree_0 = @echo \"  GIT-LS-TREE \" \$(@);
 git_ls_tree_1 =
 
@@ -235,7 +235,7 @@ ${TAB}  > \"\$(@)\" || true
 cloc: \$(CLOC_FILE)
 
 cloc = \$(cloc_${AM_V})
-cloc_ = \$(cloc_${AM_DEFAULT_V})
+cloc_ = \$(cloc_${AM_DEFAULT_VERBOSITY})
 cloc_0 = @echo \"  CLOC    \" \$(@);
 cloc_1 =
 
@@ -265,7 +265,7 @@ code_statistics_rules+="
 ohcount: \$(OHCOUNT_FILE)
 
 ohcount = \$(ohcount_${AM_V})
-ohcount_ = \$(ohcount_${AM_DEFAULT_V})
+ohcount_ = \$(ohcount_${AM_DEFAULT_VERBOSITY})
 ohcount_0 = @echo \"  OHCOUNT \" \$(@);
 ohcount_1 =
 
@@ -300,7 +300,7 @@ ${TAB}\$(AM_V${EMPTY}_at)\$(MAKE) \$(AM_MAKEFLAGS) clean
 ${TAB}\$(AM_V${EMPTY}_at)\$(MAKE) \$(AM_MAKEFLAGS) stats
 
 stats = \$(stats_${AM_V})
-stats_ = \$(stats_${AM_DEFAULT_V})
+stats_ = \$(stats_${AM_DEFAULT_VERBOSITY})
 stats_0 = @echo \"  STATS   \" \$(@);
 stats_1 =
 

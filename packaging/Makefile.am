@@ -107,10 +107,10 @@ pkgconfig_DATA = @PACKAGE@-@PACKAGE_VERSION@.pc
 	$(AM_V_at)cp "$^" "$@"
 
 install-data-hook:
-	$(LN_S) -f @PACKAGE@-@VERSION@.pc "$(DESTDIR)$(pkgconfigdir)/@PACKAGE@.pc"
+	$(AM_V_at)$(LN_S) -f @PACKAGE@-@VERSION@.pc "$(DESTDIR)$(pkgconfigdir)/@PACKAGE@.pc"
 
 uninstall-hook:
-	$(AM_V_at)test "`readlink "$(DESTDIR)$(pkgconfigdir)/@PACKAGE@.pc"`" != @PACKAGE@-@VERSION@.pc \
+	$(AM_V_at)test "`readlink "$(DESTDIR)$(pkgconfigdir)/@PACKAGE@.pc"`" != "@PACKAGE@-@VERSION@.pc" \
         || $(RM) "$(DESTDIR)$(pkgconfigdir)/@PACKAGE@.pc"
 
 

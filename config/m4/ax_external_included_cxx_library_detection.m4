@@ -36,7 +36,7 @@
 #
 # LICENSE
 #
-#   Copyright © 2015-2024 -- LIRMM / CNRS / UM
+#   Copyright © 2015-2025 -- LIRMM / CNRS / UM
 #                            (Laboratoire d'Informatique, de Robotique et de
 #                            Microélectronique de Montpellier /
 #                            Centre National de la Recherche Scientifique /

@@ -2,7 +2,7 @@
 #  https://https://gite.lirmm.fr/doccy-dev-tools/autoconf
 # ===========================================================================
 #
-# Serial 4
+# Serial 5
 #
 # SYNOPSIS
 #
@@ -318,7 +318,7 @@
 #
 # LICENSE
 #
-#   Copyright © 2023-2024 -- LIRMM / CNRS / UM
+#   Copyright © 2023-2025 -- LIRMM / CNRS / UM
 #                            (Laboratoire d'Informatique, de Robotique et de
 #                            Microélectronique de Montpellier /
 #                            Centre National de la Recherche Scientifique /
@@ -765,7 +765,7 @@ coverage-distclean: code-coverage-dist-clean
 .NOTPARALLEL:
 
 gcovr_code_coverage = \$(gcovr_code_coverage_${AM_V})
-gcovr_code_coverage_ = \$(gcovr_code_coverage_${AM_DEFAULT_V})
+gcovr_code_coverage_ = \$(gcovr_code_coverage_${AM_DEFAULT_VERBOSITY})
 gcovr_code_coverage_0 = @echo \"  GCOVR   \" \$(@);
 gcovr_code_coverage_1 =
 
