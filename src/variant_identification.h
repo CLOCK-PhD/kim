@@ -106,7 +106,7 @@ namespace kim {
     /**
      * The type of the read identifier.
      */
-    typedef std::string ReadID_type;
+    typedef size_t ReadID_type;
 
     /**
      * The type of the association between reads and k-mer (that

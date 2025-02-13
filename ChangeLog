@@ -1,3 +1,9 @@
+2025-02-13  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/variant_identification.h:
+	Change type of variant ID in order to reduce space consumption.
+	
+	
 2025-02-12  DoccY <alban.mancheron@lirmm.fr>
 
 	* packaging/control.in:
