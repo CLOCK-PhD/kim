@@ -649,7 +649,7 @@ int main() {
   assert(s.getKmerSuffixLength() == 6);
   assert(s.valid());
 
-  Settings s2(15, 5, "/some/path", true, true, true, true);
+  Settings s2(15, 5, "/some/path", true, true, true, 0.2, 0.99999, true);
   assert(s2.warn());
   assert(s2.allowOverwrite());
   assert(s2.checkConsistency());

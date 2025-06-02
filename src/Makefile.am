@@ -117,8 +117,8 @@ pkginclude_HEADERS =	\
   kmer_variant_edges_subindex.h	\
   kmer_variant_graph.h		\
   monitor.h			\
+  read_analyzer.h		\
   sort_helper.h                 \
-  variant_identification.h	\
   variant_kmer_enumerator.h	\
   variant_nodes_index.h
 
@@ -195,8 +195,8 @@ libkim_la_SOURCES =						\
   kmer_variant_edges_subindex.h kmer_variant_edges_subindex.cpp	\
   kmer_variant_graph.h kmer_variant_graph.cpp			\
   monitor.h monitor.cpp						\
+  read_analyzer.h read_analyzer.cpp				\
   sort_helper.h sort_helper.cpp					\
-  variant_identification.h variant_identification.cpp		\
   variant_kmer_enumerator.h variant_kmer_enumerator.cpp		\
   variant_filter.h variant_filter.cpp				\
   variant_filter_driver.h variant_filter_driver.cpp		\

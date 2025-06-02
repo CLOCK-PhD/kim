@@ -1,6 +1,6 @@
 /******************************************************************************
 *                                                                             *
-*  Copyright © 2023-2025 -- IGH / LIRMM / CNRS / UM                           *
+*  Copyright © 2025      -- IGH / LIRMM / CNRS / UM                           *
 *                           (Institut de Génétique Humaine /                  *
 *                           Laboratoire d'Informatique, de Robotique et de    *
 *                           Microélectronique de Montpellier /                *
@@ -87,162 +87,100 @@
 *                                                                             *
 ******************************************************************************/
 
-#include "kim_settings.h"
+#include "read_analyzer.h"
 
 #include "config.h"
+#include "gauss.h"
 
 #include <cassert>
-#include <iostream>
-#include <filesystem>
+#include <cmath>
+// #include <iostream>
 
 using namespace std;
-namespace fs = std::filesystem;
 
 BEGIN_KIM_NAMESPACE
 
-#define ERROR_MSG(msg)          \
-  do {                          \
-    BadSettingsException error; \
-    error << msg;               \
-    throw error;                \
-  } while (0)
-
-#define CHECK_FROZEN_STATE(expected_state, mth)                         \
-  if (!(expected_state)) {                                              \
-    ERROR_MSG("Settings must be " << (expected_state ? "frozen" : "unfrozen") \
-              << " before calling Settings::" << #mth                   \
-              << "() method.");                                         \
-  }                                                                     \
-  (void) 0
-
-Settings::Settings(size_t k, size_t p, const string &index_directory,
-                   bool warn, bool check_consistency, bool allow_overwrite,
-                   double alpha, double threshold, bool freeze):
-  _k(0), _p(0), _s(0), _index_directory(index_directory),
-  _warn(false), _check_consistency(check_consistency),
-  _allow_overwrite(allow_overwrite),
-  _alpha(alpha), _threshold(threshold), _frozen(false) {
-  if (k || p) {
-    setKmerLength(k);
-    _warn = warn;
-    setKmerPrefixLength(p);
-  }
-  _warn = warn;
-  _frozen = freeze;
-  assert(_alpha >= 0);
-  assert(_alpha <= 1);
-  assert(_threshold >= 0);
-  assert(_threshold <= 1);
+ReadAnalyzer::ReadAnalyzer(double alpha, double threshold):
+  _variant_kmer_rates(), _variant_scores(), _completed(false),
+  _quantile(Gauss::quantile(alpha)),
+  alpha(alpha), threshold(threshold) {
+  assert(alpha >= 0);
+  assert(alpha <= 1);
+  assert(threshold >= 0);
+  assert(threshold <= 1);
 }
 
-void Settings::freeze() {
-  if (!valid()) {
-    ERROR_MSG("Settings aren't valid, thus calling the Settings::freeze() method is not allowed.");
-  }
-  _frozen = true;
-}
+const ReadAnalyzer::VariantKmerRates &ReadAnalyzer::analyze() {
 
-void Settings::setKmerLength(size_t k) {
-  CHECK_FROZEN_STATE(!frozen(), setKmerLength);
-  if (k < 2) {
-    ERROR_MSG("Can't set the length of the k-mers to " << k
-              << " (length must be greater or equal to 2).");
-  }
-  _k = k;
-  if (_p + 1 >= _k) {
-    if (_warn) {
-      cerr << "The length of k-mers is set to " << _k
-           << " but current length of the prefixes was " << _p << "."
-           << " Setting the length of the prefixes to " << (_k - 1)
-           << "." << endl;
+  assert(!_completed);
+
+  VariantKmerRates::iterator it = _variant_kmer_rates.begin();
+  while (it != _variant_kmer_rates.end()) {
+    VariantKmerRatesIteratorWrapper vr(it);
+    // cerr << "looking for k-mers of variant '" << vr.node.variant << endl;
+    vr.rates.weak /= vr.node.in_degree;
+    vr.rates.strict /= vr.node.in_degree;
+    if (vr.rates.weak > 1.0) vr.rates.weak = 1.0;
+    if (vr.rates.strict > 1.0) vr.rates.strict = 1.0;
+
+    if (vr.rates.weak >= threshold) {
+      VariantStatistics &stats = _variant_scores[vr.node];
+      // update mean and variance using the Welford's algorithm
+      double weak_delta = vr.rates.weak - stats.weak_mean;
+      double strict_delta = vr.rates.strict - stats.strict_mean;
+      ++stats.count;
+      stats.weak_mean += weak_delta / stats.count;
+      stats.weak_variance += (vr.rates.weak - stats.weak_mean) * weak_delta;
+      stats.strict_mean += strict_delta / stats.count;
+      stats.strict_variance += (vr.rates.strict - stats.strict_mean) * strict_delta;
+      ++it;
+    } else {
+      // cerr << "Removing variant '" << vr.node.variant << " since rate is " << vr.rates.weak << endl;
+      it = _variant_kmer_rates.erase(it);
     }
-    _p = _k - 1;
   }
-  _s = _k - _p;
+
+  return _variant_kmer_rates;
+
 }
 
-void Settings::setKmerPrefixLength(size_t p) {
-  CHECK_FROZEN_STATE(!frozen(), setKmerPrefixLength);
-  if (p == 0) {
-    ERROR_MSG("Can't set the prefix length of the k-mers to 0 (it must be a strictly positive value).");
-  }
-  _p = p;
-  if (_p + 1 >= _k) {
-    if (_warn) {
-      cerr << "The length of k-mers is set to " << _k
-           << " but wanted length of the prefixes is " << _p << "."
-           << " Setting the length of the prefixes to " << (_k - 1)
-           << "." << endl;
-    }
-    _p = _k - 1;
-  }
-  _s = _k - _p;
+void ReadAnalyzer::reset() {
+  assert(!_completed);
+  _variant_kmer_rates.clear();
 }
 
-void Settings::validateDirectory(const string &path, bool must_exist, bool must_not_exist) {
-  if (must_exist || must_not_exist) {
-    fs::file_status s = fs::status(path);
-    if (must_exist) {
-      if (!fs::is_directory(s)) {
-        BadSettingsException e;
-        e << "The directory '" << path << "' doesn't exist or you don't have enough access rights";
-        throw e;
-      }
+#ifndef __UNUSED__
+# define __UNUSED__(x)
+#endif
 
-      fs::perms permissions = s.permissions();
-      static const fs::perms urx = fs::perms::owner_read | fs::perms::owner_exec;
-      static const fs::perms grx = fs::perms::group_read | fs::perms::group_exec;
-      static const fs::perms orx = fs::perms::others_read | fs::perms::others_exec;
-      if (((permissions & urx) != urx)       // permissions doesn't match 'dr.x......'
-          && ((permissions & grx) != grx)    // permissions doesn't match 'd...r.x...'
-          && ((permissions & orx) != orx)) { // permissions doesn't match 'd......r.x'
-        BadSettingsException e;
-        e << "The directory '" << path << "' is not readable";
-        throw e;
+void ReadAnalyzer::add(const VariantNodesIndex::VariantNode &node, uint16_t __UNUSED__(kmer_rank), bool in_ref) {
+  assert(!_completed);
+  // cerr << "Add kmer at pos " << kmer_rank
+  //      << " of variant " << node.variant
+  //      << (in_ref ? " (only to weak k-mers)" : "") << endl;
+  ++_variant_kmer_rates[node].weak;
+  _variant_kmer_rates[node].strict += !in_ref;
+  // cerr << "Now weak = " << _variant_kmer_rates[node].weak << " and strict = " << _variant_kmer_rates[node].strict << endl;
+}
+
+const ReadAnalyzer::VariantScores &ReadAnalyzer::result() {
+  if (!_completed) {
+    // cerr << "Ending computation of variant scores" << endl;
+    ReadAnalyzer::VariantScores::iterator it = _variant_scores.begin();
+    while (it != _variant_scores.end()) {
+      VariantScoreIteratorWrapper vs(it);
+      vs.stats.weak_variance /= vs.stats.count;
+      vs.stats.strict_variance /= vs.stats.count;
+      double stddev = _quantile * sqrt(vs.stats.weak_variance / vs.stats.count);
+      if ((vs.stats.weak_mean - stddev) < threshold) {
+        it = _variant_scores.erase(it);
+      } else {
+        ++it;
       }
     }
-
-    if (must_not_exist && fs::exists(s)) {
-      BadSettingsException e;
-      e << "The directory '" << path << "' already exists";
-      throw e;
-    }
+    _completed = true;
   }
-}
-
-void Settings::setIndexDirectory(const string &path, bool must_exist, bool must_not_exist) {
-  CHECK_FROZEN_STATE(!frozen(), setIndexDirectory);
-  validateDirectory(path, must_exist, must_not_exist);
-  _index_directory = path;
-}
-
-void Settings::warn(bool status) {
-  CHECK_FROZEN_STATE(!frozen(), warn);
-  _warn = status;
-}
-
-void Settings::checkConsistency(bool status) {
-  CHECK_FROZEN_STATE(!frozen(), warn);
-  _check_consistency = status;
-}
-
-void Settings::allowOverwrite(bool status) {
-  CHECK_FROZEN_STATE(!frozen(), warn);
-  _allow_overwrite = status;
-}
-
-void Settings::alpha(double v) {
-  CHECK_FROZEN_STATE(!frozen(), alpha);
-  assert(v >= 0);
-  assert(v <= 1);
-  _alpha = v;
-}
-
-void Settings::threshold(double v) {
-  CHECK_FROZEN_STATE(!frozen(), threshold);
-  assert(v >= 0);
-  assert(v <= 1);
-  _threshold = v;
+  return _variant_scores;
 }
 
 END_KIM_NAMESPACE

@@ -156,6 +156,19 @@ namespace kim {
     bool _allow_overwrite;
 
     /**
+     * The type I error (significance) of the variant analysis (the
+     * probability to reject a variant that really is in the analyzed
+     * data).
+     */
+    double _alpha;
+
+    /**
+     * The threshold used to consider a variant in some read (thus in
+     * the whole set of analyzed reads).
+     */
+    double _threshold;
+
+    /**
      * The settings can't be modified if _frozen is set to true.
      */
     bool _frozen;
@@ -183,11 +196,20 @@ namespace kim {
      *
      * \param allow_overwrite Allow file and directory overwriting.
      *
+     * \param alpha The type I error (significance) of the variant
+     * analysis (the probability to reject a variant that really is in
+     * the analyzed data). The type I error must be in the range [0;
+     * 1].
+     *
+     * \param threshold The k-mer rate threshold to consider a variant
+     * being present in some read. The threshold must be in the range
+     * [0; 1].
+     *
      * \param freeze Do freeze or not the settings.
      */
     Settings(size_t k = 0, size_t p = 0, const std::string &index_directory = "",
              bool warn = true, bool check_consistency = false, bool allow_overwrite = false,
-             bool freeze = false);
+             double alpha = 1., double threshold = 0., bool freeze = false);
 
     /**
      * Check whether settings are valid or not.
@@ -195,7 +217,7 @@ namespace kim {
      * \return Returns true if and only if settings are valid.
      */
     inline bool valid() const {
-      return ((_p > 0) && (_k > _p) && (_p + _s == _k));
+      return ((_p > 0) && (_k > _p) && (_p + _s == _k) && (_alpha >= 0) && (_alpha <= 1) && (_threshold >= 0));
     }
 
     /**
@@ -399,6 +421,49 @@ namespace kim {
      * this parameter is set to true.
      */
     void allowOverwrite(bool status);
+
+    /**
+     * Get the type I error (significance) of the variant analysis
+     * (the probability to reject a variant that really is in the
+     * analyzed data).
+     *
+     * \return Returns the type I error.
+     */
+    inline double alpha() const {
+      return _alpha;
+    }
+
+    /**
+     * Set the type I error (significance) of the variant analysis
+     * (the probability to reject a variant that really is in the
+     * analyzed data).
+     *
+     * \param v The type I error (significance) of the variant
+     * analysis (the probability to reject a variant that really is in
+     * the analyzed data). The type I error must be in the range [0;
+     * 1].
+     */
+    void alpha(double v);
+
+    /**
+     * Get the k-mer rate threshold to consider a variant being
+     * present in some read.
+     *
+     * \return Returns the k-mer rate threshold.
+     */
+    inline double threshold() const {
+      return _threshold;
+    }
+
+    /**
+     * Set the k-mer rate threshold to consider a variant being
+     * present in some read.
+     *
+     * \param v The k-mer rate threshold to consider a variant being
+     * present in some read. The threshold must be in the range [0;
+     * 1].
+     */
+    void threshold(double v);
 
     /**
      * Check whether the given directory meets expected status.

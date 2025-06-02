@@ -103,12 +103,12 @@
 #include <kmer_variant_edges_subindex.h>
 #include <kmer_variant_graph.h>
 #include <monitor.h>
+#include <read_analyzer.h>
 #include <sort_helper.h>
 #include <variant_filter.h>
 #include <variant_filter_driver.h>
 #include <variant_filter_parser.h>
 #include <variant_filter_scanner.h>
-#include <variant_identification.h>
 #include <variant_kmer_enumerator.h>
 #include <variant_nodes_index.h>
 

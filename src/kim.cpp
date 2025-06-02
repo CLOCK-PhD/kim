@@ -121,6 +121,8 @@ struct Arg: public option::Arg {
 
   static option::ArgStatus Numeric(const option::Option& option, bool msg);
 
+  static option::ArgStatus Percentage(const option::Option& option, bool msg);
+
 };
 
 void Arg::printError(const char* msg1, const option::Option& opt, const char* msg2) {
@@ -154,6 +156,28 @@ option::ArgStatus Arg::Numeric(const option::Option& option, bool msg) {
   return option::ARG_ILLEGAL;
 }
 
+option::ArgStatus Arg::Percentage(const option::Option& option, bool msg) {
+  char* endptr = NULL;
+  double v;
+  if (option.arg != NULL) {
+    v = strtod(option.arg, &endptr);
+    if (endptr != option.arg) {
+      if (*endptr == '%') {
+        ++endptr;
+        v *= 0.01;
+      }
+      if ((*endptr == '\0') && (v >= 0) && (v <= 1)) return option::ARG_OK;
+    }
+  }
+  if (msg) printError("Option '", option, "' requires a value in [0;1] (or 0% and 100%)\n");
+  return option::ARG_ILLEGAL;
+}
+
+// A record of the current read description and ID for read analysis callbacks
+struct _currentReadInfos {
+  string description;
+  size_t id;
+};
 
 class KimProgram {
 
@@ -180,6 +204,8 @@ private:
   static const option::Descriptor _OPTION_INDEX_CREATION_OPTIONS_VARIANT_FILTER;
   static const option::Descriptor _OPTION_QUERY_OPTIONS_HEADER;
   static const option::Descriptor _OPTION_QUERY_OPTIONS_OUTPUT_DIR;
+  static const option::Descriptor _OPTION_QUERY_OPTIONS_ALPHA;
+  static const option::Descriptor _OPTION_QUERY_OPTIONS_THRESHOLD;
   static const option::Descriptor _OPTION_FOOTER_ABOUT;
   static const option::Descriptor _OPTION_FOOTER_INDEX_CREATION;
   static const option::Descriptor _OPTION_FOOTER_QUERY;
@@ -216,7 +242,9 @@ private:
     REFERENCE_OPT,
     VARIANTS_OPT,
     CONSISTENCY_CHECKING_OPT,
-    OUTPUT_OPT
+    OUTPUT_OPT,
+    ALPHA_OPT,
+    THRESHOLD_OPT,
   };
 
   enum _RunningMode {
@@ -242,11 +270,6 @@ private:
   void _runQuery();
   void _createIndex();
   fs::path _buildResultFile(const fs::path &f) const;
-  void _dumpResults(const map<string, VariantIdentification> &results,
-                    const KmerVariantGraph &index,
-                    const string &input_fname,
-                    Monitor &monitor,
-                    ostream &os = cout) const;
 
   static bool _isURL(const string &f);
   static bool _checkIfFileIsReadable(const fs::path &f);
@@ -275,6 +298,8 @@ public:
 #define KIM_DEFAULT_RESULT_EXTENSION    ".kyr" // Kim Yaml Result
 #define KIM_DEFAULT_KMER_LENGTH         27
 #define KIM_DEFAULT_KMER_PREFIX_LENGTH  6
+#define KIM_DEFAULT_ALPHA      "1%"
+#define KIM_DEFAULT_THRESHOLD  "0%"
 
 #define _str(x) #x
 #define stringify(x) _str(x)
@@ -427,6 +452,22 @@ const option::Descriptor KimProgram::_OPTION_QUERY_OPTIONS_OUTPUT_DIR = {
   "file with the '" KIM_DEFAULT_RESULT_EXTENSION "' extension. appended."
 };
 
+const option::Descriptor KimProgram::_OPTION_QUERY_OPTIONS_ALPHA = {
+  ALPHA_OPT, 0, "a", "alpha", Arg::Percentage,
+  "  -a | --alpha <value> \t"
+  "Type I error (significance) of variant analysis. This is the "
+  "probability to reject a variant which really is in the analyzed "
+  "data. (default:" KIM_DEFAULT_ALPHA ")."
+};
+
+const option::Descriptor KimProgram::_OPTION_QUERY_OPTIONS_THRESHOLD = {
+  THRESHOLD_OPT, 0, "t", "threshold", Arg::Percentage,
+  "  -t | --threshold <value> \t"
+  "Minimum k-mer rate threshold to consider a variant being present in "
+  "some read. The threshold must be in the range [0; 1] or expressed as a "
+  "percentage (default:" KIM_DEFAULT_THRESHOLD ")."
+};
+
 const option::Descriptor KimProgram::_OPTION_FOOTER_ABOUT = {
   UNKNOWN_OPT, 0, "" , "", Arg::None,
   "ABOUT KIM\n"
@@ -571,6 +612,20 @@ const option::Descriptor KimProgram::_OPTION_FOOTER_QUERY = {
   "\n"
   "As for the index creation, the biological sequence files must be either"
   " fasta or fastq formatted.\n"
+  "\n"
+  "The default type I error (risk to reject a variant that really is in the data)"
+  " is " KIM_DEFAULT_ALPHA " but it can be changed by using the --alpha (or -a)"
+  " option:\n"
+  "\n  kim --index-dir /path/to/my/index/ --alpha 0.001 file1.fastq file2.fastq\n"
+  "\n  kim --index-dir /path/to/my/index/ --alpha 1e-3 file1.fastq file2.fastq\n"
+  "\n  kim --index-dir /path/to/my/index/ --alpha 0.1% file1.fastq file2.fastq\n"
+  "\n"
+  "The default k-mer rate minimal threshold to consider a variant being in some"
+  " read is " KIM_DEFAULT_THRESHOLD ". It can be changed too by using the"
+  " --threshold (or -t) option:\n"
+  "\n  kim --index-dir /path/to/my/index/ --threshold 0.3 file1.fastq file2.fastq\n"
+  "\n  kim --index-dir /path/to/my/index/ --threshold 3e-1 file1.fastq file2.fastq\n"
+  "\n  kim --index-dir /path/to/my/index/ --threshold 30% file1.fastq file2.fastq"
 };
 
 const option::Descriptor KimProgram::_OPTION_END = {0, 0, 0, 0, 0, 0};
@@ -635,6 +690,8 @@ const option::Descriptor KimProgram::_query_usage[] = {
   _OPTION_EMPTY_LINE,
   _OPTION_QUERY_OPTIONS_HEADER,
   _OPTION_QUERY_OPTIONS_OUTPUT_DIR,
+  _OPTION_QUERY_OPTIONS_ALPHA,
+  _OPTION_QUERY_OPTIONS_THRESHOLD,
   _OPTION_QUERY_OPTIONS_HEADER,
   _OPTION_EMPTY_LINE,
   _OPTION_FOOTER_QUERY,
@@ -666,6 +723,8 @@ const option::Descriptor KimProgram::_full_usage[] = {
   _OPTION_EMPTY_LINE,
   _OPTION_QUERY_OPTIONS_HEADER,
   _OPTION_QUERY_OPTIONS_OUTPUT_DIR,
+  _OPTION_QUERY_OPTIONS_ALPHA,
+  _OPTION_QUERY_OPTIONS_THRESHOLD,
   _OPTION_QUERY_OPTIONS_HEADER,
   _OPTION_EMPTY_LINE,
   _OPTION_FOOTER_ABOUT,
@@ -880,6 +939,20 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
       throw e;
     }
 
+    if (_opts.options[ALPHA_OPT]) {
+      Exception e;
+      e << "Option '" << _opts.options[OUTPUT_OPT].name << "'"
+        " is not available for index creation.";
+      throw e;
+    }
+
+    if (_opts.options[THRESHOLD_OPT]) {
+      Exception e;
+      e << "Option '" << _opts.options[OUTPUT_OPT].name << "'"
+        " is not available for index creation.";
+      throw e;
+    }
+
   } else {
 
     _running_mode = QUERY_MODE;
@@ -906,6 +979,24 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
       Settings::validateDirectory(_output_dir, true);
       _output_dir = fs::canonical(_output_dir);
     }
+
+    string alpha_str = (_opts.options[ALPHA_OPT]
+                        ? _opts.options[ALPHA_OPT].arg
+                        : KIM_DEFAULT_ALPHA);
+    double alpha = stod(alpha_str);
+    if (alpha_str.back() == '%') {
+      alpha *= 0.01;
+    }
+    _settings.alpha(alpha);
+
+    string threshold_str = (_opts.options[THRESHOLD_OPT]
+                            ? _opts.options[THRESHOLD_OPT].arg
+                            : KIM_DEFAULT_THRESHOLD);
+    double threshold = stod(threshold_str);
+    if (threshold_str.back() == '%') {
+      threshold *= 0.01;
+    }
+    _settings.threshold(threshold);
 
     // Prevent using options defined for other mode(s) than index
     // querying.
@@ -998,30 +1089,51 @@ void KimProgram::_dumpFile(const fs::path &filename, size_t n, ostream &os) {
   }
 }
 
-void KimProgram::_dumpResults(const map<string, VariantIdentification> &results,
-                              const KmerVariantGraph &index,
-                              const string &input_fname,
-                              Monitor &monitor,
-                              ostream &os) const {
-  os << "---" << endl
-     << "Informations:" << endl
-     << "  File: " << input_fname << endl
-     << "  Index: " << _settings.getIndexDirectory() << endl
-     << "SNPs:" << (results.empty() ? " []" : "") << endl;
-  for (map<string, VariantIdentification>::const_iterator it = results.cbegin();
+void _dumpResultsHeader(const string &input_fname, const Settings &settings, ostream &os) {
+  os << "---\n"
+     << "Informations:\n"
+     << "  File: " << input_fname << "\n"
+     << "  Index: " << settings.getIndexDirectory() << "\n"
+     << "  k-mer length: " << settings.k() << "\n"
+     << "  Alpha: " << settings.alpha() << "\n"
+     << "  Threshold: " << settings.threshold() << "\n"
+     << "Read Analysis:\n";
+}
+
+
+void _dumpResultsRead(const ReadAnalyzer::VariantKmerRates &res, const _currentReadInfos &infos, ostream &os) {
+  os << "- Read: " << infos.description << "\n"
+     << "  Id: " << infos.id << "\n"
+     << "  Variants:\n";
+  for (ReadAnalyzer::VariantKmerRates::const_iterator it = res.cbegin();
+       it != res.end();
+       ++it) {
+    ReadAnalyzer::VariantKmerRatesConstIteratorWrapper vs(it);
+    os << "  - id: "  << vs.node.variant << "\n"
+       << "    associated k-mers: " << vs.node.in_degree << "\n"
+       << "    weak found k-mer rate: " << vs.rates.weak << "\n"
+       << "    strict found k-mer rate: " << vs.rates.strict << "\n";
+  }
+
+}
+
+void _dumpResultsVariants(const ReadAnalyzer::VariantScores &results, ostream &os) {
+  os << "Variants:" << (results.empty() ? " []" : "") << "\n";
+  for (ReadAnalyzer::VariantScores::const_iterator it = results.cbegin();
        it != results.cend();
        ++it) {
-    os << "  - id: " << it->first << endl
-       << "    reads:" << endl;
-    list<VariantIdentification::ReadID_type> reads = it->second.getReads();
-    for (list<VariantIdentification::ReadID_type>::const_iterator read_it = reads.cbegin();
-         read_it != reads.cend();
-         ++read_it) {
-      os << "      - \"" << *read_it << "\": "
-         << it->second.getReadScore(*read_it) * index.getVariantCount(it->first)
-         << endl;
-    }
+    ReadAnalyzer::VariantScoreConstIteratorWrapper vs(it);
+    os << "- id: " << vs.node.variant << endl
+       << "  stats:" << endl
+       << "    weak mean: " << vs.stats.weak_mean << endl
+       << "    weak variance: " << vs.stats.weak_variance << endl
+       << "    strict mean: " << vs.stats.strict_mean << endl
+       << "    strict variance: " << vs.stats.strict_variance << endl
+       << "    count: " << vs.stats.count << endl;
   }
+}
+
+void _dumpResultsFooter(Monitor &monitor, ostream &os) {
   os << "Monitoring:" << endl
      << "  Wallclock time: "
      << (monitor.getWallClockTime() / 1s) << "s" << endl
@@ -1119,7 +1231,21 @@ fs::path KimProgram::_buildResultFile(const fs::path &f) const {
   return out_file;
 }
 
+void _updateReadInfosCallback(const DNAFileReader &reader, _currentReadInfos &infos) {
+  infos.description = reader.getCurrentSequenceDescription();
+  infos.id = reader.getCurrentSequenceID();
+}
 
+void _readAnalyzerCallback(ReadAnalyzer &r, _currentReadInfos &infos, ostream &os) {
+  // cerr << "Analyze callback for read '" << infos.id << "'" << endl;
+  const ReadAnalyzer::VariantKmerRates &res = r.analyze();
+  // cerr << "Analysis done" << endl;
+  if (!res.empty()) {
+    _dumpResultsRead(res, infos, os);
+    r.reset();
+  }
+  // cerr << "===" << endl;
+}
 
 void KimProgram::_runQuery() {
   Monitor monitor;
@@ -1130,63 +1256,83 @@ void KimProgram::_runQuery() {
 
   kim_index.freeze();
 
+  // Process each input file
 #ifdef _OPENMP
+  if (_output_dir.empty()) {
+    // Disable multthreading if results are output on the terminal
+    omp_set_num_threads(1);
+  }
 #  pragma omp parallel for
 #endif
-  // Process each input file
   for (auto const &f: _dna_files) {
+
+    ofstream ofs;
+    // Write the result to output stream
+    if (!_output_dir.empty()) {
+      fs::path out_file = _buildResultFile(f.substr(common_path_prefix_size));
+      ofs.open(out_file);
+      if (!ofs) {
+        Exception e;
+        e << "Unable to open '" << _output_dir << "' file to print results.";
+        throw e;
+      }
+    }
+    ostream &os = ofs.is_open() ? ofs : cout;
+
+    _dumpResultsHeader(f, _settings, os);
 
     Monitor one_file_monitor;
 
-    map<string, VariantIdentification> variants_map;
     if (_settings.warn()) {
       cerr << "Processing file '" << f << "'" << endl;
     }
     DNAFileReader reader(_settings.k(), f, _settings.warn());
+    ReadAnalyzer read_analyzer(_settings.alpha(), _settings.threshold());
+    _currentReadInfos read_infos;
+
+    reader.gotoNextSequence();
+    read_infos.description = reader.getCurrentSequenceDescription();
+    read_infos.id = reader.getCurrentSequenceID();
+
+    reader.addOnNewSequenceCallback([&read_analyzer, &read_infos, &os](const DNAFileReader &) {
+      _readAnalyzerCallback(read_analyzer, read_infos, os);
+    });
+    reader.addOnNewSequenceCallback([&read_infos](const DNAFileReader &reader) {
+      _updateReadInfosCallback(reader, read_infos);
+    });
 
     // Process each k-mer from the current input file
     for (string kmer = reader.getNextKmer(true /* skip degenerate */); !kmer.empty(); kmer = reader.getNextKmer(true /* skip degenerate */)) {
       // cerr << "K-mer : '" << kmer << "'" << endl;
       list<KmerVariantEdgesSubindex::KmerVariantAssociation> assoc_variant = kim_index.search(kmer);
       // cerr << "assoc_variant size is " << assoc_variant.size() << endl;
+
+      // We don't care of in_ref if the k-mer is not associated to som
+      // variant, thus we can assign any value. Although, when the
+      // k-mer is not indexed, calling isInReferenceKmer() will throw
+      // an exception. So the lazy evaluation when assigning true will
+      // prevent this exception.
+      bool in_ref = assoc_variant.empty() || kim_index.isInReferenceKmer(kmer);
       for (list<KmerVariantEdgesSubindex::KmerVariantAssociation>::const_iterator it = assoc_variant.cbegin(); it != assoc_variant.cend(); ++it) {
         // cerr << "Current variant association concerns variant '" << it->variant_node.variant << "' which concerns " << it->variant_node.in_degree << " k-mers" << endl;
         // cerr << "This variant is potentially seen in read " << reader.getCurrentSequenceDescription()
         //      << " by the k-mer at position " << reader.getCurrentKmerRelativePosition()
         //      << " in the read" << endl;
-        VariantIdentification &v_ident = variants_map[it->variant_node.variant];
-        v_ident.add(reader.getCurrentSequenceID(), reader.getCurrentKmerRelativePosition());
+        read_analyzer.add(it->variant_node, it->rank, in_ref);
       }
     }
 
+    _readAnalyzerCallback(read_analyzer, read_infos, os);
     one_file_monitor.stop();
 
+    const ReadAnalyzer::VariantScores &result = read_analyzer.result();
+
     // Write the result to output stream
-    if (!_output_dir.empty()) {
-      fs::path out_file = _buildResultFile(f.substr(common_path_prefix_size));
-      if (_checkIfFileIsReadable(out_file)) {
-        if (_settings.allowOverwrite()) {
-          cerr << "File " << out_file << " already exist and will be overwritten." << endl;
-        } else {
-          Exception e;
-          e << "File " << out_file << " already exist. You should either provide a new output directory using the --output-dir option (recommanded) or use the --force flag (dangerous)" << endl;
-          throw e;
-        }
-      }
-      ofstream ofs(out_file);
-      if (ofs) {
-        _dumpResults(variants_map, kim_index, f, one_file_monitor, ofs);
-        ofs.close();
-      } else {
-        Exception e;
-        e << "Unable to open '" << _output_dir << "' file to print results.";
-        throw e;
-      }
-    } else {
-#ifdef _OPENMP
-# pragma omp critical
-#endif
-      _dumpResults(variants_map, kim_index, f, one_file_monitor);
+    _dumpResultsVariants(result, os);
+    _dumpResultsFooter(one_file_monitor, os);
+
+    if (ofs.is_open()) {
+      ofs.close();
     }
   }
 

@@ -185,15 +185,17 @@ host_triplet = @host@
 target_triplet = @target@
 check_PROGRAMS = test_bounded_size_string$(EXEEXT) \
 	test_dna_file_reader$(EXEEXT) test_dna_file_index$(EXEEXT) \
-	test_file_reader$(EXEEXT) test_kim_exception$(EXEEXT) \
-	test_kim_settings$(EXEEXT) test_kmer_nodes_subindex$(EXEEXT) \
+	test_file_reader$(EXEEXT) test_gauss$(EXEEXT) \
+	test_kim_exception$(EXEEXT) test_kim_settings$(EXEEXT) \
+	test_kmer_nodes_subindex$(EXEEXT) \
 	test_kmer_variant_edges_subindex$(EXEEXT) \
 	test_kmer_variant_graph$(EXEEXT) test_sort_helper$(EXEEXT) \
 	test_variant_nodes_index$(EXEEXT) test_variant_filter$(EXEEXT)
 TESTS = test_bounded_size_string$(EXEEXT) \
 	test_dna_file_reader$(EXEEXT) test_dna_file_index$(EXEEXT) \
-	test_file_reader$(EXEEXT) test_kim_exception$(EXEEXT) \
-	test_kim_settings$(EXEEXT) test_kmer_nodes_subindex$(EXEEXT) \
+	test_file_reader$(EXEEXT) test_gauss$(EXEEXT) \
+	test_kim_exception$(EXEEXT) test_kim_settings$(EXEEXT) \
+	test_kmer_nodes_subindex$(EXEEXT) \
 	test_kmer_variant_edges_subindex$(EXEEXT) \
 	test_kmer_variant_graph$(EXEEXT) test_sort_helper$(EXEEXT) \
 	test_variant_nodes_index$(EXEEXT) test_variant_filter$(EXEEXT)
