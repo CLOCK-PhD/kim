@@ -1,3 +1,27 @@
+2025-06-02  DoccY <alban.mancheron@lirmm.fr>
+
+	* resources/test-variants-generate-reads.awk,
+	resources/test-variants-reads1.csv,
+	resources/test-variants-reads1.fastq,
+	resources/test-variants-reads2.csv,
+	resources/test-variants-reads2.fastq:
+	Add synthetic test files containing variants and sequencing errors.
+	The CSV files summarize the "true" variants inserted in the fastq files.
+	The test files were generated using the AWK test-variant-generate-reads.awk script.
+	
+	
+2025-06-02  DoccY <alban.mancheron@lirmm.fr>
+
+	* aminclude_static.am, config/version.configure.ac, configure,
+	configure.ac, coverage/Makefile.in, doc/mainpage.dox.in,
+	packaging/control.in, src/Makefile.am, src/Makefile.in,
+	src/dna_file_reader.h, src/kim.cpp, src/variant_identification.cpp,
+	src/variant_identification.h, src/variant_nodes_index.h,
+	tests/test_dna_file_reader.cpp:
+	Improve kim program option handling.
+	Improve test for DNAFileReader class.
+	
+	
 2025-02-13  DoccY <alban.mancheron@lirmm.fr>
 
 	* src/variant_identification.h:
