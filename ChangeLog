@@ -1,5 +1,11 @@
 2025-06-02  DoccY <alban.mancheron@lirmm.fr>
 
+	* .gitlab-ci.yml:
+	Add libz2 in CI/CD.
+	
+	
+2025-06-02  DoccY <alban.mancheron@lirmm.fr>
+
 	* .gitignore, aminclude_static.am, config/m4/ax_code_statistics.m4,
 	config/m4/ax_debian_package.m4, config/m4/pkg.m4,
 	config/version.configure.ac, configure, coverage/Makefile.in,
