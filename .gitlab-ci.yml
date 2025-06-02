@@ -156,7 +156,8 @@ prepare docker image:
           && apt-get -qq update \
           && echo "Compilation tools installation" \
           && apt-get -qq install -y git sed dpkg \
-          && apt-get -qq install -y build-essential libc6 libc6-dev libbz2-dev \
+          && apt-get -qq install -y build-essential libc6 libc6-dev \
+          && apt-get -qq install -y libbz2-dev liblzma-dev \
           && apt-get -qq install -y gcc g++ flex bison make autoconf \
              autoconf-archive automake libtool pkg-config m4 \
           && echo "Graphviz & LaTeX suite installation" \
@@ -353,6 +354,7 @@ debian package:
   needs:
     - sources archive
   script:
+    - apt-get -qq install -y libhtslib-dev
     - make -j -C "${DEB_PACKAGE_BUILDDIR}" deb
     - deb_file=$(ls --sort=version "${DEB_PACKAGE_BUILDDIR}/${PROJECT_BASENAME}_"*.deb | tail -n1)
     - echo "deb_file is '${deb_file}'"

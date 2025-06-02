@@ -1,3 +1,10 @@
+2025-06-03  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitlab-ci.yml:
+	Add liblzm-dev to the CI/CD base image.
+	Add libhts-deb for debian package construction.
+	
+	
 2025-06-02  DoccY <alban.mancheron@lirmm.fr>
 
 	* .gitlab-ci.yml:
