@@ -206,6 +206,7 @@ private:
   static const option::Descriptor _OPTION_QUERY_OPTIONS_OUTPUT_DIR;
   static const option::Descriptor _OPTION_QUERY_OPTIONS_ALPHA;
   static const option::Descriptor _OPTION_QUERY_OPTIONS_THRESHOLD;
+  static const option::Descriptor _OPTION_QUERY_OPTIONS_MODE;
   static const option::Descriptor _OPTION_FOOTER_ABOUT;
   static const option::Descriptor _OPTION_FOOTER_INDEX_CREATION;
   static const option::Descriptor _OPTION_FOOTER_QUERY;
@@ -245,6 +246,7 @@ private:
     OUTPUT_OPT,
     ALPHA_OPT,
     THRESHOLD_OPT,
+    MODE_OPT
   };
 
   enum _RunningMode {
@@ -298,8 +300,9 @@ public:
 #define KIM_DEFAULT_RESULT_EXTENSION    ".kyr" // Kim Yaml Result
 #define KIM_DEFAULT_KMER_LENGTH         27
 #define KIM_DEFAULT_KMER_PREFIX_LENGTH  6
-#define KIM_DEFAULT_ALPHA      "1%"
-#define KIM_DEFAULT_THRESHOLD  "0%"
+#define KIM_DEFAULT_ALPHA               "1%"
+#define KIM_DEFAULT_THRESHOLD           "0%"
+#define KIM_DEFAULT_MODE                "weak"
 
 #define _str(x) #x
 #define stringify(x) _str(x)
@@ -468,6 +471,15 @@ const option::Descriptor KimProgram::_OPTION_QUERY_OPTIONS_THRESHOLD = {
   "percentage (default:" KIM_DEFAULT_THRESHOLD ")."
 };
 
+const option::Descriptor KimProgram::_OPTION_QUERY_OPTIONS_MODE = {
+  MODE_OPT, 0, "m", "mode", Arg::Required,
+  "  -m | --mode <weak*|strict> \t"
+  "Set the query mode. A weak mode means that this analyzer uses all "
+  "k-mers to [try to] detect variants whereas a strict mode means that "
+  "this analyzer uses only k-mers that are not in the reference (default:"
+  KIM_DEFAULT_MODE ")."
+};
+
 const option::Descriptor KimProgram::_OPTION_FOOTER_ABOUT = {
   UNKNOWN_OPT, 0, "" , "", Arg::None,
   "ABOUT KIM\n"
@@ -625,7 +637,15 @@ const option::Descriptor KimProgram::_OPTION_FOOTER_QUERY = {
   " --threshold (or -t) option:\n"
   "\n  kim --index-dir /path/to/my/index/ --threshold 0.3 file1.fastq file2.fastq\n"
   "\n  kim --index-dir /path/to/my/index/ --threshold 3e-1 file1.fastq file2.fastq\n"
-  "\n  kim --index-dir /path/to/my/index/ --threshold 30% file1.fastq file2.fastq"
+  "\n  kim --index-dir /path/to/my/index/ --threshold 30% file1.fastq file2.fastq\n"
+  "\n"
+  "Using the strict mode can reduce the number of false positive but in "
+  "the same time can increase the number of false negative. The for very "
+  "small value of k (e.g., less than 20 for human genome), running in "
+  "strict mode may improve the query results. But for \"standard\" values "
+  "of k, running in weak mode (default) should give better results. The "
+  "mode can be changed using:\n"
+  "\n  kim --index-dir /path/to/my/index/ --mode strict file1.fastq file2.fastq"
 };
 
 const option::Descriptor KimProgram::_OPTION_END = {0, 0, 0, 0, 0, 0};
@@ -692,7 +712,7 @@ const option::Descriptor KimProgram::_query_usage[] = {
   _OPTION_QUERY_OPTIONS_OUTPUT_DIR,
   _OPTION_QUERY_OPTIONS_ALPHA,
   _OPTION_QUERY_OPTIONS_THRESHOLD,
-  _OPTION_QUERY_OPTIONS_HEADER,
+  _OPTION_QUERY_OPTIONS_MODE,
   _OPTION_EMPTY_LINE,
   _OPTION_FOOTER_QUERY,
   _OPTION_EMPTY_LINE,
@@ -725,7 +745,7 @@ const option::Descriptor KimProgram::_full_usage[] = {
   _OPTION_QUERY_OPTIONS_OUTPUT_DIR,
   _OPTION_QUERY_OPTIONS_ALPHA,
   _OPTION_QUERY_OPTIONS_THRESHOLD,
-  _OPTION_QUERY_OPTIONS_HEADER,
+  _OPTION_QUERY_OPTIONS_MODE,
   _OPTION_EMPTY_LINE,
   _OPTION_FOOTER_ABOUT,
   _OPTION_EMPTY_LINE,
@@ -941,14 +961,21 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
 
     if (_opts.options[ALPHA_OPT]) {
       Exception e;
-      e << "Option '" << _opts.options[OUTPUT_OPT].name << "'"
+      e << "Option '" << _opts.options[ALPHA_OPT].name << "'"
         " is not available for index creation.";
       throw e;
     }
 
     if (_opts.options[THRESHOLD_OPT]) {
       Exception e;
-      e << "Option '" << _opts.options[OUTPUT_OPT].name << "'"
+      e << "Option '" << _opts.options[THRESHOLD_OPT].name << "'"
+        " is not available for index creation.";
+      throw e;
+    }
+
+    if (_opts.options[MODE_OPT]) {
+      Exception e;
+      e << "Option '" << _opts.options[MODE_OPT].name << "'"
         " is not available for index creation.";
       throw e;
     }
@@ -997,6 +1024,20 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
       threshold *= 0.01;
     }
     _settings.threshold(threshold);
+
+    string mode_str = (_opts.options[MODE_OPT]
+                       ? _lowercase(_opts.options[MODE_OPT].arg)
+                       : KIM_DEFAULT_MODE);
+    if (mode_str == "weak") {
+      _settings.weakMode(true);
+    } else if (mode_str == "strict") {
+      _settings.strictMode(true);
+    } else {
+      Exception e;
+      e << "Incorrect value '" << mode_str << "' "
+        << "for option '" << _opts.options[MODE_OPT].name << "'.";
+      throw e;
+    }
 
     // Prevent using options defined for other mode(s) than index
     // querying.
@@ -1097,6 +1138,7 @@ void _dumpResultsHeader(const string &input_fname, const Settings &settings, ost
      << "  k-mer length: " << settings.k() << "\n"
      << "  Alpha: " << settings.alpha() << "\n"
      << "  Threshold: " << settings.threshold() << "\n"
+     << "  Mode: " << (settings.weakMode() ? "Weak" : "Strict") << "\n"
      << "Read Analysis:\n";
 }
 
@@ -1111,25 +1153,41 @@ void _dumpResultsRead(const ReadAnalyzer::VariantKmerRates &res, const _currentR
     ReadAnalyzer::VariantKmerRatesConstIteratorWrapper vs(it);
     os << "  - id: "  << vs.node.variant << "\n"
        << "    associated k-mers: " << vs.node.in_degree << "\n"
-       << "    weak found k-mer rate: " << vs.rates.weak << "\n"
-       << "    strict found k-mer rate: " << vs.rates.strict << "\n";
+       << "    found k-mer rate: " << vs.rate << "\n";
   }
-
 }
 
-void _dumpResultsVariants(const ReadAnalyzer::VariantScores &results, ostream &os) {
+void _dumpResultsVariants(const ReadAnalyzer::VariantScores &results,
+                          size_t indexed_kmers, size_t total_kmers, ostream &os) {
   os << "Variants:" << (results.empty() ? " []" : "") << "\n";
+  assert(total_kmers);
+  double coef = double(indexed_kmers) / double(total_kmers);
+  coef *= (1.0 - coef);
   for (ReadAnalyzer::VariantScores::const_iterator it = results.cbegin();
        it != results.cend();
        ++it) {
     ReadAnalyzer::VariantScoreConstIteratorWrapper vs(it);
     os << "- id: " << vs.node.variant << endl
        << "  stats:" << endl
-       << "    weak mean: " << vs.stats.weak_mean << endl
-       << "    weak variance: " << vs.stats.weak_variance << endl
-       << "    strict mean: " << vs.stats.strict_mean << endl
-       << "    strict variance: " << vs.stats.strict_variance << endl
-       << "    count: " << vs.stats.count << endl;
+       << "    mean: " << vs.stats.mean << endl
+       << "    variance: " << vs.stats.variance << endl
+       << "    count: " << vs.stats.count << endl
+       << "    confidence (lower bound): " << 1 - (coef / vs.stats.mean / vs.stats.mean) << endl;
+    // The Bienaymé–Chebyshev inequality states that:
+    // $P(|\frac{X}{n} - p| > x) <= \frac{p\,(1 - p)}{n\,x^2}$
+    // With:
+    // - $n$ The number of k-mers in a read
+    // - $p$ The probability of some k-mer to be indexed
+    // - $X$ The variable following a binomial distribution of
+    //   parameters n and p (the number of indexed k-mers in a read
+    //   having $n$ k-mers due to random).
+    // - $x$ The observed rate of indexed k-mers.
+    // In pratice, it follows that:
+    // - $\frac{p\,(1 - p)}{n\,x^2} \leq \frac{p\,(1 - p)}{x^2}$
+    // - $p \ll x$, thus $P(|\frac{X}{n} - p| > x) \simeq P(\frac{X}{n} > x)$
+    // This upper bound is then the probability of seeing this variant
+    // due to random, thus the confidence lower bound is its
+    // complement to 1.
   }
 }
 
@@ -1251,7 +1309,6 @@ void KimProgram::_runQuery() {
   Monitor monitor;
   // Loading the index.
   KmerVariantGraph kim_index(_settings);
-
   size_t common_path_prefix_size = _commonPathPrefix(_dna_files).string().size();
 
   kim_index.freeze();
@@ -1266,6 +1323,7 @@ void KimProgram::_runQuery() {
 #endif
   for (auto const &f: _dna_files) {
 
+    size_t nb_kmers = 0;
     ofstream ofs;
     // Write the result to output stream
     if (!_output_dir.empty()) {
@@ -1287,7 +1345,7 @@ void KimProgram::_runQuery() {
       cerr << "Processing file '" << f << "'" << endl;
     }
     DNAFileReader reader(_settings.k(), f, _settings.warn());
-    ReadAnalyzer read_analyzer(_settings.alpha(), _settings.threshold());
+    ReadAnalyzer read_analyzer(_settings.alpha(), _settings.threshold(), _settings.weakMode());
     _currentReadInfos read_infos;
 
     reader.gotoNextSequence();
@@ -1303,6 +1361,7 @@ void KimProgram::_runQuery() {
 
     // Process each k-mer from the current input file
     for (string kmer = reader.getNextKmer(true /* skip degenerate */); !kmer.empty(); kmer = reader.getNextKmer(true /* skip degenerate */)) {
+      ++nb_kmers;
       // cerr << "K-mer : '" << kmer << "'" << endl;
       list<KmerVariantEdgesSubindex::KmerVariantAssociation> assoc_variant = kim_index.search(kmer);
       // cerr << "assoc_variant size is " << assoc_variant.size() << endl;
@@ -1328,7 +1387,7 @@ void KimProgram::_runQuery() {
     const ReadAnalyzer::VariantScores &result = read_analyzer.result();
 
     // Write the result to output stream
-    _dumpResultsVariants(result, os);
+    _dumpResultsVariants(result, kim_index.getNbKmers(), nb_kmers, os);
     _dumpResultsFooter(one_file_monitor, os);
 
     if (ofs.is_open()) {

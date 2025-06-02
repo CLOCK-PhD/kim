@@ -360,7 +360,7 @@ AC_ARG_ENABLE([code-statistics],
 
 AS_IF([test "${enable_code_statistics}" != "no"],
       [enable_code_statistics="yes"])dnl
-      
+
 dnl If code statistics is enabled...
 AS_IF([test "${enable_code_statistics}" = "yes"],
       [dnl ...check for available program to compute code statistics.

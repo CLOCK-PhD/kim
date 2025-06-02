@@ -107,12 +107,17 @@ int main() {
 
   cout << "Creating default settings" << endl;
   Settings s;
+  cerr << "s.alpha = " << s.alpha() << endl;
   assert(s.warn());
   assert(!s.allowOverwrite());
   assert(!s.checkConsistency());
   assert(s.getIndexDirectory().empty());
   assert(!s.frozen());
   assert(!s.valid());
+  assert(s.alpha() == 0.01);
+  assert(s.threshold() == 0);
+  assert(s.weakMode());
+  assert(!s.strictMode());
 
   cout << "Setting k-mer length to 3" << endl;
   s.setKmerLength(3);
@@ -123,6 +128,10 @@ int main() {
   assert(!s.frozen());
   assert(s.getKmerLength() == s.k());
   assert(s.getKmerLength() == 3);
+  assert(s.alpha() == 0.01);
+  assert(s.threshold() == 0);
+  assert(s.weakMode());
+  assert(!s.strictMode());
 
   cout << "Setting k-mer prefix length to 1" << endl;
   s.setKmerPrefixLength(1);
@@ -133,6 +142,10 @@ int main() {
   assert(!s.frozen());
   assert(s.getKmerPrefixLength() == 1);
   assert(s.getKmerSuffixLength() == 2);
+  assert(s.alpha() == 0.01);
+  assert(s.threshold() == 0);
+  assert(s.weakMode());
+  assert(!s.strictMode());
   assert(s.valid());
 
   cout << "Trying to set k-mer prefix length to 4 (should lead to 2)" << endl;
@@ -146,6 +159,10 @@ int main() {
   assert(s.getKmerLength() == 3);
   assert(s.getKmerPrefixLength() == 2);
   assert(s.getKmerSuffixLength() == 1);
+  assert(s.alpha() == 0.01);
+  assert(s.threshold() == 0);
+  assert(s.weakMode());
+  assert(!s.strictMode());
   assert(s.valid());
 
   cout << "Setting k-mer length to 10" << endl;
@@ -159,6 +176,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 2);
   assert(s.getKmerSuffixLength() == 8);
+  assert(s.alpha() == 0.01);
+  assert(s.threshold() == 0);
+  assert(s.weakMode());
+  assert(!s.strictMode());
   assert(s.valid());
 
   cout << "Setting k-mer prefix length to 4" << endl;
@@ -172,6 +193,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.01);
+  assert(s.threshold() == 0);
+  assert(s.weakMode());
+  assert(!s.strictMode());
   assert(s.valid());
 
   cout << "Setting index directory to '/some/path'" << endl;
@@ -185,6 +210,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.01);
+  assert(s.threshold() == 0);
+  assert(s.weakMode());
+  assert(!s.strictMode());
   assert(s.valid());
 
   for (auto const &p: { "/some/path/that/must/not/exist", "/tmp"}) {
@@ -224,6 +253,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.01);
+  assert(s.threshold() == 0);
+  assert(s.weakMode());
+  assert(!s.strictMode());
   assert(s.valid());
 
   cout << "Enable warnings." << endl;
@@ -237,6 +270,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.01);
+  assert(s.threshold() == 0);
+  assert(s.weakMode());
+  assert(!s.strictMode());
   assert(s.valid());
 
   cout << "Disable warnings." << endl;
@@ -250,6 +287,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.01);
+  assert(s.threshold() == 0);
+  assert(s.weakMode());
+  assert(!s.strictMode());
   assert(s.valid());
 
   cout << "Enable warnings again." << endl;
@@ -263,6 +304,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.01);
+  assert(s.threshold() == 0);
+  assert(s.weakMode());
+  assert(!s.strictMode());
   assert(s.valid());
 
   cout << "Enable consistency checking." << endl;
@@ -276,6 +321,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.01);
+  assert(s.threshold() == 0);
+  assert(s.weakMode());
+  assert(!s.strictMode());
   assert(s.valid());
 
   cout << "Disable consistency checking." << endl;
@@ -289,6 +338,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.01);
+  assert(s.threshold() == 0);
+  assert(s.weakMode());
+  assert(!s.strictMode());
   assert(s.valid());
 
   cout << "Allow overwrite." << endl;
@@ -302,6 +355,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.01);
+  assert(s.threshold() == 0);
+  assert(s.weakMode());
+  assert(!s.strictMode());
   assert(s.valid());
 
   cout << "Forbid overwrite." << endl;
@@ -315,6 +372,95 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.01);
+  assert(s.threshold() == 0);
+  assert(s.weakMode());
+  assert(!s.strictMode());
+  assert(s.valid());
+
+  cout << "Set error of type I to 0.05." << endl;
+  s.alpha(0.05);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0);
+  assert(s.weakMode());
+  assert(!s.strictMode());
+  assert(s.valid());
+
+  cout << "Set k-mer rate threshold to 0.15." << endl;
+  s.threshold(0.15);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(s.weakMode());
+  assert(!s.strictMode());
+  assert(s.valid());
+
+  cout << "Set weak mode to false." << endl;
+  s.weakMode(false);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
+  assert(s.valid());
+
+  cout << "Set strict mode to false." << endl;
+  s.strictMode(false);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(s.weakMode());
+  assert(!s.strictMode());
+  assert(s.valid());
+
+  cout << "Set strict mode to true." << endl;
+  s.strictMode(true);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
   cout << "Freeze settings." << endl;
@@ -328,6 +474,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
   exception_thrown = false;
@@ -348,6 +498,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
   exception_thrown = false;
@@ -368,6 +522,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
   exception_thrown = false;
@@ -388,6 +546,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
   exception_thrown = false;
@@ -408,6 +570,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
   exception_thrown = false;
@@ -428,6 +594,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
   exception_thrown = false;
@@ -448,6 +618,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
   exception_thrown = false;
@@ -468,6 +642,82 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
+  assert(s.valid());
+
+  exception_thrown = false;
+  try {
+    cout << "Trying to change the error of type I (should throw a BadSettingsException)" << endl;
+    s.alpha(0.2);
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
+  assert(s.valid());
+
+  exception_thrown = false;
+  try {
+    cout << "Trying to change the k-mer rate threshold (should throw a BadSettingsException)" << endl;
+    s.threshold(0.2);
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
+  assert(s.valid());
+
+  exception_thrown = false;
+  try {
+    cout << "Trying to change mode (should throw a BadSettingsException)" << endl;
+    s.weakMode(true);
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
   cout << "Unfreeze settings." << endl;
@@ -481,6 +731,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
   cout << "Enable consistency checking." << endl;
@@ -494,6 +748,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
   cout << "Freeze settings again." << endl;
@@ -507,6 +765,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
   exception_thrown = false;
@@ -547,6 +809,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
   exception_thrown = false;
@@ -567,6 +833,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
   exception_thrown = false;
@@ -587,6 +857,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
   exception_thrown = false;
@@ -607,6 +881,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
   exception_thrown = false;
@@ -627,6 +905,10 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
   exception_thrown = false;
@@ -647,9 +929,13 @@ int main() {
   assert(s.getKmerLength() == 10);
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
   assert(s.valid());
 
-  Settings s2(15, 5, "/some/path", true, true, true, 0.2, 0.99999, true);
+  Settings s2(15, 5, "/some/path", true, true, true, 0.2, 0.99999, false, true);
   assert(s2.warn());
   assert(s2.allowOverwrite());
   assert(s2.checkConsistency());
@@ -659,6 +945,10 @@ int main() {
   assert(s2.getKmerLength() == 15);
   assert(s2.getKmerPrefixLength() == 5);
   assert(s2.getKmerSuffixLength() == 10);
+  assert(s2.alpha() == 0.2);
+  assert(s2.threshold() == 0.99999);
+  assert(!s2.weakMode());
+  assert(s2.strictMode());
   assert(s2.valid());
 
   cout << "That's All, Folk!!!" << endl;

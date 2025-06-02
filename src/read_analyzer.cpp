@@ -100,8 +100,8 @@ using namespace std;
 
 BEGIN_KIM_NAMESPACE
 
-ReadAnalyzer::ReadAnalyzer(double alpha, double threshold):
-  _variant_kmer_rates(), _variant_scores(), _completed(false),
+ReadAnalyzer::ReadAnalyzer(double alpha, double threshold, bool weak_mode):
+  _variant_kmer_rates(), _variant_scores(), _weak_mode(weak_mode), _completed(false),
   _quantile(Gauss::quantile(alpha)),
   alpha(alpha), threshold(threshold) {
   assert(alpha >= 0);
@@ -118,24 +118,19 @@ const ReadAnalyzer::VariantKmerRates &ReadAnalyzer::analyze() {
   while (it != _variant_kmer_rates.end()) {
     VariantKmerRatesIteratorWrapper vr(it);
     // cerr << "looking for k-mers of variant '" << vr.node.variant << endl;
-    vr.rates.weak /= vr.node.in_degree;
-    vr.rates.strict /= vr.node.in_degree;
-    if (vr.rates.weak > 1.0) vr.rates.weak = 1.0;
-    if (vr.rates.strict > 1.0) vr.rates.strict = 1.0;
+    vr.rate /= vr.node.in_degree;
+    if (vr.rate > 1.0) vr.rate = 1.0;
 
-    if (vr.rates.weak >= threshold) {
+    if (vr.rate >= threshold) {
       VariantStatistics &stats = _variant_scores[vr.node];
       // update mean and variance using the Welford's algorithm
-      double weak_delta = vr.rates.weak - stats.weak_mean;
-      double strict_delta = vr.rates.strict - stats.strict_mean;
+      double delta = vr.rate - stats.mean;
       ++stats.count;
-      stats.weak_mean += weak_delta / stats.count;
-      stats.weak_variance += (vr.rates.weak - stats.weak_mean) * weak_delta;
-      stats.strict_mean += strict_delta / stats.count;
-      stats.strict_variance += (vr.rates.strict - stats.strict_mean) * strict_delta;
+      stats.mean += delta / stats.count;
+      stats.variance += (vr.rate - stats.mean) * delta;
       ++it;
     } else {
-      // cerr << "Removing variant '" << vr.node.variant << " since rate is " << vr.rates.weak << endl;
+      // cerr << "Removing variant '" << vr.node.variant << " since rate is " << vr.rate << endl;
       it = _variant_kmer_rates.erase(it);
     }
   }
@@ -157,10 +152,13 @@ void ReadAnalyzer::add(const VariantNodesIndex::VariantNode &node, uint16_t __UN
   assert(!_completed);
   // cerr << "Add kmer at pos " << kmer_rank
   //      << " of variant " << node.variant
-  //      << (in_ref ? " (only to weak k-mers)" : "") << endl;
-  ++_variant_kmer_rates[node].weak;
-  _variant_kmer_rates[node].strict += !in_ref;
-  // cerr << "Now weak = " << _variant_kmer_rates[node].weak << " and strict = " << _variant_kmer_rates[node].strict << endl;
+  //      << (in_ref
+  //          ? (_weak_mode
+  //             ? " (keepd since in ref but weak mode"
+  //             : " (skipped since in ref and in strict mode")
+  //          : "") << endl;
+  _variant_kmer_rates[node] += _weak_mode || !in_ref;
+  // cerr << "Now mean (count) = " << _variant_kmer_rates[node] << endl;
 }
 
 const ReadAnalyzer::VariantScores &ReadAnalyzer::result() {
@@ -169,12 +167,29 @@ const ReadAnalyzer::VariantScores &ReadAnalyzer::result() {
     ReadAnalyzer::VariantScores::iterator it = _variant_scores.begin();
     while (it != _variant_scores.end()) {
       VariantScoreIteratorWrapper vs(it);
-      vs.stats.weak_variance /= vs.stats.count;
-      vs.stats.strict_variance /= vs.stats.count;
-      double stddev = _quantile * sqrt(vs.stats.weak_variance / vs.stats.count);
-      if ((vs.stats.weak_mean - stddev) < threshold) {
+      double error = INFINITY;
+      if (vs.stats.variance <= 0) {
+        // This case occurs when vs.stats.count == 1 or
+        // vs.node.in_degree == 1
+        vs.stats.variance = 0;
+      } else {
+        // This division is the finalization of the Welford's
+        // algorithm for the variance computation.
+        vs.stats.variance /= vs.stats.count;
+        // The division of the variance (in the sqrt()) comes from the
+        // limit central theorem.
+        error = _quantile * sqrt(vs.stats.variance / vs.stats.count);
+        if (error < 0) error = -error;
+      }
+      if ((vs.stats.mean - error) < threshold) {
+        // cerr << "The variant " << vs.node.variant << " is removed since it has "
+        //      << vs.stats.mean << "±" << error << " k-mer ratio (from " << vs.stats.count << " reads)"
+        //      << endl;
         it = _variant_scores.erase(it);
       } else {
+        // cerr << "The variant " << vs.node.variant << " is kept since it has "
+        //      << vs.stats.mean << "±" << error << " k-mer ratio (from " << vs.stats.count << " reads and variance " << vs.stats.variance << ")"
+        //      << endl;
         ++it;
       }
     }

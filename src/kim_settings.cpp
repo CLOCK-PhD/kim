@@ -117,11 +117,13 @@ BEGIN_KIM_NAMESPACE
 
 Settings::Settings(size_t k, size_t p, const string &index_directory,
                    bool warn, bool check_consistency, bool allow_overwrite,
-                   double alpha, double threshold, bool freeze):
+                   double alpha, double threshold, bool weak_mode,
+                   bool freeze):
   _k(0), _p(0), _s(0), _index_directory(index_directory),
   _warn(false), _check_consistency(check_consistency),
   _allow_overwrite(allow_overwrite),
-  _alpha(alpha), _threshold(threshold), _frozen(false) {
+  _alpha(alpha), _threshold(threshold), _weak_mode(weak_mode),
+  _frozen(false) {
   if (k || p) {
     setKmerLength(k);
     _warn = warn;
@@ -243,6 +245,18 @@ void Settings::threshold(double v) {
   assert(v >= 0);
   assert(v <= 1);
   _threshold = v;
+}
+
+void Settings::weakMode(bool b) {
+  CHECK_FROZEN_STATE(!frozen(), weakMode);
+  _weak_mode = b;
+  assert(weakMode() == !strictMode());
+}
+
+void Settings::strictMode(bool b) {
+  CHECK_FROZEN_STATE(!frozen(), strictMode);
+  _weak_mode = !b;
+  assert(strictMode() == !weakMode());
 }
 
 END_KIM_NAMESPACE

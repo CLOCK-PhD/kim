@@ -107,27 +107,9 @@ namespace kim {
   public:
 
     /**
-     * Rate of k-mer associated to some variant
-     */
-    struct KmerRates {
-
-      /**
-       * Include all k-mers seen in some read for some variant.
-       */
-      float weak;
-
-      /**
-       * Include only k-mers seen in some read for some variant that
-       * are not in reference.
-       */
-      float strict;
-
-    };
-
-    /**
      * Type to store k-mer rates of variants in some read.
      */
-    typedef std::map<VariantNodesIndex::VariantNode, KmerRates> VariantKmerRates;
+    typedef std::map<VariantNodesIndex::VariantNode, double> VariantKmerRates;
 
     /**
      * A simple wrapper over VariantKmerRates::iterator to rename its
@@ -141,9 +123,9 @@ namespace kim {
       const VariantNodesIndex::VariantNode& node;
 
       /**
-       * The statistics attribute.
+       * The rate attribute.
        */
-      KmerRates& rates;
+      double& rate;
 
       /**
        * Builds an iterator wrapper.
@@ -151,7 +133,7 @@ namespace kim {
        * \param it The iterator to wrap.
        */
       inline VariantKmerRatesIteratorWrapper(VariantKmerRates::iterator &it):
-        node(it->first), rates(it->second) {
+        node(it->first), rate(it->second) {
       }
 
     };
@@ -168,9 +150,9 @@ namespace kim {
       const VariantNodesIndex::VariantNode& node;
 
       /**
-       * The statistics attribute.
+       * The rate attribute.
        */
-      const KmerRates& rates;
+      const double& rate;
 
       /**
        * Builds a const_iterator wrapper.
@@ -178,7 +160,7 @@ namespace kim {
        * \param it The const_iterator to wrap.
        */
       inline VariantKmerRatesConstIteratorWrapper(VariantKmerRates::const_iterator &it):
-        node(it->first), rates(it->second) {
+        node(it->first), rate(it->second) {
       }
 
     };
@@ -189,24 +171,14 @@ namespace kim {
     struct VariantStatistics {
 
       /**
-       * The weak k-mer rate average (see KmerRates).
+       * The k-mer rate average.
        */
-      float weak_mean;
+      float mean;
 
       /**
-       * The weak k-mer rate variance (see KmerRates).
+       * The k-mer rate variance.
        */
-      float weak_variance;
-
-      /**
-       * The strict k-mer rate average (see KmerRates).
-       */
-      float strict_mean;
-
-      /**
-       * The strict k-mer rate variance (see KmerRates).
-       */
-      float strict_variance;
+      float variance;
 
       /**
        * The number of analyzed reads having at least one (weak)
@@ -288,6 +260,12 @@ namespace kim {
     VariantScores _variant_scores;
 
     /**
+     * Whether this analyzer uses all k-mers (true) or only k-mers
+     * that are not in the reference (false).
+     */
+    const bool _weak_mode;
+
+    /**
      * The analysis status.
      *
      * Once completed, no more informations can be added to this
@@ -315,8 +293,11 @@ namespace kim {
      * \param threshold The k-mer rate threshold to consider a variant
      * being present in some read. The threshold must be in the range
      * [0; 1].
+     *
+     * \param weak_mode Whether this analyzer uses all k-mers (true,
+     * default) or only k-mers that are not in the reference (false).
      */
-    ReadAnalyzer(double alpha, double threshold);
+    ReadAnalyzer(double alpha, double threshold, bool weak_mode = true);
 
     /**
      * The type I error (significance) of the variant analysis (the
@@ -330,6 +311,36 @@ namespace kim {
      * the whole set of analyzed reads).
      */
     const double threshold;
+
+    /**
+     * Analyzer mode.
+     *
+     * A weak mode means that this analyzer uses all k-mers to [try
+     * to] detect variants whereas a strict mode means that this
+     * analyzer uses only k-mers that are not in the reference.
+     *
+     * \see strict()
+     *
+     * \return Returns true if this analyzer uses a weak mode.
+     */
+    inline bool weak() const {
+      return _weak_mode;
+    }
+
+    /**
+     * Analyzer mode.
+     *
+     * A weak mode means that this analyzer uses all k-mers to [try
+     * to] detect variants whereas a strict mode means that this
+     * analyzer uses only k-mers that are not in the reference.
+     *
+     * \see weak()
+     *
+     * \return Returns true if this analyzer uses a strict mode.
+     */
+    inline bool strict() const {
+      return !_weak_mode;
+    }
 
     /**
      * Perform the analysis of all collected variants since the last

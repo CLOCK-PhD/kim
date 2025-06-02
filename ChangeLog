@@ -1,5 +1,37 @@
 2025-06-02  DoccY <alban.mancheron@lirmm.fr>
 
+	* .gitignore, aminclude_static.am, config/m4/ax_code_statistics.m4,
+	config/m4/ax_debian_package.m4, config/m4/pkg.m4,
+	config/version.configure.ac, configure, coverage/Makefile.in,
+	src/kim.cpp, src/kim_settings.cpp, src/kim_settings.h,
+	src/read_analyzer.cpp, src/read_analyzer.h,
+	tests/test_kim_settings.cpp:
+	Add a weak/strict mode to the kim program. The weak mode consider all k-mers associated to som variants whereas strict mode consider only k-mers that are not natively in the reference.
+	Fix the statistics computations.
+	Add a confidence probability to each detected the variant.
+	
+	
+2025-06-02  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/Makefile.am, src/Makefile.in, src/kim.cpp, src/kim.h,
+	src/kim_settings.cpp, src/kim_settings.h, src/read_analyzer.cpp,
+	src/read_analyzer.h, tests/Makefile.in, tests/test_kim_settings.cpp:
+	Replace VariantIdentification class by ReadAnalyzer class.
+	The ReadAnalyzer uses two parameters:
+	- A threshold corresponding to the minimum ratio of k-mers in the read that are associated to some given variant to consider the variant being in the currently analyzed read. The default threshold is 0% (but at least one variant associated k-mer must be present).
+	- An error of type I (alpha) to reject a variant that really is in the dataset. The default value is 1%.
+	
+	
+2025-06-02  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/Makefile.am, src/Makefile.in, src/gauss.cpp, src/gauss.h,
+	src/variant_nodes_index.h, tests/Makefile.am, tests/Makefile.in,
+	tests/test_gauss.cpp:
+	Add a Gauss class to handle probabilities under normal laws.
+	
+	
+2025-06-02  DoccY <alban.mancheron@lirmm.fr>
+
 	* resources/test-variants-generate-reads.awk,
 	resources/test-variants-reads1.csv,
 	resources/test-variants-reads1.fastq,

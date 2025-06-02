@@ -367,7 +367,7 @@ ${TAB}@false
 dnl _debian_package_is_valid_key([_debian_package_key_name]),
 m4_define([_debian_package_is_valid_key], [
 m4_set_contains([_debian_package_valid_metadata], $1, [],
-                [m4_fatal("Metadata parameter '$1' is unknown; Valid metadata are: m4_set_contents([_debian_package_valid_metadata], [, ]))])dnl 
+                [m4_fatal("Metadata parameter '$1' is unknown; Valid metadata are: m4_set_contents([_debian_package_valid_metadata], [, ]))])dnl
 ])dnl
 
 

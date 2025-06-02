@@ -169,6 +169,15 @@ namespace kim {
     double _threshold;
 
     /**
+     * The mode used to analyze variants.
+     *
+     * In the weak mode, all k-mers are considered to detetc variants
+     * whereas in the strict mode (the opposite of the weak mode),
+     * only k-mers that are not in the reference are considered.
+     */
+    bool _weak_mode;
+
+    /**
      * The settings can't be modified if _frozen is set to true.
      */
     bool _frozen;
@@ -199,17 +208,21 @@ namespace kim {
      * \param alpha The type I error (significance) of the variant
      * analysis (the probability to reject a variant that really is in
      * the analyzed data). The type I error must be in the range [0;
-     * 1].
+     * 1] (default is 1%).
      *
      * \param threshold The k-mer rate threshold to consider a variant
      * being present in some read. The threshold must be in the range
-     * [0; 1].
+     * [0; 1] (default is 0%).
+     *
+     * \param weak_mode Whether this analyzer uses all k-mers (true,
+     * default) or only k-mers that are not in the reference (false).
      *
      * \param freeze Do freeze or not the settings.
      */
     Settings(size_t k = 0, size_t p = 0, const std::string &index_directory = "",
              bool warn = true, bool check_consistency = false, bool allow_overwrite = false,
-             double alpha = 1., double threshold = 0., bool freeze = false);
+             double alpha = 0.01, double threshold = 0., bool weak_mode = true,
+             bool freeze = false);
 
     /**
      * Check whether settings are valid or not.
@@ -464,6 +477,58 @@ namespace kim {
      * 1].
      */
     void threshold(double v);
+
+    /**
+     * Get the weak mode status.
+     *
+     * A weak mode means that this analyzer uses all k-mers to [try
+     * to] detect variants whereas a strict mode means that this
+     * analyzer uses only k-mers that are not in the reference.
+     *
+     * \see strictMode()
+     *
+     * \return Returns true if the mode is weak.
+     */
+    inline bool weakMode() const {
+      return _weak_mode;
+    }
+
+    /**
+     * Set the weak mode status.
+     *
+     * A weak mode means that this analyzer uses all k-mers to [try
+     * to] detect variants whereas a strict mode means that this
+     * analyzer uses only k-mers that are not in the reference.
+     *
+     * \param mode The weak mode status.
+     */
+    void weakMode(bool mode);
+
+    /**
+     * Get the strict mode status.
+     *
+     * A weak mode means that this analyzer uses all k-mers to [try
+     * to] detect variants whereas a strict mode means that this
+     * analyzer uses only k-mers that are not in the reference.
+     *
+     * \see weakMode()
+     *
+     * \return Returns true if the mode is strict.
+     */
+    inline bool strictMode() const {
+      return !_weak_mode;
+    }
+
+    /**
+     * Set the strict mode status.
+     *
+     * A weak mode means that this analyzer uses all k-mers to [try
+     * to] detect variants whereas a strict mode means that this
+     * analyzer uses only k-mers that are not in the reference.
+     *
+     * \param mode The strict mode status.
+     */
+    void strictMode(bool mode);
 
     /**
      * Check whether the given directory meets expected status.
