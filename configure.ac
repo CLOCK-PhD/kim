@@ -107,7 +107,8 @@ AC_INIT([kim],
 AX_PACKAGE_INFOS(
   [PRETTY_NAME:k-mer Identification Metric.],
   [SHORT_DESCRIPTION:Kim is a k-mer identification metric program.],
-  [FULL_DESCRIPTION:],
+  [FULL_DESCRIPTION:dnl
+TODO.],
   [AUTHORS:Remy COSTA <remy.costa@igh.cnrs.fr>, William RITCHIE <william.ritchie@igh.cnrs.fr> and Alban MANCHERON  <alban.mancheron@lirmm.fr>],
   [LICENSE:CeCILL],
   [COPYRIGHT_DATE:2023-2025])dnl
@@ -352,12 +353,14 @@ A ([f]lex) lexical analyser generator is needed if some built sources must be re
 ])])
 PKG_PROG_PKG_CONFIG([0.25])
 
+DEBIAN_PACKAGE_DESCRIPTION=`printf "${PACKAGE_FULL_DESCRIPTION}" | sed -e 's,^[[[:space:]]]*$,.,g' -e 's,^, ,g'`
+AC_SUBST([DEBIAN_PACKAGE_DESCRIPTION])
+AM_SUBST_NOTMAKE([DEBIAN_PACKAGE_DESCRIPTION])
 AX_DEBIAN_PACKAGE([packaging/control],
                   [PRERM:packaging/prerm],
                   [POSTINST:packaging/postinst])
 
 AC_LANG([C++])
-
 
 dnl Ensure compiler is C++17 compatible
 AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])

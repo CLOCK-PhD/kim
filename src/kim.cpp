@@ -159,7 +159,36 @@ class KimProgram {
 
 private:
 
-  static const option::Descriptor _usage[];
+  static const option::Descriptor _OPTION_EMPTY_LINE;
+  static const option::Descriptor _OPTION_PREAMBLE;
+  static const option::Descriptor _OPTION_INFORMATIONS_HEADER;
+  static const option::Descriptor _OPTION_INFORMATIONS_HELP;
+  static const option::Descriptor _OPTION_INFORMATIONS_VERSION;
+  static const option::Descriptor _OPTION_INFORMATIONS_COPYRIGHT;
+  static const option::Descriptor _OPTION_COMMON_OPTIONS_HEADER;
+  static const option::Descriptor _OPTION_COMMON_OPTIONS_QUIET;
+  static const option::Descriptor _OPTION_COMMON_OPTIONS_FORCE;
+  static const option::Descriptor _OPTION_COMMON_OPTIONS_INDEX_DIRECTORY;
+  static const option::Descriptor _OPTION_COMMON_OPTIONS_CHECK_CONSISTENCY;
+  static const option::Descriptor _OPTION_INDEX_CREATION_OPTIONS_HEADER;
+  static const option::Descriptor _OPTION_INDEX_CREATION_OPTIONS_CREATE_INDEX;
+  static const option::Descriptor _OPTION_INDEX_CREATION_OPTIONS_KMER_LENGTH;
+  static const option::Descriptor _OPTION_INDEX_CREATION_OPTIONS_KMER_PREFIX_LENGTH;
+  static const option::Descriptor _OPTION_INDEX_CREATION_OPTIONS_KMER_FILTER;
+  static const option::Descriptor _OPTION_INDEX_CREATION_OPTIONS_REFERENCE;
+  static const option::Descriptor _OPTION_INDEX_CREATION_OPTIONS_VARIANTS;
+  static const option::Descriptor _OPTION_INDEX_CREATION_OPTIONS_VARIANT_FILTER;
+  static const option::Descriptor _OPTION_QUERY_OPTIONS_HEADER;
+  static const option::Descriptor _OPTION_QUERY_OPTIONS_OUTPUT_DIR;
+  static const option::Descriptor _OPTION_FOOTER_ABOUT;
+  static const option::Descriptor _OPTION_FOOTER_INDEX_CREATION;
+  static const option::Descriptor _OPTION_FOOTER_QUERY;
+  static const option::Descriptor _OPTION_END;
+
+  static const option::Descriptor _short_usage[];
+  static const option::Descriptor _create_index_usage[];
+  static const option::Descriptor _query_usage[];
+  static const option::Descriptor _full_usage[];
 
   struct _OptionHandler {
     option::Stats  stats;
@@ -250,235 +279,409 @@ public:
 #define _str(x) #x
 #define stringify(x) _str(x)
 
-const option::Descriptor KimProgram::_usage[] =
-  {
-   { UNKNOWN_OPT,            0, "" , "",                   Arg::None,
-     PACKAGE " version " VERSION " -- " PACKAGE_SHORT_DESCRIPTION "\n\n"
-     "Usages:\n"
-     "  kim [options] --create-index\n"
-     "  kim [options] <file> [<file> ...]\n"
-     "  kim [information option]\n"
-     "\n" },
-   ////////////////////////////////////////////////////////////////////////
-   { UNKNOWN_OPT,              0, "" , "",                   Arg::None,
-     "Available information options:" },
-   { HELP_OPT,                 0, "h", "help",               Arg::None,
-     "  -h | --help \tPrint usage and exit." },
-   { VERSION_OPT,              0, "v", "version",            Arg::None,
-     "  -v | --version \tPrint version and exit." },
-   { COPYRIGHT_OPT,            0, "" , "copyright",          Arg::None,
-     "       --copyright \tPrint copyright summary and exit." },
-   { COPYRIGHT_OPT,            1, "" , "full-copyright",     Arg::None,
-     "       --full-copyright \tPrint full copyright and exit." },
-   ////////////////////////////////////////////////////////////////////////
-   { UNKNOWN_OPT,              0, "" , "",                   Arg::None,
-     "\n"
-     "Options available for both index creation and querying:" },
-   { QUIET_OPT,                0, "q", "quiet",              Arg::None,
-     "  -q | --quiet \tDon't produce warning or extra informations on"
-     " standard error channel." },
-   { FORCE_OPT,                0, "f", "force",              Arg::None,
-     "  -f | --force \tForce overwriting existing index directory. "
-     " This is dangerous, you are advertised." },
-   { INDEX_DIRECTORY_OPT,      0, "d", "index-dir",          Arg::Required,
-     "  -d | --index-dir <dir> \tDirectory containing the index files"
-     " (default: " KIM_DEFAULT_INDEX_DIRECTORY ")." },
-   { CONSISTENCY_CHECKING_OPT, 0, "", "check-consistency",   Arg::None,
-     "       --check-consistency \tEnable consistency checking while parsing"
-     " DNA sequence files. This significantly increases the program running"
-     " time but ensures that your file are correctly written (useful when"
-     " something wrong occurs, disabled by default)" },
-   { UNKNOWN_OPT,              0, "" , "",                   Arg::None,
-     "\n"
-     "Options available only for index creation:" },
-   { CREATE_INDEX_OPT,         0, "c", "create-index",       Arg::None,
-     "  -c | --create-index \tFlag to run in index creation mode. If this"
-     " flag is given, the --reference and --variants options must be"
-     " provided." },
-   { KMER_LENGTH_OPT,          0, "k", "kmer-length",        Arg::Numeric,
-     "  -k | --kmer-length <length> \tLength of the k-mers"
-     " (default: " stringify(KIM_DEFAULT_KMER_LENGTH) ")." },
-   { KMER_PREFIX_LENGTH_OPT,   0, "p", "kmer-prefix-length", Arg::Numeric,
-     "  -p | --kmer-prefix-length <length> \tLength of the k-mers prefix"
-     " (default: " stringify(KIM_DEFAULT_KMER_PREFIX_LENGTH) ")." },
-   { KMER_FILTER_OPT,          0, "E", "exclude-kmer",       Arg::Required,
-     "  -E | --exclude-kmer <expr> \tFilter out k-mers matching the given"
-     " expression. When this option is provided multiple time, any k-mer"
-     " that matches some of the given expression is filtered out from the"
-     " index. For example, to ignore poly-A and poly-T k-mers, you can"
-     " provide either the expression '^(A+)|(T+)$' or provide the two"
-     " separate expressions '^A+$' and '^T+$'. The former is less efficient." },
-   { REFERENCE_OPT,            0, "R", "reference",          Arg::Required,
-     "  -r | --reference <file> \tReference sequence from which k-mers are"
-     " built. It is possible to use several references and at least one"
-     " reference file must be provided (see option --variants). The given"
-     " reference file must be fasta or fastq formatted." },
-   { VARIANTS_OPT,             0, "V", "variants",           Arg::Required,
-     "  -V | --variants <file> \tVariants to index. The sequence name of"
-     " each variant must be defined in exactly one of the provided reference"
-     " files (see option --reference). The variants file must be VCF of BCF"
-     " formatted (compressed with gzip or not). You also can provide URL "
-     "instead of some local file name." },
-   { VARIANT_FILTER_OPT,       0, "F", "variant-filter",     Arg::Required,
-     "  -F | --variant-filter <expr> \tFilter variants according to the"
-     " given expression. When this option is provided multiple time, each"
-     " expression must be satisfyed for the variant to be added into the"
-     " index. See filter syntax explanation below for additional details." },
-   ////////////////////////////////////////////////////////////////////////
-   { UNKNOWN_OPT,              0, "" , "",                   Arg::None,
-     "\n"
-     "Options available only for Index querying:" },
-   { OUTPUT_OPT,               0, "o", "output-dir",         Arg::Required,
-     "-o | --output-dir <dir> \tPath to the directory where results are "
-     " stored (instead of being prompted to the standard output). One "
-     "result file is created by input file with the "
-     "'" KIM_DEFAULT_RESULT_EXTENSION "' extension."
-     " appended." },
-   ////////////////////////////////////////////////////////////////////////
-   { UNKNOWN_OPT,              0, "" ,  "",                  Arg::None,
-     "\n"
-     PACKAGE_FULL_DESCRIPTION "\n"
-     "The kim program has two major features:\n"
-     "- The first one is to create a k-mer index related to some variant of"
-     " interest.\n"
-     "- The second one is to analyse some given input files (containing raw"
-     " biological data from some experiment) and to query an existing index"
-     " to exhibit variants that are present in the input data.\n"
-     "\n"
-     "INDEX CREATION\n"
-     "==============\n"
-     "\n"
-     "To create an index, the kim program needs a (set of) reference"
-     " genome(s) or transcriptome(s) and the variant tof interest (in VCF"
-     " format). An example of command line to create an index is:\n"
-     "\n  kim --create-index \\"
-     "\n      --kmer-length 27 --kmer-prefix-length 6 \\"
-     "\n      --reference file1.fasta --reference file2.fasta \\"
-     "\n      --variants variants_file.vcf \\"
-     "\n      --index-dir /where/to/store/index/"
-     "\n"
-     "\n"
-     "The biological sequence files must be either fasta or fastq formatted.\n"
-     "\n"
-     "Variant Filtering\n"
-     "-----------------\n"
-     "\n"
-     "The filter can be a simple expression of the form:\n"
-     "   '<attribute> <comparator> <value>'\n"
-     "or a more complex expression using logical operators.\n\n"
-     "Accepted (case insensive) operators are:\n"
-     "  'not', '!' (shortcut for 'not'),\n"
-     "  'and', '&&' (shortcut for 'and'),\n"
-     "  'or' and '||' (shortcut for 'or').\n"
-     "\n"
-     "The conjunction ('and') has priority over the disjunction ('or') and the"
-     " negation ('not') has priority over the conjunction. It is possible to use"
-     " parenthesis to enclose an expression in order to give it a higher priority."
-     " For example '<expr1> or not <expr2> and <expr3>' evaluates exactly as"
-     " '(<expr1> or (not(<expr2>) and <expr3>))'.\n"
-     "\n"
-     "The possible <attribute>s can be either VCF fields or some variant status:\n"
-     "- Handled (case insensive) VCF fields are:\n"
-     "  'CHROM', 'ID', 'POS', 'FILTER' and 'QUAL'.\n"
-     "- It can also be some (CASE SENSIVE) key of the 'INFO' field.\n"
-     "  The syntax of the <attribute> is then 'INFO:KEY'.\n"
-     "- The following (case insensive) variant properties are also accepted:\n"
-     "  'Ploidy', 'SNP', 'MSNP', 'SV' and 'Indel'.\n"
-     "\n"
-     "The available <comparator>s depends on the type of the attribute.\n"
-     "\n"
-     "If the attribute has a boolean value ('SNP', 'mSNP', 'SV', 'Indel' and some"
-     " info tags like 'INFO:1000G' of 'INFO:R3' for example), then only '=' and"
-     " '!=' (or '<>') are accepted.\n"
-     "\n"
-     "If the attribute has a string value ('CHROM', 'ID', 'FILTER' and some"
-     " info tags like 'info:VC' for example), then only '=', '~', '!=' (or '<>')"
-     " are accepted. The '~' is a regex comparison whereas the other operators"
-     " expect exact (in)equality.\n"
-     "\n"
-     "If the attribute has a numeric value ('POS', 'QUAL', 'Ploidy' and some"
-     " INFO tags like 'info:RS' for example), then available operators are"
-     " '=', '!=' (or '<>'), '<', '<=', '>', '>='.\n"
-     "\n"
-     "The compared <value> must be of the correct type according to the"
-     "attribute. For boolean values, only 'true', '1' (shortcut for 'true'),"
-     " 'false', '0' (shortcut for 'false') are accepted (case insensive).\n"
-     "\n"
-     "String values must be enclosed by either single quotes (in such case,"
-     " inner single quotes must be escaped uising '\\') or by double quotes"
-     " (in such case, inner double quotes must be escaped using '\\').\n"
-     "\n"
-     "Numeric values are either integer like -3, +54, 42, ... or reals"
-     " (possibly using a scientific notation) like -3., +5.12, .18, 1.2e-3,"
-     " ...\n"
-     "\n"
-     "Let us illustate filters using some examples:\n"
-     "\n"
-     "- Filter 'Chrom~\".*\"' accepts all variants (since any name"
-     " is accepted for the 'CHROM' attribute.\n"
-     "\n"
-     "- Filter 'Chrom=\"B\"' accepts only variants on the sequence named 'B'.\n"
-     "\n"
-     "- Filter 'Pos>123' accepts any variants located after position 123"
-     " (starting from 1) in any sequence.\n"
-     "\n"
-     "- Filter 'SNP=1' accepts only variants that are SNPs (multi-allelic SNP\n"
-     " are not accepted).\n"
-     "\n"
-     "- Filter 'SNP=1 or MSNP=true' accepts only variants that are SNPs,"
-     " including multi-allelic SNP.\n"
-     "\n"
-     "- Filter 'info:RS>=35' accepts variants having the key 'RS' in the info\n"
-     "field with a value greater or equalt to 35."
-     "\n"
-     "- Filter 'info:VC=\"INS\"' accepts variants having the key 'VC' (variant"
-     " category) in the info field with an exact value of 'INS' (insertion).\n"
-     "\n"
-     "- Filter 'Chrom=\"D\" and (pos < 50 or pos > 100)' accepts only variants"
-     " located on sequence 'D' before position 50 or after position 100.\n"
-     "\n"
-     "- Filter 'not (Chrom~\"[A-C]\" or pos >= 50 and pos <= 100)' accepts"
-     " variants that are located in any sequence except sequences 'A', 'B' and 'C'."
-     " It also accepts any variants located between positions 50 and 100 on any"
-     " sequence. The 'and' operator has the priority over the 'or' operator.\n"
-     "\n"
-     "Notice that there is no lazy evaluation nor optimization of the complex"
-     " filters. Thus all parts of a complex filter are evaluated. For example,"
-     " let us consider the filter expression:\n"
-     "  '<expr1> and (<expr2> or <expr3>)'\n"
-     "\n"
-     "Both '<expr3>' and '<expr4>' are evaluated even if '<expr1>' is false. This"
-     " may lead to waste of time and resources. Since multiple filters can be"
-     " provided, it is more efficient to provide two simpler filters on command"
-     " line:\n"
-     "  --variant-filter '<expr1>' --variant-filter '<expr2> or <expr3>'\n"
-     "\n"
-     "Since all --variant-filter options must be satisfied, the variant filtering"
-     " process is interrupted as soon as some filter discard a variant.\n"
-     "\n"
-     "In the end, even if the kim program makes possible to filter variants on the"
-     " fly while creating the index, it should be more efficient to create the"
-     " filtered VCF file(s) first by using any third party software of your choice,"
-     " then use this(these) filtered VCF file(s) to create the index.\n"
-     "\n"
-     "INDEX QUERY\n"
-     "===========\n"
-     "\n"
-     "To query an existing index, the kim program needs an index and some"
-     " files to analyse. An example of command line to query some index is:\n"
-     "\n  kim --index-dir /path/to/my/index/ file1.fastq file2.fastq\n"
-     "\n"
-     "As for the index creation, the biological sequence files must be either"
-     " fasta or fastq formatted."
-     "\n" },
-     {0, 0, 0, 0, 0, 0}
-  };
+const option::Descriptor KimProgram::_OPTION_EMPTY_LINE = {
+  UNKNOWN_OPT, 0, "" , "", Arg::None, "\n"
+};
+
+const option::Descriptor KimProgram::_OPTION_PREAMBLE = {
+  UNKNOWN_OPT, 0, "" , "", Arg::None,
+  PACKAGE " version " VERSION " -- " PACKAGE_SHORT_DESCRIPTION "\n\n"
+  "Usages:\n"
+  "  kim [options] --create-index\n"
+  "  kim [options] <file> [<file> ...]\n"
+  "  kim [information option]\n"
+};
+
+const option::Descriptor KimProgram::_OPTION_INFORMATIONS_HEADER = {
+  UNKNOWN_OPT, 0, "" , "", Arg::None,
+  "Available information options:"
+};
+
+const option::Descriptor KimProgram::_OPTION_INFORMATIONS_HELP = {
+  HELP_OPT, 0, "h", "help", Arg::Optional,
+  "  -h | --help[=<short*|create-index|query|full> \t"
+  "Print usage and exit. This flag can be given an option to display "
+  "additional details on index creation or on query. Default is to "
+  "display a short help message."
+};
+
+const option::Descriptor KimProgram::_OPTION_INFORMATIONS_VERSION = {
+  VERSION_OPT, 0, "v", "version", Arg::None,
+  "  -v | --version \t"
+  "Print version and exit."
+};
+
+const option::Descriptor KimProgram::_OPTION_INFORMATIONS_COPYRIGHT = {
+  COPYRIGHT_OPT, 0, "" , "copyright", Arg::Optional,
+  "       --copyright[=<short*|full>] \t"
+  "Print copyright summary (short or default) or complete (full) and exit."
+};
+
+
+const option::Descriptor KimProgram::_OPTION_COMMON_OPTIONS_HEADER = {
+  UNKNOWN_OPT, 0, "" , "", Arg::None,
+  "Options available for both index creation and querying:"
+};
+
+const option::Descriptor KimProgram::_OPTION_COMMON_OPTIONS_QUIET = {
+  QUIET_OPT, 0, "q", "quiet", Arg::None,
+  "  -q | --quiet \t"
+  "Don't produce warning or extra informations on standard error channel."
+};
+
+const option::Descriptor KimProgram::_OPTION_COMMON_OPTIONS_FORCE = {
+  FORCE_OPT, 0, "f", "force", Arg::None,
+  "  -f | --force \t"
+  "Force overwriting existing index directory. "
+  "This is dangerous, you are advertised."
+};
+
+const option::Descriptor KimProgram::_OPTION_COMMON_OPTIONS_INDEX_DIRECTORY = {
+  INDEX_DIRECTORY_OPT, 0, "d", "index-dir", Arg::Required,
+  "  -d | --index-dir <dir> \t"
+  "Directory containing the index files  (default: " KIM_DEFAULT_INDEX_DIRECTORY ")."
+};
+
+const option::Descriptor KimProgram::_OPTION_COMMON_OPTIONS_CHECK_CONSISTENCY = {
+  CONSISTENCY_CHECKING_OPT, 0, "", "check-consistency", Arg::None,
+  "       --check-consistency \t"
+  "Enable consistency checking while parsing DNA sequence files. "
+  "This significantly increases the program running time but ensures that "
+  "your file are correctly written (useful when something wrong occurs, "
+  "disabled by default)"
+};
+
+const option::Descriptor KimProgram::_OPTION_INDEX_CREATION_OPTIONS_HEADER = {
+  UNKNOWN_OPT, 0, "" , "", Arg::None,
+  "Options available only for index creation:"
+};
+
+const option::Descriptor KimProgram::_OPTION_INDEX_CREATION_OPTIONS_CREATE_INDEX = {
+  CREATE_INDEX_OPT, 0, "c", "create-index", Arg::None,
+  "  -c | --create-index \t"
+  "Flag to run in index creation mode. If this flag is given, the "
+  "--reference and --variants options must be provided."
+};
+
+const option::Descriptor KimProgram::_OPTION_INDEX_CREATION_OPTIONS_KMER_LENGTH = {
+  KMER_LENGTH_OPT, 0, "k", "kmer-length", Arg::Numeric,
+  "  -k | --kmer-length <length> \t"
+  "Length of the k-mers (default: " stringify(KIM_DEFAULT_KMER_LENGTH) ")."
+};
+
+const option::Descriptor KimProgram::_OPTION_INDEX_CREATION_OPTIONS_KMER_PREFIX_LENGTH = {
+  KMER_PREFIX_LENGTH_OPT, 0, "p", "kmer-prefix-length", Arg::Numeric,
+  "  -p | --kmer-prefix-length <length> \t"
+  "Length of the k-mers prefix (default: " stringify(KIM_DEFAULT_KMER_PREFIX_LENGTH) ")."
+};
+
+const option::Descriptor KimProgram::_OPTION_INDEX_CREATION_OPTIONS_KMER_FILTER = {
+  KMER_FILTER_OPT, 0, "E", "exclude-kmer", Arg::Required,
+  "  -E | --exclude-kmer <expr> \t"
+  "Filter out k-mers matching the given expression. When this option is "
+  "provided multiple time, any k-mer that matches some of the given "
+  "expression is filtered out from the index. For example, to ignore "
+  "poly-A and poly-T k-mers, you can provide either the expression "
+  "'^(A+)|(T+)$' or provide the two separate expressions '^A+$' and "
+  "'^T+$'. The former is less efficient."
+};
+
+const option::Descriptor KimProgram::_OPTION_INDEX_CREATION_OPTIONS_REFERENCE = {
+  REFERENCE_OPT, 0, "R", "reference", Arg::Required,
+  "  -r | --reference <file> \t"
+  "Reference sequence from which k-mers are built. It is possible to use "
+  "several references and at least one reference file must be provided "
+  "(see option --variants). The given reference file must be fasta or "
+  "fastq formatted."
+};
+
+const option::Descriptor KimProgram::_OPTION_INDEX_CREATION_OPTIONS_VARIANTS = {
+  VARIANTS_OPT, 0, "V", "variants", Arg::Required,
+  "  -V | --variants <file> \t"
+  "Variants to index. The sequence name of each variant must be defined "
+  "in exactly one of the provided reference files (see option "
+  "--reference). The variants file must be VCF of BCF formatted "
+  "(compressed with gzip or not). You also can provide URL instead of "
+  "some local file name."
+};
+
+const option::Descriptor KimProgram::_OPTION_INDEX_CREATION_OPTIONS_VARIANT_FILTER = {
+  VARIANT_FILTER_OPT, 0, "F", "variant-filter", Arg::Required,
+  "  -F | --variant-filter <expr> \t"
+  "Filter variants according to the given expression. When this option is "
+  "provided multiple time, each expression must be satisfyed for the "
+  "variant to be added into the index. See filter syntax explanation "
+  "below for additional details."
+};
+
+const option::Descriptor KimProgram::_OPTION_QUERY_OPTIONS_HEADER = {
+  UNKNOWN_OPT, 0, "" , "", Arg::None,
+  "Options available only for Index querying:"
+};
+
+const option::Descriptor KimProgram::_OPTION_QUERY_OPTIONS_OUTPUT_DIR = {
+  OUTPUT_OPT, 0, "o", "output-dir", Arg::Required,
+  "  -o | --output-dir <dir> \t"
+  "Path to the directory where results are stored (instead of being "
+  "prompted to the standard output). One result file is created by input "
+  "file with the '" KIM_DEFAULT_RESULT_EXTENSION "' extension. appended."
+};
+
+const option::Descriptor KimProgram::_OPTION_FOOTER_ABOUT = {
+  UNKNOWN_OPT, 0, "" , "", Arg::None,
+  "ABOUT KIM\n"
+  "=========\n"
+  "\n"
+  PACKAGE_FULL_DESCRIPTION "\n"
+  "The kim program has two major features:\n"
+  "- The first one is to create a k-mer index related to some variant of"
+  " interest.\n"
+  "- The second one is to analyse some given input files (containing raw"
+  " biological data from some experiment) and to query an existing index"
+  " to exhibit variants that are present in the input data."
+};
+
+const option::Descriptor KimProgram::_OPTION_FOOTER_INDEX_CREATION = {
+  UNKNOWN_OPT, 0, "" , "", Arg::None,
+  "INDEX CREATION\n"
+  "==============\n"
+  "\n"
+  "To create an index, the kim program needs a (set of) reference"
+  " genome(s) or transcriptome(s) and the variant tof interest (in VCF"
+  " format). An example of command line to create an index is:\n"
+  "\n  kim --create-index \\"
+  "\n      --kmer-length 27 --kmer-prefix-length 6 \\"
+  "\n      --reference file1.fasta --reference file2.fasta \\"
+  "\n      --variants variants_file.vcf \\"
+  "\n      --index-dir /where/to/store/index/"
+  "\n"
+  "\n"
+  "The biological sequence files must be either fasta or fastq formatted.\n"
+  "\n"
+  "Variant Filtering\n"
+  "-----------------\n"
+  "\n"
+  "The filter can be a simple expression of the form:\n"
+  "   '<attribute> <comparator> <value>'\n"
+  "or a more complex expression using logical operators.\n\n"
+  "Accepted (case insensive) operators are:\n"
+  "  'not', '!' (shortcut for 'not'),\n"
+  "  'and', '&&' (shortcut for 'and'),\n"
+  "  'or' and '||' (shortcut for 'or').\n"
+  "\n"
+  "The conjunction ('and') has priority over the disjunction ('or') and the"
+  " negation ('not') has priority over the conjunction. It is possible to use"
+  " parenthesis to enclose an expression in order to give it a higher priority."
+  " For example '<expr1> or not <expr2> and <expr3>' evaluates exactly as"
+  " '(<expr1> or (not(<expr2>) and <expr3>))'.\n"
+  "\n"
+  "The possible <attribute>s can be either VCF fields or some variant status:\n"
+  "- Handled (case insensive) VCF fields are:\n"
+  "  'CHROM', 'ID', 'POS', 'FILTER' and 'QUAL'.\n"
+  "- It can also be some (CASE SENSIVE) key of the 'INFO' field.\n"
+  "  The syntax of the <attribute> is then 'INFO:KEY'.\n"
+  "- The following (case insensive) variant properties are also accepted:\n"
+  "  'Ploidy', 'SNP', 'MSNP', 'SV' and 'Indel'.\n"
+  "\n"
+  "The available <comparator>s depends on the type of the attribute.\n"
+  "\n"
+  "If the attribute has a boolean value ('SNP', 'mSNP', 'SV', 'Indel' and some"
+  " info tags like 'INFO:1000G' of 'INFO:R3' for example), then only '=' and"
+  " '!=' (or '<>') are accepted.\n"
+  "\n"
+  "If the attribute has a string value ('CHROM', 'ID', 'FILTER' and some"
+  " info tags like 'info:VC' for example), then only '=', '~', '!=' (or '<>')"
+  " are accepted. The '~' is a regex comparison whereas the other operators"
+  " expect exact (in)equality.\n"
+  "\n"
+  "If the attribute has a numeric value ('POS', 'QUAL', 'Ploidy' and some"
+  " INFO tags like 'info:RS' for example), then available operators are"
+  " '=', '!=' (or '<>'), '<', '<=', '>', '>='.\n"
+  "\n"
+  "The compared <value> must be of the correct type according to the"
+  "attribute. For boolean values, only 'true', '1' (shortcut for 'true'),"
+  " 'false', '0' (shortcut for 'false') are accepted (case insensive).\n"
+  "\n"
+  "String values must be enclosed by either single quotes (in such case,"
+  " inner single quotes must be escaped uising '\\') or by double quotes"
+  " (in such case, inner double quotes must be escaped using '\\').\n"
+  "\n"
+  "Numeric values are either integer like -3, +54, 42, ... or reals"
+  " (possibly using a scientific notation) like -3., +5.12, .18, 1.2e-3,"
+  " ...\n"
+  "\n"
+  "Let us illustate filters using some examples:\n"
+  "\n"
+  "- Filter 'Chrom~\".*\"' accepts all variants (since any name"
+  " is accepted for the 'CHROM' attribute.\n"
+  "\n"
+  "- Filter 'Chrom=\"B\"' accepts only variants on the sequence named 'B'.\n"
+  "\n"
+  "- Filter 'Pos>123' accepts any variants located after position 123"
+  " (starting from 1) in any sequence.\n"
+  "\n"
+  "- Filter 'SNP=1' accepts only variants that are SNPs (multi-allelic SNP\n"
+  " are not accepted).\n"
+  "\n"
+  "- Filter 'SNP=1 or MSNP=true' accepts only variants that are SNPs,"
+  " including multi-allelic SNP.\n"
+  "\n"
+  "- Filter 'info:RS>=35' accepts variants having the key 'RS' in the info\n"
+  "field with a value greater or equalt to 35."
+  "\n"
+  "- Filter 'info:VC=\"INS\"' accepts variants having the key 'VC' (variant"
+  " category) in the info field with an exact value of 'INS' (insertion).\n"
+  "\n"
+  "- Filter 'Chrom=\"D\" and (pos < 50 or pos > 100)' accepts only variants"
+  " located on sequence 'D' before position 50 or after position 100.\n"
+  "\n"
+  "- Filter 'not (Chrom~\"[A-C]\" or pos >= 50 and pos <= 100)' accepts"
+  " variants that are located in any sequence except sequences 'A', 'B' and 'C'."
+  " It also accepts any variants located between positions 50 and 100 on any"
+  " sequence. The 'and' operator has the priority over the 'or' operator.\n"
+  "\n"
+  "Notice that there is no lazy evaluation nor optimization of the complex"
+  " filters. Thus all parts of a complex filter are evaluated. For example,"
+  " let us consider the filter expression:\n"
+  "  '<expr1> and (<expr2> or <expr3>)'\n"
+  "\n"
+  "Both '<expr3>' and '<expr4>' are evaluated even if '<expr1>' is false. This"
+  " may lead to waste of time and resources. Since multiple filters can be"
+  " provided, it is more efficient to provide two simpler filters on command"
+  " line:\n"
+  "  --variant-filter '<expr1>' --variant-filter '<expr2> or <expr3>'\n"
+  "\n"
+  "Since all --variant-filter options must be satisfied, the variant filtering"
+  " process is interrupted as soon as some filter discard a variant.\n"
+  "\n"
+  "In the end, even if the kim program makes possible to filter variants on the"
+  " fly while creating the index, it should be more efficient to create the"
+  " filtered VCF file(s) first by using any third party software of your choice,"
+  " then use this(these) filtered VCF file(s) to create the index."
+};
+
+const option::Descriptor KimProgram::_OPTION_FOOTER_QUERY = {
+  UNKNOWN_OPT, 0, "" , "", Arg::None,
+  "INDEX QUERY\n"
+  "===========\n"
+  "\n"
+  "To query an existing index, the kim program needs an index and some"
+  " files to analyse. An example of command line to query some index is:\n"
+  "\n  kim --index-dir /path/to/my/index/ file1.fastq file2.fastq\n"
+  "\n"
+  "As for the index creation, the biological sequence files must be either"
+  " fasta or fastq formatted.\n"
+};
+
+const option::Descriptor KimProgram::_OPTION_END = {0, 0, 0, 0, 0, 0};
+
+const option::Descriptor KimProgram::_short_usage[] = {
+  _OPTION_PREAMBLE,
+  _OPTION_INFORMATIONS_HEADER,
+  _OPTION_INFORMATIONS_HELP,
+  _OPTION_INFORMATIONS_VERSION,
+  _OPTION_INFORMATIONS_COPYRIGHT,
+  _OPTION_EMPTY_LINE,
+  _OPTION_COMMON_OPTIONS_HEADER,
+  _OPTION_COMMON_OPTIONS_QUIET,
+  _OPTION_COMMON_OPTIONS_FORCE,
+  _OPTION_COMMON_OPTIONS_INDEX_DIRECTORY,
+  _OPTION_COMMON_OPTIONS_CHECK_CONSISTENCY,
+  _OPTION_EMPTY_LINE,
+  _OPTION_FOOTER_ABOUT,
+  _OPTION_EMPTY_LINE,
+  _OPTION_END
+};
+
+const option::Descriptor KimProgram::_create_index_usage[] = {
+  _OPTION_PREAMBLE,
+  _OPTION_INFORMATIONS_HEADER,
+  _OPTION_INFORMATIONS_HELP,
+  _OPTION_INFORMATIONS_VERSION,
+  _OPTION_INFORMATIONS_COPYRIGHT,
+  _OPTION_EMPTY_LINE,
+  _OPTION_COMMON_OPTIONS_HEADER,
+  _OPTION_COMMON_OPTIONS_QUIET,
+  _OPTION_COMMON_OPTIONS_FORCE,
+  _OPTION_COMMON_OPTIONS_INDEX_DIRECTORY,
+  _OPTION_COMMON_OPTIONS_CHECK_CONSISTENCY,
+  _OPTION_EMPTY_LINE,
+  _OPTION_INDEX_CREATION_OPTIONS_HEADER,
+  _OPTION_INDEX_CREATION_OPTIONS_CREATE_INDEX,
+  _OPTION_INDEX_CREATION_OPTIONS_KMER_LENGTH,
+  _OPTION_INDEX_CREATION_OPTIONS_KMER_PREFIX_LENGTH,
+  _OPTION_INDEX_CREATION_OPTIONS_KMER_FILTER,
+  _OPTION_INDEX_CREATION_OPTIONS_REFERENCE,
+  _OPTION_INDEX_CREATION_OPTIONS_VARIANTS,
+  _OPTION_INDEX_CREATION_OPTIONS_VARIANT_FILTER,
+  _OPTION_EMPTY_LINE,
+  _OPTION_FOOTER_INDEX_CREATION,
+  _OPTION_EMPTY_LINE,
+  _OPTION_END
+};
+
+const option::Descriptor KimProgram::_query_usage[] = {
+  _OPTION_PREAMBLE,
+  _OPTION_INFORMATIONS_HEADER,
+  _OPTION_INFORMATIONS_HELP,
+  _OPTION_INFORMATIONS_VERSION,
+  _OPTION_INFORMATIONS_COPYRIGHT,
+  _OPTION_EMPTY_LINE,
+  _OPTION_COMMON_OPTIONS_HEADER,
+  _OPTION_COMMON_OPTIONS_QUIET,
+  _OPTION_COMMON_OPTIONS_FORCE,
+  _OPTION_COMMON_OPTIONS_INDEX_DIRECTORY,
+  _OPTION_COMMON_OPTIONS_CHECK_CONSISTENCY,
+  _OPTION_EMPTY_LINE,
+  _OPTION_QUERY_OPTIONS_HEADER,
+  _OPTION_QUERY_OPTIONS_OUTPUT_DIR,
+  _OPTION_QUERY_OPTIONS_HEADER,
+  _OPTION_EMPTY_LINE,
+  _OPTION_FOOTER_QUERY,
+  _OPTION_EMPTY_LINE,
+  _OPTION_END
+};
+
+const option::Descriptor KimProgram::_full_usage[] = {
+  _OPTION_PREAMBLE,
+  _OPTION_INFORMATIONS_HEADER,
+  _OPTION_INFORMATIONS_HELP,
+  _OPTION_INFORMATIONS_VERSION,
+  _OPTION_INFORMATIONS_COPYRIGHT,
+  _OPTION_EMPTY_LINE,
+  _OPTION_COMMON_OPTIONS_HEADER,
+  _OPTION_COMMON_OPTIONS_QUIET,
+  _OPTION_COMMON_OPTIONS_FORCE,
+  _OPTION_COMMON_OPTIONS_INDEX_DIRECTORY,
+  _OPTION_COMMON_OPTIONS_CHECK_CONSISTENCY,
+  _OPTION_EMPTY_LINE,
+  _OPTION_INDEX_CREATION_OPTIONS_HEADER,
+  _OPTION_INDEX_CREATION_OPTIONS_CREATE_INDEX,
+  _OPTION_INDEX_CREATION_OPTIONS_KMER_LENGTH,
+  _OPTION_INDEX_CREATION_OPTIONS_KMER_PREFIX_LENGTH,
+  _OPTION_INDEX_CREATION_OPTIONS_KMER_FILTER,
+  _OPTION_INDEX_CREATION_OPTIONS_REFERENCE,
+  _OPTION_INDEX_CREATION_OPTIONS_VARIANTS,
+  _OPTION_INDEX_CREATION_OPTIONS_VARIANT_FILTER,
+  _OPTION_EMPTY_LINE,
+  _OPTION_QUERY_OPTIONS_HEADER,
+  _OPTION_QUERY_OPTIONS_OUTPUT_DIR,
+  _OPTION_QUERY_OPTIONS_HEADER,
+  _OPTION_EMPTY_LINE,
+  _OPTION_FOOTER_ABOUT,
+  _OPTION_EMPTY_LINE,
+  _OPTION_FOOTER_INDEX_CREATION,
+  _OPTION_EMPTY_LINE,
+  _OPTION_FOOTER_QUERY,
+  _OPTION_EMPTY_LINE,
+  _OPTION_END
+};
 
 KimProgram::_OptionHandler::_OptionHandler(int argc, char **argv):
-  stats(true, _usage, argc, argv),
+  stats(true, _full_usage, argc, argv),
   options(new option::Option[stats.options_max]),
   buffer(new option::Option[stats.buffer_max]),
-  parse(_usage, argc, argv, options, buffer) {
+  parse(_full_usage, argc, argv, options, buffer) {
 }
 
 KimProgram::_OptionHandler::~_OptionHandler() {
@@ -503,7 +706,7 @@ KimProgram::KimProgram(int argc, char **argv):
   argv += (argc > 0); // skip program name argv[0] if present
 
   if (argc == 0) {
-    option::printUsage(cout, _usage);
+    option::printUsage(cout, _short_usage);
     exit(1);
   }
 
@@ -518,6 +721,12 @@ KimProgram::KimProgram(int argc, char **argv):
 
 }
 
+string _lowercase(const char *s) {
+  string res(s ? s : "");
+  transform(res.begin(), res.end(), res.begin(), [](unsigned char c){ return tolower(c); });
+  return res;
+}
+
 void KimProgram::_processOptions(_OptionHandler &_opts) {
 
   if (_opts.parse.error()) {
@@ -525,7 +734,16 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
   }
 
   if (_opts.options[HELP_OPT]) {
-    option::printUsage(cout, _usage);
+    string help_opt = _lowercase(_opts.options[HELP_OPT].arg);
+    if (help_opt == "create-index") {
+      option::printUsage(cout, _create_index_usage);
+    } else if (help_opt == "query") {
+      option::printUsage(cout, _query_usage);
+    } else if (help_opt == "full") {
+      option::printUsage(cout, _full_usage);
+    } else {
+      option::printUsage(cout, _short_usage);
+    }
     exit(0);
   }
 
@@ -535,7 +753,8 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
   }
 
   if (_opts.options[COPYRIGHT_OPT]) {
-    _showCopyright(_opts.options[COPYRIGHT_OPT].type());
+    string copyright_opt = _lowercase(_opts.options[COPYRIGHT_OPT].arg);
+    _showCopyright(copyright_opt == "full");
     exit(0);
   }
 

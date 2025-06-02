@@ -143,6 +143,19 @@ namespace kim {
        */
       static const VariantNode undefined;
 
+      /**
+       * Compares this variant node to the given one according to the
+       * lexicographic order of the variant label.
+       *
+       * \param v The variant node to compare to.
+       *
+       * \return Returns true if the lable of the current variant node
+       * is lexicographicially less than the given one.
+       */
+      inline bool operator<(const VariantNode &v) const {
+        return variant < v.variant;
+      }
+      
     private:
 
       /**

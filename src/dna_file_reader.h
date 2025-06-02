@@ -90,9 +90,10 @@
 #ifndef __DNA_FILE_READER_H__
 #define __DNA_FILE_READER_H__
 
-#include <string>
-#include <list>
 #include <algorithm>
+#include <functional>
+#include <list>
+#include <string>
 
 #include <file_reader.h>
 
@@ -134,7 +135,7 @@ namespace kim {
      * The type of some callback function to call each time a new
      * sequence is encountered (see onNewSequence() method).
      */
-    typedef void (*onNewSequenceFct)(const DNAFileReader &);
+    typedef std::function<void(const DNAFileReader &)> onNewSequenceFct;
 
     /**
      * A quite simple structure that stores essential informations to
@@ -573,7 +574,7 @@ namespace kim {
      *
      * \param cb The callback function to call.
      */
-    inline void addOnNewSequenceCallback(onNewSequenceFct cb) {
+    inline void addOnNewSequenceCallback(const onNewSequenceFct &cb) {
       _on_new_sequence_cb.push_back(cb);
     }
 
@@ -584,8 +585,10 @@ namespace kim {
      *
      * \param cb The callback function to remove.
      */
-    inline void removeOnNewSequenceCallback(onNewSequenceFct cb) {
-      [[maybe_unused]] auto r = std::remove(_on_new_sequence_cb.begin(), _on_new_sequence_cb.end(), cb);
+    inline void removeOnNewSequenceCallback(const onNewSequenceFct &cb) {
+      _on_new_sequence_cb.remove_if([&cb](const onNewSequenceFct &f) {
+        return *(void **)&cb == *(void **)&f;
+      });
     }
 
     /**

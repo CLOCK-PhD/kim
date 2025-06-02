@@ -118,6 +118,13 @@ void printReaderDetails(const DNAFileReader &reader) {
        << endl;
 }
 
+void cancelAndExit(const DNAFileReader &) {
+  cout << "[" << __FUNCTION__ << "] "
+       << "This should not be invoked"
+       << endl;
+  exit(1);
+}
+
 // Check for opening & finding file methods
 void test_DNAFileReader_init(string fname, DNAFileReader &reader, DNAFileReader::Format expected_fmt) {
 
@@ -665,6 +672,8 @@ int main() {
   cout << "Add two callback functions called each time a new sequence is encountered" << endl;
   reader.addOnNewSequenceCallback(printSequenceInformations);
   reader.addOnNewSequenceCallback(printReaderDetails);
+  reader.addOnNewSequenceCallback(cancelAndExit);
+  reader.removeOnNewSequenceCallback(cancelAndExit);
   vector<size_t> sequence_length;
   list<size_t> bad_sequences;
   vector<list<size_t>> degenerated_kmers;

@@ -253,9 +253,9 @@ $(top_builddir)/external/%: force-rebuild
 GCDA_FILES = $(patsubst %.cpp,%.gcda,$(filter %.cpp,$(SOURCES)))
 GCDA_FILES += $(patsubst %.cpp,%.gcda,$(filter %.cpp,$(BUILT_SOURCES)))
 GCNO_FILES = $(GCDA_FILES:.gcda=.gcno)
-GCDA_FILES += $(patsubst %.lo,%.gcno,$(libkim_la_OBJECTS))
-GCDA_FILES += $(patsubst %.lo,%.gcno,$(libkim_debug_la_OBJECTS))
-GCDA_FILES += $(patsubst %.o,%.gcno,$(kim_OBJECTS))
+GCNO_FILES += $(patsubst %.lo,%.gcno,$(libkim_la_OBJECTS))
+GCNO_FILES += $(patsubst %.lo,%.gcno,$(libkim_debug_la_OBJECTS))
+GCNO_FILES += $(patsubst %.o,%.gcno,$(kim_OBJECTS))
 GCOV_FILES = $(GCDA_FILES:.gcda=.gcov)
 
 

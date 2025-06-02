@@ -733,11 +733,11 @@ kim_DEPENDENCIES = $(kim_LDADD)
 # Code Coverage #
 #################
 GCDA_FILES = $(patsubst %.cpp,%.gcda,$(filter %.cpp,$(SOURCES))) \
-	$(patsubst %.cpp,%.gcda,$(filter %.cpp,$(BUILT_SOURCES))) \
-	$(patsubst %.lo,%.gcno,$(libkim_la_OBJECTS)) $(patsubst \
+	$(patsubst %.cpp,%.gcda,$(filter %.cpp,$(BUILT_SOURCES)))
+GCNO_FILES = $(GCDA_FILES:.gcda=.gcno) $(patsubst \
+	%.lo,%.gcno,$(libkim_la_OBJECTS)) $(patsubst \
 	%.lo,%.gcno,$(libkim_debug_la_OBJECTS)) $(patsubst \
 	%.o,%.gcno,$(kim_OBJECTS))
-GCNO_FILES = $(GCDA_FILES:.gcda=.gcno)
 GCOV_FILES = $(GCDA_FILES:.gcda=.gcov)
 
 ####################
