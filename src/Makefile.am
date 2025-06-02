@@ -109,6 +109,7 @@ pkginclude_HEADERS =	\
   dna_file_index.h		\
   dna_file_reader.h		\
   file_reader.h			\
+  gauss.h			\
   kim.h				\
   kim_exception.h		\
   kim_settings.h		\
@@ -187,6 +188,7 @@ libkim_la_SOURCES =						\
   dna_file_index.h dna_file_index.cpp				\
   dna_file_reader.h dna_file_reader.cpp				\
   file_reader.h file_reader.cpp					\
+  gauss.h gauss.cpp						\
   kim_exception.h						\
   kim_settings.h kim_settings.cpp				\
   kmer_nodes_subindex.h kmer_nodes_subindex.cpp			\

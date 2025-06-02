@@ -147,6 +147,16 @@ TESTS          += test_file_reader
 test_file_reader_SOURCES = test_file_reader.cpp
 
 
+#################################
+# kim::Hauss class test program #
+#################################
+
+check_PROGRAMS += test_gauss
+TESTS          += test_gauss
+
+test_gauss_SOURCES = test_gauss.cpp
+
+
 #####################################
 # kim::Exception class test program #
 #####################################

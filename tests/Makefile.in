@@ -266,6 +266,10 @@ am_test_file_reader_OBJECTS = test_file_reader.$(OBJEXT)
 test_file_reader_OBJECTS = $(am_test_file_reader_OBJECTS)
 test_file_reader_LDADD = $(LDADD)
 test_file_reader_DEPENDENCIES = ../src/libkim-debug.la
+am_test_gauss_OBJECTS = test_gauss.$(OBJEXT)
+test_gauss_OBJECTS = $(am_test_gauss_OBJECTS)
+test_gauss_LDADD = $(LDADD)
+test_gauss_DEPENDENCIES = ../src/libkim-debug.la
 am_test_kim_exception_OBJECTS = test_kim_exception.$(OBJEXT)
 test_kim_exception_OBJECTS = $(am_test_kim_exception_OBJECTS)
 test_kim_exception_LDADD = $(LDADD)
@@ -325,7 +329,7 @@ am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/test_bounded_size_string.Po \
 	./$(DEPDIR)/test_dna_file_index.Po \
 	./$(DEPDIR)/test_dna_file_reader.Po \
-	./$(DEPDIR)/test_file_reader.Po \
+	./$(DEPDIR)/test_file_reader.Po ./$(DEPDIR)/test_gauss.Po \
 	./$(DEPDIR)/test_kim_exception.Po \
 	./$(DEPDIR)/test_kim_settings.Po \
 	./$(DEPDIR)/test_kmer_nodes_subindex.Po \
@@ -355,8 +359,8 @@ am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(test_bounded_size_string_SOURCES) \
 	$(test_dna_file_index_SOURCES) $(test_dna_file_reader_SOURCES) \
-	$(test_file_reader_SOURCES) $(test_kim_exception_SOURCES) \
-	$(test_kim_settings_SOURCES) \
+	$(test_file_reader_SOURCES) $(test_gauss_SOURCES) \
+	$(test_kim_exception_SOURCES) $(test_kim_settings_SOURCES) \
 	$(test_kmer_nodes_subindex_SOURCES) \
 	$(test_kmer_variant_edges_subindex_SOURCES) \
 	$(test_kmer_variant_graph_SOURCES) $(test_sort_helper_SOURCES) \
@@ -364,8 +368,8 @@ SOURCES = $(test_bounded_size_string_SOURCES) \
 	$(test_variant_nodes_index_SOURCES)
 DIST_SOURCES = $(test_bounded_size_string_SOURCES) \
 	$(test_dna_file_index_SOURCES) $(test_dna_file_reader_SOURCES) \
-	$(test_file_reader_SOURCES) $(test_kim_exception_SOURCES) \
-	$(test_kim_settings_SOURCES) \
+	$(test_file_reader_SOURCES) $(test_gauss_SOURCES) \
+	$(test_kim_exception_SOURCES) $(test_kim_settings_SOURCES) \
 	$(test_kmer_nodes_subindex_SOURCES) \
 	$(test_kmer_variant_edges_subindex_SOURCES) \
 	$(test_kmer_variant_graph_SOURCES) $(test_sort_helper_SOURCES) \
@@ -815,6 +819,7 @@ test_bounded_size_string_SOURCES = test_bounded_size_string.cpp
 test_dna_file_reader_SOURCES = test_dna_file_reader.cpp
 test_dna_file_index_SOURCES = test_dna_file_index.cpp
 test_file_reader_SOURCES = test_file_reader.cpp
+test_gauss_SOURCES = test_gauss.cpp
 test_kim_exception_SOURCES = test_kim_exception.cpp
 test_kim_settings_SOURCES = test_kim_settings.cpp
 test_kmer_nodes_subindex_SOURCES = test_kmer_nodes_subindex.cpp
@@ -892,6 +897,10 @@ test_file_reader$(EXEEXT): $(test_file_reader_OBJECTS) $(test_file_reader_DEPEND
 	@rm -f test_file_reader$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_file_reader_OBJECTS) $(test_file_reader_LDADD) $(LIBS)
 
+test_gauss$(EXEEXT): $(test_gauss_OBJECTS) $(test_gauss_DEPENDENCIES) $(EXTRA_test_gauss_DEPENDENCIES) 
+	@rm -f test_gauss$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_gauss_OBJECTS) $(test_gauss_LDADD) $(LIBS)
+
 test_kim_exception$(EXEEXT): $(test_kim_exception_OBJECTS) $(test_kim_exception_DEPENDENCIES) $(EXTRA_test_kim_exception_DEPENDENCIES) 
 	@rm -f test_kim_exception$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_kim_exception_OBJECTS) $(test_kim_exception_LDADD) $(LIBS)
@@ -934,6 +943,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_dna_file_index.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_dna_file_reader.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_file_reader.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_gauss.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_kim_exception.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_kim_settings.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_kmer_nodes_subindex.Po@am__quote@ # am--include-marker
@@ -1222,6 +1232,13 @@ test_file_reader.log: test_file_reader$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+test_gauss.log: test_gauss$(EXEEXT)
+	@p='test_gauss$(EXEEXT)'; \
+	b='test_gauss'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 test_kim_exception.log: test_kim_exception$(EXEEXT)
 	@p='test_kim_exception$(EXEEXT)'; \
 	b='test_kim_exception'; \
@@ -1378,6 +1395,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/test_dna_file_index.Po
 	-rm -f ./$(DEPDIR)/test_dna_file_reader.Po
 	-rm -f ./$(DEPDIR)/test_file_reader.Po
+	-rm -f ./$(DEPDIR)/test_gauss.Po
 	-rm -f ./$(DEPDIR)/test_kim_exception.Po
 	-rm -f ./$(DEPDIR)/test_kim_settings.Po
 	-rm -f ./$(DEPDIR)/test_kmer_nodes_subindex.Po
@@ -1435,6 +1453,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/test_dna_file_index.Po
 	-rm -f ./$(DEPDIR)/test_dna_file_reader.Po
 	-rm -f ./$(DEPDIR)/test_file_reader.Po
+	-rm -f ./$(DEPDIR)/test_gauss.Po
 	-rm -f ./$(DEPDIR)/test_kim_exception.Po
 	-rm -f ./$(DEPDIR)/test_kim_settings.Po
 	-rm -f ./$(DEPDIR)/test_kmer_nodes_subindex.Po

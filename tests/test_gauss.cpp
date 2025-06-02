@@ -1,6 +1,6 @@
 /******************************************************************************
 *                                                                             *
-*  Copyright © 2023-2025 -- IGH / LIRMM / CNRS / UM                           *
+*  Copyright © 2025      -- IGH / LIRMM / CNRS / UM                           *
 *                           (Institut de Génétique Humaine /                  *
 *                           Laboratoire d'Informatique, de Robotique et de    *
 *                           Microélectronique de Montpellier /                *
@@ -87,177 +87,56 @@
 *                                                                             *
 ******************************************************************************/
 
-#ifndef __VARIANT_NODES_INDEX_H__
-#define __VARIANT_NODES_INDEX_H__
+#include <gauss.h>
 
-#include <cstdint>
-#include <map>
-#include <string>
-
-namespace kim {
-
-    /**
-     * The type of each "variant" node of the bipartite graph.
-     */
-  class VariantNodesIndex: private std::map<std::string, uint16_t> {
-
-  private:
-
-    friend class KmerVariantEdgesSubindex;
-
-  public:
-
-    /**
-     * The type describing the content of a variant node.
-     */
-    struct VariantNode {
-
-      /**
-       * The variant identifier.
-       */
-      const key_type &variant;
-
-      /**
-       * The node incoming degree.
-       */
-      mapped_type in_degree;
-
-      /**
-       * Constructs a VariantNode "view".
-       *
-       * \remark The "view" means that both the variant label and the
-       * incoming degree used to build the view must exists while
-       * current view is alive.
-       *
-       * \param it The read-only iterator "pointing to" the variant
-       * node.
-       */
-      inline VariantNode(const_iterator it):
-        variant(it->first),
-        in_degree(it->second)
-      {}
-
-      /**
-       * The undefined node with an empty identifier and a 0 incoming
-       * degree.
-       */
-      static const VariantNode undefined;
-
-      /**
-       * Compares this variant node to the given one according to the
-       * lexicographic order of the variant label.
-       *
-       * \param v The variant node to compare to.
-       *
-       * \return Returns true if the lable of the current variant node
-       * is lexicographicially less than the given one.
-       */
-      inline bool operator<(const VariantNode &v) const {
-        return variant < v.variant;
-      }
-
-    private:
-
-      /**
-       * Constructs a default VariantNode "view".
-       */
-      VariantNode();
-
-    };
-
-    using std::map<std::string, uint16_t>::iterator;
-    using std::map<std::string, uint16_t>::const_iterator;
-    using std::map<std::string, uint16_t>::cbegin;
-    using std::map<std::string, uint16_t>::cend;
-    using std::map<std::string, uint16_t>::crbegin;
-    using std::map<std::string, uint16_t>::crend;
-    using std::map<std::string, uint16_t>::size;
-    using std::map<std::string, uint16_t>::max_size;
-    using std::map<std::string, uint16_t>::empty;
-
-    /**
-     * Get the read-only node associated to the given variant.
-     *
-     * \param variant The variant for which the node is queried.
-     *
-     * \return Returns a "view" of the node associated to the given
-     * variant if found ot the VariantNode::undefined node otherwise.
-     */
-    inline VariantNode getVariantNode(const std::string &variant) const {
-      const_iterator it;
-#ifdef _OPENMP
-#pragma omp critical
+#include <iostream>
+#ifdef NDEBUG
+#  undef NDEBUG
 #endif
-      it = find(variant);
-      return ((it == cend())
-              ? VariantNode::undefined
-              : VariantNode(it));
-    }
+#include <cassert>
 
-    /**
-     * Random access operator.
-     *
-     * This is a shortcut for getVariantNode() method.
-     *
-     * \param variant The variant for which the node is queried.
-     *
-     * \return Returns a "view" of the node associated to the given
-     * variant if found ot the VariantNode::undefined node otherwise.
-     */
-    inline VariantNode operator[](const std::string &variant) const {
-      return getVariantNode(variant);
-    }
+using namespace std;
+using namespace kim;
 
-    /**
-     * Get the number of k-mers associated to the given variant (the
-     * incoming degree of its associated node).
-     *
-     * \param variant The variant for which the number of associated
-     * k-mer is queried.
-     *
-     * \return Returns the number of k-mers associated to the given
-     * variant.
-     */
-    inline uint16_t getVariantCount(const std::string &variant) const {
-      return getVariantNode(variant).in_degree;
-    }
 
-    /**
-     * Add (if necessary) a new node associated to the given variant.
-     *
-     * If there is no variant node for the given variant, a new node
-     * is added with its incoming degree set to zero, otherwise it acts like find.
-     *
-     * \param variant The variant to add.
-     *
-     * \param increment_in_degree Increment the incoming degree of the
-     * variant node.
-     *
-     * \return Returns a read-write iterator to the node corresponding
-     * to the given variant.
-     */
-    iterator addVariantNode(const std::string &variant, bool increment_in_degree = false);
-
-    /**
-     * Add (if necessary) a new node associated to the given variant.
-     *
-     * This is a shortcut for addVariantNode() without incrementing
-     * the incoming degree.
-     *
-     * \param variant The variant to add.
-     *
-     * \return Returns this index.
-     */
-    inline VariantNodesIndex &operator+=(const std::string &variant) {
-      addVariantNode(variant);
-      return *this;
-    }
-
-  };
-
+void compare(double v1, double v2, double epsilon) {
+  double d = v1 > v2 ? v1 - v2 : v2 - v1;
+  cout << "|" << v1 << " - " << v2 << "| = " << d << " (and epsilon is " << epsilon << ")" << endl;
+  assert(d <= epsilon);
 }
 
-#endif
-// Local Variables:
-// mode:c++
-// End:
+int main() {
+
+  for (int i = 0; i <= 10; ++i) {
+    double x = (lrand48() % 80 - 40) / 10.;
+    double p = Gauss::CDF(x);
+    double x2 = Gauss::quantile(p);
+    cout << "InvCDF(" << p << ") = " << x2 << " (expecting " << x << ")" << endl;
+    compare(x, x2, 1e-1);
+  }
+
+  double values[][4] = {
+    { -1.64,   0.05     , 1e-2},
+    {  1.64,   0.95     , 1e-2},
+    {  1.96,   0.975    , 1e-3},
+    {  2.5758, 0.995    , 1e-4},
+    {  3.0902, 0.999    , 1e-4},
+    {  3.2905, 0.9995   , 1e-4},
+    {  3.7190, 0.9999   , 1e-4},
+    {  3.8906, 0.99995  , 1e-4},
+    {  4.2649, 0.99999  , 1e-4},
+    {  4.4172, 0.999995 , 1e-4}
+  };
+
+  for (auto val: values) {
+    double q = val[0], p = val[1], e = val[2];
+    double v = Gauss::CDF(q);
+    cout << "CDF(" << q << ") = " << v << " (expecting " << p << ")" << endl;
+    compare(v, p, e);
+    v = Gauss::quantile(p);
+    cout << "InvCDF(" << p << ") = " << v << " (expecting " << q << ")" << endl;
+    compare(v, q, e);
+  }
+
+  return 0;
+}

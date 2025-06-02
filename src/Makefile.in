@@ -270,7 +270,8 @@ libkim_debug_la_LIBADD =
 am__objects_1 = libkim_debug_la-bounded_size_string.lo \
 	libkim_debug_la-dna_file_index.lo \
 	libkim_debug_la-dna_file_reader.lo \
-	libkim_debug_la-file_reader.lo libkim_debug_la-kim_settings.lo \
+	libkim_debug_la-file_reader.lo libkim_debug_la-gauss.lo \
+	libkim_debug_la-kim_settings.lo \
 	libkim_debug_la-kmer_nodes_subindex.lo \
 	libkim_debug_la-kmer_variant_edges_subindex.lo \
 	libkim_debug_la-kmer_variant_graph.lo \
@@ -295,8 +296,8 @@ libkim_debug_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 libkim_la_LIBADD =
 am_libkim_la_OBJECTS = libkim_la-bounded_size_string.lo \
 	libkim_la-dna_file_index.lo libkim_la-dna_file_reader.lo \
-	libkim_la-file_reader.lo libkim_la-kim_settings.lo \
-	libkim_la-kmer_nodes_subindex.lo \
+	libkim_la-file_reader.lo libkim_la-gauss.lo \
+	libkim_la-kim_settings.lo libkim_la-kmer_nodes_subindex.lo \
 	libkim_la-kmer_variant_edges_subindex.lo \
 	libkim_la-kmer_variant_graph.lo libkim_la-monitor.lo \
 	libkim_la-sort_helper.lo libkim_la-variant_identification.lo \
@@ -334,6 +335,7 @@ am__depfiles_remade = ./$(DEPDIR)/kim-kim.Po \
 	./$(DEPDIR)/libkim_debug_la-dna_file_index.Plo \
 	./$(DEPDIR)/libkim_debug_la-dna_file_reader.Plo \
 	./$(DEPDIR)/libkim_debug_la-file_reader.Plo \
+	./$(DEPDIR)/libkim_debug_la-gauss.Plo \
 	./$(DEPDIR)/libkim_debug_la-kim_settings.Plo \
 	./$(DEPDIR)/libkim_debug_la-kmer_nodes_subindex.Plo \
 	./$(DEPDIR)/libkim_debug_la-kmer_variant_edges_subindex.Plo \
@@ -344,13 +346,13 @@ am__depfiles_remade = ./$(DEPDIR)/kim-kim.Po \
 	./$(DEPDIR)/libkim_debug_la-variant_filter_driver.Plo \
 	./$(DEPDIR)/libkim_debug_la-variant_filter_parser.Plo \
 	./$(DEPDIR)/libkim_debug_la-variant_filter_scanner.Plo \
-	./$(DEPDIR)/libkim_debug_la-variant_identification.Plo \
 	./$(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Plo \
 	./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo \
 	./$(DEPDIR)/libkim_la-bounded_size_string.Plo \
 	./$(DEPDIR)/libkim_la-dna_file_index.Plo \
 	./$(DEPDIR)/libkim_la-dna_file_reader.Plo \
 	./$(DEPDIR)/libkim_la-file_reader.Plo \
+	./$(DEPDIR)/libkim_la-gauss.Plo \
 	./$(DEPDIR)/libkim_la-kim_settings.Plo \
 	./$(DEPDIR)/libkim_la-kmer_nodes_subindex.Plo \
 	./$(DEPDIR)/libkim_la-kmer_variant_edges_subindex.Plo \
@@ -663,6 +665,7 @@ pkginclude_HEADERS = \
   dna_file_index.h		\
   dna_file_reader.h		\
   file_reader.h			\
+  gauss.h			\
   kim.h				\
   kim_exception.h		\
   kim_settings.h		\
@@ -700,6 +703,7 @@ libkim_la_SOURCES = \
   dna_file_index.h dna_file_index.cpp				\
   dna_file_reader.h dna_file_reader.cpp				\
   file_reader.h file_reader.cpp					\
+  gauss.h gauss.cpp						\
   kim_exception.h						\
   kim_settings.h kim_settings.cpp				\
   kmer_nodes_subindex.h kmer_nodes_subindex.cpp			\
@@ -898,6 +902,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-dna_file_index.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-dna_file_reader.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-file_reader.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-gauss.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-kim_settings.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-kmer_nodes_subindex.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-kmer_variant_edges_subindex.Plo@am__quote@ # am--include-marker
@@ -908,13 +913,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_filter_driver.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_filter_parser.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_filter_scanner.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_identification.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_nodes_index.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-bounded_size_string.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-dna_file_index.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-dna_file_reader.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-file_reader.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-gauss.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-kim_settings.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-kmer_nodes_subindex.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-kmer_variant_edges_subindex.Plo@am__quote@ # am--include-marker
@@ -983,6 +988,13 @@ libkim_debug_la-file_reader.lo: file_reader.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='file_reader.cpp' object='libkim_debug_la-file_reader.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-file_reader.lo `test -f 'file_reader.cpp' || echo '$(srcdir)/'`file_reader.cpp
+
+libkim_debug_la-gauss.lo: gauss.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-gauss.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-gauss.Tpo -c -o libkim_debug_la-gauss.lo `test -f 'gauss.cpp' || echo '$(srcdir)/'`gauss.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_debug_la-gauss.Tpo $(DEPDIR)/libkim_debug_la-gauss.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='gauss.cpp' object='libkim_debug_la-gauss.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-gauss.lo `test -f 'gauss.cpp' || echo '$(srcdir)/'`gauss.cpp
 
 libkim_debug_la-kim_settings.lo: kim_settings.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-kim_settings.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-kim_settings.Tpo -c -o libkim_debug_la-kim_settings.lo `test -f 'kim_settings.cpp' || echo '$(srcdir)/'`kim_settings.cpp
@@ -1102,6 +1114,13 @@ libkim_la-file_reader.lo: file_reader.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='file_reader.cpp' object='libkim_la-file_reader.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-file_reader.lo `test -f 'file_reader.cpp' || echo '$(srcdir)/'`file_reader.cpp
+
+libkim_la-gauss.lo: gauss.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-gauss.lo -MD -MP -MF $(DEPDIR)/libkim_la-gauss.Tpo -c -o libkim_la-gauss.lo `test -f 'gauss.cpp' || echo '$(srcdir)/'`gauss.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-gauss.Tpo $(DEPDIR)/libkim_la-gauss.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='gauss.cpp' object='libkim_la-gauss.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-gauss.lo `test -f 'gauss.cpp' || echo '$(srcdir)/'`gauss.cpp
 
 libkim_la-kim_settings.lo: kim_settings.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-kim_settings.lo -MD -MP -MF $(DEPDIR)/libkim_la-kim_settings.Tpo -c -o libkim_la-kim_settings.lo `test -f 'kim_settings.cpp' || echo '$(srcdir)/'`kim_settings.cpp
@@ -1410,6 +1429,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libkim_debug_la-dna_file_index.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-dna_file_reader.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-file_reader.Plo
+	-rm -f ./$(DEPDIR)/libkim_debug_la-gauss.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kim_settings.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kmer_nodes_subindex.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kmer_variant_edges_subindex.Plo
@@ -1427,6 +1447,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libkim_la-dna_file_index.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-dna_file_reader.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-file_reader.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-gauss.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-kim_settings.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-kmer_nodes_subindex.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-kmer_variant_edges_subindex.Plo
@@ -1492,6 +1513,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libkim_debug_la-dna_file_index.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-dna_file_reader.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-file_reader.Plo
+	-rm -f ./$(DEPDIR)/libkim_debug_la-gauss.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kim_settings.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kmer_nodes_subindex.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-kmer_variant_edges_subindex.Plo
@@ -1509,6 +1531,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libkim_la-dna_file_index.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-dna_file_reader.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-file_reader.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-gauss.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-kim_settings.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-kmer_nodes_subindex.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-kmer_variant_edges_subindex.Plo

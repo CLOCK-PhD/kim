@@ -1,6 +1,6 @@
 /******************************************************************************
 *                                                                             *
-*  Copyright © 2023-2025 -- IGH / LIRMM / CNRS / UM                           *
+*  Copyright © 2025      -- IGH / LIRMM / CNRS / UM                           *
 *                           (Institut de Génétique Humaine /                  *
 *                           Laboratoire d'Informatique, de Robotique et de    *
 *                           Microélectronique de Montpellier /                *
@@ -87,171 +87,236 @@
 *                                                                             *
 ******************************************************************************/
 
-#ifndef __VARIANT_NODES_INDEX_H__
-#define __VARIANT_NODES_INDEX_H__
+#ifndef __GAUSS_H__
+#define __GAUSS_H__
 
-#include <cstdint>
-#include <map>
-#include <string>
+#include <cstddef>
+#include <vector>
 
 namespace kim {
 
-    /**
-     * The type of each "variant" node of the bipartite graph.
-     */
-  class VariantNodesIndex: private std::map<std::string, uint16_t> {
+  /**
+   * Helper class to handle Gaussian (normal) law.
+   */
+  class Gauss {
 
   private:
 
-    friend class KmerVariantEdgesSubindex;
+    /**
+     * Values of the reduced centered Gaussian law for some probility
+     * range are stored in a dedicated table.
+     */
+    struct _Table {
+      /**
+       * The value of the first stored probability
+       */
+      double start;
+
+      /**
+       * The step between two consecutive probability values.
+       */
+      double step;
+
+      /**
+       * The value of the probalities.
+       */
+      std::vector<double> values;
+
+      /**
+       * Test whether a given probability is stored in this table.
+       *
+       * \param v The probability to check.
+       *
+       * \return Returns true if the given probability is in this
+       * table.
+       */
+      bool contains(double v) const;
+
+      /**
+       * Get the value corresponding to the cumulative density
+       * function of the given value.
+       *
+       * \param v The probability to check.
+       *
+       * \return Returns the CDF of the given vlaue if stored in this
+       * table or NaN otherwise.
+       */
+      double lookup(double v) const;
+
+    };
+
+    /**
+     * The table for alpha starting from 0.50 to 0.90 by step of 0.01.
+     */
+    static const _Table _table_percent;
+
+    /**
+     * The table for alpha starting from 0.900 to 0.990 by step of
+     * 0.005.
+     */
+    static const _Table _table_half_percent;
+
+    /**
+     * The table for alpha starting from 0.99 to °.999 by step of
+     * 0.001.
+     */
+    static const _Table _table_1E3;
+
+    /**
+     * The table for alpha starting from 0.999 to 0.9999 by step
+     * 10e-4.
+     */
+    static const _Table _table_1E4;
+
+    /**
+     * The table for alpha starting from 0.9999 to 0.99999 by step
+     * 10e-5.
+     */
+    static const _Table _table_1E5;
+
+    /**
+     * The table for alpha starting from 0.99999 to 0.999999 by step
+     * 10e-6.
+     */
+    static const _Table _table_1E6;
+
+    /**
+     * The table for alpha starting from 0.9999990 to 0.9999999 by
+     * step 10e-7.
+     */
+    static const _Table _table_1E7;
+
+    /**
+     * The table for alpha starting from 0.9999999 to 0.99999999 by
+     * step 10e-8.
+     */
+    static const _Table _table_1E8;
+
+    /**
+     * The table for alpha starting from 0.99999999 to 1 by step
+     * 10e-9.
+     */
+    static const _Table _table_1E9;
+
+    /**
+     * The lowest quantile value for which the probability is assumed
+     * to be equal ot 1.
+     */
+    static const double _upper_quantile;
+
+    /**
+     * The mean of this normal low handler.
+     */
+    const double _mu;
+
+    /**
+     * The standard deviation of this normal low handler.
+     */
+    const double _sigma;
 
   public:
 
     /**
-     * The type describing the content of a variant node.
-     */
-    struct VariantNode {
-
-      /**
-       * The variant identifier.
-       */
-      const key_type &variant;
-
-      /**
-       * The node incoming degree.
-       */
-      mapped_type in_degree;
-
-      /**
-       * Constructs a VariantNode "view".
-       *
-       * \remark The "view" means that both the variant label and the
-       * incoming degree used to build the view must exists while
-       * current view is alive.
-       *
-       * \param it The read-only iterator "pointing to" the variant
-       * node.
-       */
-      inline VariantNode(const_iterator it):
-        variant(it->first),
-        in_degree(it->second)
-      {}
-
-      /**
-       * The undefined node with an empty identifier and a 0 incoming
-       * degree.
-       */
-      static const VariantNode undefined;
-
-      /**
-       * Compares this variant node to the given one according to the
-       * lexicographic order of the variant label.
-       *
-       * \param v The variant node to compare to.
-       *
-       * \return Returns true if the lable of the current variant node
-       * is lexicographicially less than the given one.
-       */
-      inline bool operator<(const VariantNode &v) const {
-        return variant < v.variant;
-      }
-
-    private:
-
-      /**
-       * Constructs a default VariantNode "view".
-       */
-      VariantNode();
-
-    };
-
-    using std::map<std::string, uint16_t>::iterator;
-    using std::map<std::string, uint16_t>::const_iterator;
-    using std::map<std::string, uint16_t>::cbegin;
-    using std::map<std::string, uint16_t>::cend;
-    using std::map<std::string, uint16_t>::crbegin;
-    using std::map<std::string, uint16_t>::crend;
-    using std::map<std::string, uint16_t>::size;
-    using std::map<std::string, uint16_t>::max_size;
-    using std::map<std::string, uint16_t>::empty;
-
-    /**
-     * Get the read-only node associated to the given variant.
+     * Builds a Gaussian law handler.
      *
-     * \param variant The variant for which the node is queried.
+     * \param mu The mean of this normal law handler (default to 0).
      *
-     * \return Returns a "view" of the node associated to the given
-     * variant if found ot the VariantNode::undefined node otherwise.
+     * \param sigma The mean of this normal law handler (default to
+     * 1).
      */
-    inline VariantNode getVariantNode(const std::string &variant) const {
-      const_iterator it;
-#ifdef _OPENMP
-#pragma omp critical
-#endif
-      it = find(variant);
-      return ((it == cend())
-              ? VariantNode::undefined
-              : VariantNode(it));
+    inline Gauss(double mu = 0, double sigma = 1): _mu(mu), _sigma(sigma) {
     }
 
     /**
-     * Random access operator.
+     * Get the Z-score associated to the given value.
      *
-     * This is a shortcut for getVariantNode() method.
+     * \param x The value for which to compute the Z-score.
      *
-     * \param variant The variant for which the node is queried.
-     *
-     * \return Returns a "view" of the node associated to the given
-     * variant if found ot the VariantNode::undefined node otherwise.
+     * \return Returns the Z-score (the probability) of the given
+     * value under this Gaussian law.
      */
-    inline VariantNode operator[](const std::string &variant) const {
-      return getVariantNode(variant);
+    inline double getZscore(double x) const {
+      return Zscore(x, _mu, _sigma);
     }
 
     /**
-     * Get the number of k-mers associated to the given variant (the
-     * incoming degree of its associated node).
+     * Get the Z-score associated to the given value following a
+     * Gaussian law characterized by the given mean and standard
+     * deviation.
      *
-     * \param variant The variant for which the number of associated
-     * k-mer is queried.
+     * \param x The value for which to compute the Z-score.
      *
-     * \return Returns the number of k-mers associated to the given
-     * variant.
+     * \param mu The mean of the Gaussian law.
+     *
+     * \param sigma The standard deviation of the Gaussian law.
+     *
+     * \return Returns the Z-score (the probability) of the given
+     * value under the given Gaussian law parameters.
      */
-    inline uint16_t getVariantCount(const std::string &variant) const {
-      return getVariantNode(variant).in_degree;
+    inline static double Zscore(double x, double mu, double sigma) {
+      return (x - mu) / sigma;
     }
 
     /**
-     * Add (if necessary) a new node associated to the given variant.
+     * Get the quantile of the given probability.
      *
-     * If there is no variant node for the given variant, a new node
-     * is added with its incoming degree set to zero, otherwise it acts like find.
+     * \param alpha The probability for which to compute the quantile.
      *
-     * \param variant The variant to add.
-     *
-     * \param increment_in_degree Increment the incoming degree of the
-     * variant node.
-     *
-     * \return Returns a read-write iterator to the node corresponding
-     * to the given variant.
+     * \return Returns the quantile of the cumulative distribution
+     * frequency of the given probability under this Gaussian law.
      */
-    iterator addVariantNode(const std::string &variant, bool increment_in_degree = false);
+    inline double getQuantile(double alpha) const {
+      return quantile(alpha, _mu, _sigma);
+    }
 
     /**
-     * Add (if necessary) a new node associated to the given variant.
+     * Get the quantile of the given probability following a Gaussian
+     * law characterized by the given mean and standard deviation.
      *
-     * This is a shortcut for addVariantNode() without incrementing
-     * the incoming degree.
+     * \param alpha The probability for which to compute the quantile.
      *
-     * \param variant The variant to add.
+     * \param mu The mean of the Gaussian law.
      *
-     * \return Returns this index.
+     * \param sigma The standard deviation of the Gaussian law.
+     *
+     * \return Returns the quantile the given probability under this
+     * Gaussian law.
      */
-    inline VariantNodesIndex &operator+=(const std::string &variant) {
-      addVariantNode(variant);
-      return *this;
+    static double quantile(double alpha, double mu = 0, double sigma = 1);
+
+    /**
+     * Get the cumulative distribution frequency of the given
+     * probability following this Gaussian law.
+     *
+     * \param x The probability for which to compute the CDF.
+     *
+     * \return Returns the cumulative distribution frequency of the
+     * given probability under this Gaussian law. This is
+     * \f$\Phi(-\infty, x)\f$ of \f$\mathcal{N}\left(\mu,
+     * \sigma^2\right)\f$.
+     */
+    inline double getCDF(double x) const {
+      return CDF(x, _mu, _sigma);
     }
+
+    /**
+     * Get the cumulative distribution frequency of the given
+     * probability following the Gaussian law characterized by the
+     * given mean and standard deviation.
+     *
+     * \param x The probability for which to compute the CDF.
+     *
+     * \param mu The mean of the Gaussian law (default to 0).
+     *
+     * \param sigma The standard deviation of the Gaussian law
+     * (default to 1).
+     *
+     * \return Returns the cumulative distribution frequency of the
+     * given probability under the Gaussian law characterized by the
+     * given mean and standard deviation. This is \f$\Phi(-\infty,
+     * x)\f$ of \f$\mathcal{N}\left(\mu, \sigma^2\right)\f$.
+     */
+    static double CDF(double x, double mu = 0, double sigma = 1);
 
   };
 
