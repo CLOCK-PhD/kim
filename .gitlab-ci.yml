@@ -198,6 +198,12 @@ check:
   script:
     - make -j
     - make -j check
+    - cp tests/*.log "${ARTIFACTS_DESTDIR}"
+  artifacts:
+    name: "Test suite logs"
+    paths:
+      - "${ARTIFACTS_DESTDIR}/"
+    expire_in: 1 week
 
 #########################
 # Test (un)installation #

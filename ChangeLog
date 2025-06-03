@@ -1,5 +1,11 @@
 2025-06-03  DoccY <alban.mancheron@lirmm.fr>
 
+	* .gitlab-ci.yml:
+	Save test suite logs as artifact for one week in CI/CD.
+	
+	
+2025-06-03  DoccY <alban.mancheron@lirmm.fr>
+
 	* aminclude_static.am, config/version.configure.ac, configure,
 	configure.ac, coverage/Makefile.in:
 	Update full documentation in autoconf script and fix a bug when using the included htslib library.
@@ -13,24 +19,24 @@
 	
 2025-06-03  DoccY <alban.mancheron@lirmm.fr>
 
-	* .gitlab-ci.yml, ChangeLog:
+	* .gitlab-ci.yml:
 	Add liblzm-dev to the CI/CD base image.
 	Add libhts-deb for debian package construction.
 	
 	
 2025-06-02  DoccY <alban.mancheron@lirmm.fr>
 
-	* .gitlab-ci.yml, ChangeLog:
+	* .gitlab-ci.yml:
 	Add libz2 in CI/CD.
 	
 	
 2025-06-02  DoccY <alban.mancheron@lirmm.fr>
 
-	* .gitignore, ChangeLog, aminclude_static.am,
-	config/m4/ax_code_statistics.m4, config/m4/ax_debian_package.m4,
-	config/m4/pkg.m4, config/version.configure.ac, configure,
-	coverage/Makefile.in, src/kim.cpp, src/kim_settings.cpp,
-	src/kim_settings.h, src/read_analyzer.cpp, src/read_analyzer.h,
+	* .gitignore, aminclude_static.am, config/m4/ax_code_statistics.m4,
+	config/m4/ax_debian_package.m4, config/m4/pkg.m4,
+	config/version.configure.ac, configure, coverage/Makefile.in,
+	src/kim.cpp, src/kim_settings.cpp, src/kim_settings.h,
+	src/read_analyzer.cpp, src/read_analyzer.h,
 	tests/test_kim_settings.cpp:
 	Add a weak/strict mode to the kim program. The weak mode consider all k-mers associated to som variants whereas strict mode consider only k-mers that are not natively in the reference.
 	Fix the statistics computations.
@@ -58,7 +64,7 @@
 	
 2025-06-02  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, resources/test-variants-generate-reads.awk,
+	* resources/test-variants-generate-reads.awk,
 	resources/test-variants-reads1.csv,
 	resources/test-variants-reads1.fastq,
 	resources/test-variants-reads2.csv,
@@ -82,13 +88,13 @@
 	
 2025-02-13  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, src/variant_identification.h:
+	* src/variant_identification.h:
 	Change type of variant ID in order to reduce space consumption.
 	
 	
 2025-02-12  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, packaging/control.in:
+	* packaging/control.in:
 	Update control file for debian package.
 	
 	
@@ -116,7 +122,7 @@
 	
 2025-02-06  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, src/Makefile.am, src/Makefile.in:
+	* src/Makefile.am, src/Makefile.in:
 	BugFix in code coverage generation while main program is built inside a subdirectory.
 	
 	
@@ -135,41 +141,40 @@
 	
 2025-02-05  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, src/kim.cpp:
+	* src/kim.cpp:
 	Add k-mer filter option in order to exclude k-mer matching given regex.
 	
 	
 2025-02-05  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, src/kim.cpp, src/kim_settings.cpp, src/kim_settings.h:
+	* src/kim.cpp, src/kim_settings.cpp, src/kim_settings.h:
 	Change query results. Now there is one result file by file input query and they are stored inside a dedicated directory.
 	
 	
 2025-02-05  DoccY <alban.mancheron@lirmm.fr>
 
-	* .gitlab-ci.yml, ChangeLog:
+	* .gitlab-ci.yml:
 	Adding gitlab CI/CD.
 	
 	
 2025-02-05  DoccY <alban.mancheron@lirmm.fr>
 
-	* .gitignore, .gitmodules, ChangeLog, Makefile.am, Makefile.in,
-	README.md, aminclude_static.am, config/config.h.in,
-	config/fix-timestamp.sh, config/git-release,
-	config/git-version-gen, config/version.configure.ac, configure,
-	configure.ac, coverage/Makefile.am, coverage/Makefile.in,
-	doc/Makefile.am, doc/Makefile.in, doc/mainpage.dox.in,
-	external/gzstream, packaging/Makefile.am, packaging/Makefile.in,
-	packaging/kim.pc.in, packaging/postinst.in, packaging/prerm.in,
-	resources/Makefile.am, resources/Makefile.in,
-	resources/kim.bash_completion, src/Makefile.am, src/Makefile.in,
-	src/bounded_size_string.cpp, src/bounded_size_string.h,
-	src/dna_file_index.cpp, src/dna_file_index.h,
-	src/dna_file_reader.cpp, src/dna_file_reader.h,
-	src/file_reader.cpp, src/file_reader.h, src/kim.cpp, src/kim.h,
-	src/kim_exception.h, src/kim_settings.cpp, src/kim_settings.h,
-	src/kmer_nodes_subindex.cpp, src/kmer_nodes_subindex.h,
-	src/kmer_variant_edges_subindex.cpp,
+	* .gitignore, .gitmodules, Makefile.am, Makefile.in, README.md,
+	aminclude_static.am, config/config.h.in, config/fix-timestamp.sh,
+	config/git-release, config/git-version-gen,
+	config/version.configure.ac, configure, configure.ac,
+	coverage/Makefile.am, coverage/Makefile.in, doc/Makefile.am,
+	doc/Makefile.in, doc/mainpage.dox.in, external/gzstream,
+	packaging/Makefile.am, packaging/Makefile.in, packaging/kim.pc.in,
+	packaging/postinst.in, packaging/prerm.in, resources/Makefile.am,
+	resources/Makefile.in, resources/kim.bash_completion,
+	src/Makefile.am, src/Makefile.in, src/bounded_size_string.cpp,
+	src/bounded_size_string.h, src/dna_file_index.cpp,
+	src/dna_file_index.h, src/dna_file_reader.cpp,
+	src/dna_file_reader.h, src/file_reader.cpp, src/file_reader.h,
+	src/kim.cpp, src/kim.h, src/kim_exception.h, src/kim_settings.cpp,
+	src/kim_settings.h, src/kmer_nodes_subindex.cpp,
+	src/kmer_nodes_subindex.h, src/kmer_variant_edges_subindex.cpp,
 	src/kmer_variant_edges_subindex.h, src/kmer_variant_graph.cpp,
 	src/kmer_variant_graph.h, src/monitor.cpp, src/monitor.h,
 	src/sort_helper.cpp, src/sort_helper.h, src/variant_filter.cpp,
@@ -194,34 +199,34 @@
 	
 2024-12-13  DoccY <alban.mancheron@lirmm.fr>
 
-	* .gitignore, ChangeLog, Makefile.in, aclocal.m4,
-	aminclude_static.am, config/config.h.in,
-	config/m4/ax_prog_bison.m4, config/m4/ax_prog_bison_version.m4,
-	config/version.configure.ac, config/ylwrap, configure,
-	configure.ac, coverage/Makefile.in, doc/Makefile.in,
-	doc/doxygen.cfg.in, packaging/Makefile.in, resources/Makefile.am,
-	resources/Makefile.in, resources/test-variants-ref.fasta,
-	resources/test-variants.vcf, src/Makefile.am, src/Makefile.in,
-	src/kim.cpp, src/kim.h, src/kmer_variant_graph.h,
-	src/variant_filter.cpp, src/variant_filter.h,
-	src/variant_filter_driver.cpp, src/variant_filter_driver.h,
-	src/variant_filter_parser.cpp, src/variant_filter_parser.h,
-	src/variant_filter_parser.ypp, src/variant_filter_scanner.cpp,
-	src/variant_filter_scanner.h, src/variant_filter_scanner.lpp,
-	tests/Makefile.am, tests/Makefile.in, tests/test_variant_filter.cpp:
+	* .gitignore, Makefile.in, aclocal.m4, aminclude_static.am,
+	config/config.h.in, config/m4/ax_prog_bison.m4,
+	config/m4/ax_prog_bison_version.m4, config/version.configure.ac,
+	config/ylwrap, configure, configure.ac, coverage/Makefile.in,
+	doc/Makefile.in, doc/doxygen.cfg.in, packaging/Makefile.in,
+	resources/Makefile.am, resources/Makefile.in,
+	resources/test-variants-ref.fasta, resources/test-variants.vcf,
+	src/Makefile.am, src/Makefile.in, src/kim.cpp, src/kim.h,
+	src/kmer_variant_graph.h, src/variant_filter.cpp,
+	src/variant_filter.h, src/variant_filter_driver.cpp,
+	src/variant_filter_driver.h, src/variant_filter_parser.cpp,
+	src/variant_filter_parser.h, src/variant_filter_parser.ypp,
+	src/variant_filter_scanner.cpp, src/variant_filter_scanner.h,
+	src/variant_filter_scanner.lpp, tests/Makefile.am,
+	tests/Makefile.in, tests/test_variant_filter.cpp:
 	Add an option to the kim program to allow variant filtering on index creation.
 	The usage message details how to define such filters.
 	
 	
 2024-11-29  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, src/dna_file_reader.cpp:
+	* src/dna_file_reader.cpp:
 	Bug Fix in DNA file reading.
 	
 	
 2024-11-29  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, tests/test_kmer_variant_graph.cpp:
+	* tests/test_kmer_variant_graph.cpp:
 	Update test using the public encode/decode functions from the kim library.
 	
 	
@@ -252,7 +257,7 @@
 	
 2024-11-27  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, src/kim.cpp:
+	* src/kim.cpp:
 	Add index creation to the kim program.
 	
 	
@@ -276,7 +281,7 @@
 	
 2024-11-27  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, src/Makefile.am, src/Makefile.in,
+	* src/Makefile.am, src/Makefile.in,
 	src/variant_kmer_enumerator.cpp, src/variant_kmer_enumerator.h:
 	Add an helper class to enumerate k-mers associaed to some variant.
 	
@@ -289,8 +294,7 @@
 	
 2024-11-27  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, src/kmer_variant_graph.h,
-	tests/test_kmer_variant_graph.cpp:
+	* src/kmer_variant_graph.h, tests/test_kmer_variant_graph.cpp:
 	Make the encode/decode/timestamp function visible.
 	Add/fix the test program to take into account the index metadata.
 	
@@ -303,8 +307,7 @@
 	
 2024-11-27  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, src/kmer_nodes_subindex.cpp,
-	src/kmer_variant_edges_subindex.cpp:
+	* src/kmer_nodes_subindex.cpp, src/kmer_variant_edges_subindex.cpp:
 	BugFix: update of external Bitmagic external library broke the existing code.
 	
 	
@@ -326,14 +329,14 @@
 	
 2024-11-27  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, src/kim.cpp, src/kim_settings.cpp, src/kim_settings.h,
+	* src/kim.cpp, src/kim_settings.cpp, src/kim_settings.h,
 	tests/test_kim_settings.cpp:
 	Store the allow overwrite flag in settings.
 	
 	
 2024-11-16  DoccY <alban.mancheron@lirmm.fr>
 
-	* .gitignore, ChangeLog, config/config.h.in:
+	* .gitignore, config/config.h.in:
 	Prevent binary program test_kmer_variant_graph from being versioned.
 	Update configuration header template.
 	
@@ -390,7 +393,7 @@
 	
 2024-09-05  DoccY <alban.mancheron@lirmm.fr>
 
-	* .gitignore, ChangeLog, src/Makefile.am, src/Makefile.in,
+	* .gitignore, src/Makefile.am, src/Makefile.in,
 	src/dna_file_index.cpp, src/dna_file_index.h, tests/Makefile.am,
 	tests/Makefile.in, tests/test_dna_file_index.cpp:
 	Add a DNAFileIndex class to retrieve more efficiently parts of DNA sequences.
@@ -398,7 +401,7 @@
 	
 2024-09-05  DoccY <alban.mancheron@lirmm.fr>
 
-	* .gitignore, ChangeLog, resources/test-reads.fastq,
+	* .gitignore, resources/test-reads.fastq,
 	resources/test-sequences.fasta, src/dna_file_reader.cpp,
 	src/dna_file_reader.h, src/file_reader.cpp,
 	tests/test_dna_file_reader.cpp:
@@ -407,7 +410,7 @@
 	
 2024-07-22  DoccY <alban.mancheron@lirmm.fr>
 
-	* .gitignore, ChangeLog, Makefile.am, Makefile.in, aclocal.m4,
+	* .gitignore, Makefile.am, Makefile.in, aclocal.m4,
 	aminclude_static.am, config/config.h.in, config/fix-timestamp.sh,
 	config/git-release, config/git-version-gen,
 	config/m4/ax_c_cxx_enable_debug_option.m4,
@@ -435,10 +438,10 @@
 	
 2024-07-22  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, config/compile, config/config.guess,
-	config/config.sub, config/depcomp, config/install-sh,
-	config/ltmain.sh, config/m4/ax_check_gnu_make.m4,
-	config/m4/libtool.m4, config/m4/ltoptions.m4, config/m4/ltsugar.m4,
+	* config/compile, config/config.guess, config/config.sub,
+	config/depcomp, config/install-sh, config/ltmain.sh,
+	config/m4/ax_check_gnu_make.m4, config/m4/libtool.m4,
+	config/m4/ltoptions.m4, config/m4/ltsugar.m4,
 	config/m4/ltversion.m4, config/m4/lt~obsolete.m4, config/missing,
 	config/test-driver:
 	Update *autotools* macros and scripts.
@@ -670,8 +673,8 @@
 	
 2023-07-28  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, src/Makefile.am, src/Makefile.in, src/kim.cpp,
-	src/kim.h, src/kmer_variant_graph.cpp, src/{variant_kmer_index.h =>
+	* src/Makefile.am, src/Makefile.in, src/kim.cpp, src/kim.h,
+	src/kmer_variant_graph.cpp, src/{variant_kmer_index.h =>
 	kmer_variant_graph.h}, src/variant_kmer_index.cpp:
 	Update the kim main program.
 	The program options are not fully implemented.
@@ -872,7 +875,7 @@
 	
 2023-07-10  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, configure, src/kim.cpp, src/variant_kmer_index.cpp:
+	* configure, src/kim.cpp, src/variant_kmer_index.cpp:
 	Use map instead of unordered_map in the main program in order to reduce memory footprint.
 	
 	
@@ -890,7 +893,7 @@
 	
 2023-07-07  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, src/variant_identification.cpp:
+	* src/variant_identification.cpp:
 	Fix the code due to the last modification of the internal data structure.
 	
 	
@@ -942,14 +945,6 @@
 	
 2023-06-16  DoccY <alban.mancheron@lirmm.fr>
 
-	* :
-	commit 29b006418ac3dcf43521178bca782fd949f2b432
-	Author: DoccY <alban.mancheron@lirmm.fr>
-	Date:   Fri Jun 16 20:48:08 2023 +0200
-	
-	
-2023-06-16  DoccY <alban.mancheron@lirmm.fr>
-
 	* src/variant_kmer_index.cpp, src/variant_kmer_index.h:
 	Implement a quick and not fully controlled index loading strategy.
 	
@@ -974,7 +969,7 @@
 	
 2023-06-15  DoccY <alban.mancheron@lirmm.fr>
 
-	* ChangeLog, INSTALL, Makefile.am, Makefile.in, TODO, aclocal.m4,
+	* INSTALL, Makefile.am, Makefile.in, TODO, aclocal.m4,
 	config/config.h.in, config/git-release, config/git-version-gen,
 	config/version, config/version.configure.ac, configure,
 	configure.ac, doc/Makefile.in, doc/doxygen.cfg.in,
@@ -1015,12 +1010,6 @@
 	
 2023-06-14  Ositofeliz <remy.costa@live.fr>
 
-	* ChangeLog:
-	Update ChangeLog.
-	
-	
-2023-06-14  Ositofeliz <remy.costa@live.fr>
-
 	* .gitignore, src/Makefile.am, src/Makefile.in,
 	src/file_reader.cpp, src/file_reader.h, src/kim.cpp,
 	src/variant_identification.cpp, src/variant_identification.h,
@@ -1039,13 +1028,13 @@
 	
 2023-06-14  Ositofeliz <remy.costa@live.fr>
 
-	* .gitignore, AUTHORS, ChangeLog, LICENSE-CeCILL-en.md,
-	LICENSE-CeCILL-fr.md, LICENSE.md, Makefile.am, Makefile.in, NEWS,
-	README.md, aclocal.m4, config/compile, config/config.guess,
-	config/config.h.in, config/config.sub, config/depcomp,
-	config/install-sh, config/m4/ax_compare_version.m4,
-	config/m4/ax_prog_doxygen.m4, config/missing, configure,
-	configure.ac, doc/Makefile.am, doc/Makefile.in, doc/doxygen.cfg.in:
+	* .gitignore, AUTHORS, LICENSE-CeCILL-en.md, LICENSE-CeCILL-fr.md,
+	LICENSE.md, Makefile.am, Makefile.in, NEWS, README.md, aclocal.m4,
+	config/compile, config/config.guess, config/config.h.in,
+	config/config.sub, config/depcomp, config/install-sh,
+	config/m4/ax_compare_version.m4, config/m4/ax_prog_doxygen.m4,
+	config/missing, configure, configure.ac, doc/Makefile.am,
+	doc/Makefile.in, doc/doxygen.cfg.in:
 	Adding autotools.
 	
 	
