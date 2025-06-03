@@ -1,6 +1,12 @@
 2025-06-03  DoccY <alban.mancheron@lirmm.fr>
 
 	* .gitlab-ci.yml:
+	Try to understand why tests are failing in CI/CD.
+	
+	
+2025-06-03  DoccY <alban.mancheron@lirmm.fr>
+
+	* .gitlab-ci.yml:
 	Save test suite logs as artifact for one week in CI/CD.
 	
 	
