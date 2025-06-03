@@ -108,7 +108,8 @@ AX_PACKAGE_INFOS(
   [PRETTY_NAME:k-mer Identification Metric.],
   [SHORT_DESCRIPTION:Kim is a k-mer identification metric program.],
   [FULL_DESCRIPTION:dnl
-TODO.],
+The kim program is an alignment-free software which allows to predict genomic dnl
+variants from raw sequencing data.],
   [AUTHORS:Remy COSTA <remy.costa@igh.cnrs.fr>, William RITCHIE <william.ritchie@igh.cnrs.fr> and Alban MANCHERON  <alban.mancheron@lirmm.fr>],
   [LICENSE:CeCILL],
   [COPYRIGHT_DATE:2023-2025])dnl
@@ -564,8 +565,8 @@ AC_SUBST(HTSlib_MIN_VERSION)
 
 AX_EXTERNAL_INCLUDED_CXX_LIBRARY_DETECTION([HTSlib],
                                            [[external/htslib],
-                                            [],
-                                            [-L${ac_pwd}/external/htslib/lib -lhts]],
+                                            [-I${ac_pwd}/external/htslib/],
+                                            [-L${ac_pwd}/external/htslib/ -lhts]],
                                            [htslib],
                                            [htslib > ${HTSlib_MIN_VERSION}],
                                            [bcf_strerror],
