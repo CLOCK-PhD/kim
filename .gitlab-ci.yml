@@ -353,8 +353,12 @@ debian package:
   timeout: 3 hours
   needs:
     - sources archive
-  script:
+  before_script:
+    - !reference [.setup, pre_configuration]
     - apt-get -qq install -y libhtslib-dev
+    - ./configure
+    - mkdir -p "${ARTIFACTS_DESTDIR}"
+  script:
     - make -j -C "${DEB_PACKAGE_BUILDDIR}" deb
     - deb_file=$(ls --sort=version "${DEB_PACKAGE_BUILDDIR}/${PROJECT_BASENAME}_"*.deb | tail -n1)
     - echo "deb_file is '${deb_file}'"
