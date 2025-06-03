@@ -103,6 +103,10 @@ AM_CXXFLAGS =				\
 
 LDADD = ../src/libkim-debug.la
 
+if INCLUDED_HTSlib
+export LD_LIBRARY_PATH += :$(top_builddir)/external/htslib/
+endif
+
 check_PROGRAMS =
 TESTS =
 

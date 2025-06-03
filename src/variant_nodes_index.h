@@ -96,9 +96,9 @@
 
 namespace kim {
 
-    /**
-     * The type of each "variant" node of the bipartite graph.
-     */
+  /**
+   * The type of each "variant" node of the bipartite graph.
+   */
   class VariantNodesIndex: private std::map<std::string, uint16_t> {
 
   private:

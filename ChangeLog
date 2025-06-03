@@ -1,5 +1,11 @@
 2025-06-03  DoccY <alban.mancheron@lirmm.fr>
 
+	* src/variant_nodes_index.h, tests/Makefile.am, tests/Makefile.in:
+	BugFix in tests when using included HTSlib.
+	
+	
+2025-06-03  DoccY <alban.mancheron@lirmm.fr>
+
 	* .gitlab-ci.yml:
 	Try to understand why tests are failing in CI/CD.
 	

@@ -1501,6 +1501,8 @@ uninstall-am:
 .PRECIOUS: Makefile
 
 
+@INCLUDED_HTSlib_FALSE@export LD_LIBRARY_PATH += :$(top_builddir)/external/htslib/
+
 #########################
 # Dependencies handling #
 #########################
