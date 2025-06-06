@@ -90,6 +90,7 @@
 #ifndef __SETTINGS_H__
 #define __SETTINGS_H__
 
+#include <filesystem>
 #include <string>
 
 #include <kim_exception.h>
@@ -138,7 +139,7 @@ namespace kim {
     /**
      * The index directory.
      */
-    std::string _index_directory;
+    std::filesystem::path _index_directory;
 
     /**
      * Emit warning messages or not.
@@ -219,7 +220,7 @@ namespace kim {
      *
      * \param freeze Do freeze or not the settings.
      */
-    Settings(size_t k = 0, size_t p = 0, const std::string &index_directory = "",
+    Settings(size_t k = 0, size_t p = 0, const std::filesystem::path &index_directory = "",
              bool warn = true, bool check_consistency = false, bool allow_overwrite = false,
              double alpha = 0.01, double threshold = 0., bool weak_mode = true,
              bool freeze = false);
@@ -314,7 +315,7 @@ namespace kim {
      *
      * \return Returns the directory containing the index files.
      */
-    inline const std::string &getIndexDirectory() const {
+    inline const std::filesystem::path &getIndexDirectory() const {
       return _index_directory;
     }
 
@@ -335,7 +336,7 @@ namespace kim {
      *
      * \see validateDirectory().
      */
-    void setIndexDirectory(const std::string &path, bool must_exist = false, bool must_not_exist = false);
+    void setIndexDirectory(const std::filesystem::path &path, bool must_exist = false, bool must_not_exist = false);
 
     /**
      * Get the prefix length of the k-mers.
@@ -544,7 +545,7 @@ namespace kim {
      * must_not_exist set to true necessarily leads to a
      * BadSettingsException.
      */
-    static void validateDirectory(const std::string &path, bool must_exist = false, bool must_not_exist = false);
+    static void validateDirectory(const std::filesystem::path &path, bool must_exist = false, bool must_not_exist = false);
 
   };
 

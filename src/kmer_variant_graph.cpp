@@ -88,7 +88,6 @@
 ******************************************************************************/
 
 #include "kmer_variant_graph.h"
-
 #include "config.h"
 
 #include <fstream>
@@ -103,11 +102,20 @@
 #include <cassert>
 
 using namespace std;
+namespace fs = std::filesystem;
 
 BEGIN_KIM_NAMESPACE
 
-#define METADATA_FILENAME "0_metadata"
-static const string EXTRA_METADATA_TOKEN = "Additional informations:";
+static const fs::path METADATA_FILENAME = "0_metadata";
+static const string METADATA_EXTRA_TOKEN = "Additional informations";
+static const string METADATA_KMER_LENGTH_TOKEN = "k-mer length";
+static const string METADATA_KMER_PREFIX_LENGTH_TOKEN = "k-mer prefix length";
+static const string METADATA_KMER_SUFFIX_LENGTH_TOKEN = "k-mer suffix length";
+static const string METADATA_INDEX_DIRECTORY_TOKEN = "index directory";
+static const string METADATA_WARN_TOKEN = "warn";
+static const string METADATA_CHECK_CONSISTENCY_TOKEN = "consistency checking";
+static const string METADATA_ENABLED_TOKEN = "enabled";
+static const string METADATA_DISABLED_TOKEN = "disabled";
 
 #define WARNING_MSG(msg)        \
   if (_settings.warn()) {       \
@@ -320,7 +328,7 @@ size_t KmerVariantGraph::_checkFilenameCorrectness(const string &filename) const
   return prefix;
 }
 
-void KmerVariantGraph::_parseFile(const string &filename, size_t prefix) {
+void KmerVariantGraph::_parseFile(const fs::path &filename, size_t prefix) {
   ifstream ifs(filename);
   if (!ifs) {
     PARSE_ERROR_MSG("Unable to open index file '" << filename << "'");
@@ -391,22 +399,11 @@ void KmerVariantGraph::_parseFile(const string &filename, size_t prefix) {
     if (ifs) {
       ++line;
 
-      // Ensure that the k-mer suffix has size k2 (or set k2 on first
-      // kmer suffix).
-#ifdef _OPENMP
-#  pragma omp critical
-#endif
-      if (_settings.frozen()) {
-        if (suffix.length() != _settings.getKmerSuffixLength()) {
-          PARSE_ERROR_MSG("Badly formatted index file '" << filename
-                          << "' (line " << line << ": suffix '" << suffix
-                          << "' should have length " << _settings.getKmerSuffixLength() << ").");
-        }
-      } else {
-        _settings.setKmerLength(_settings.getKmerPrefixLength() + suffix.length());
-        _settings.freeze();
-        assert(_settings.valid());
-        BoundedSizeString::setMaximalSize(_settings.getKmerSuffixLength());
+      // Ensure that the k-mer suffix has size k2
+      if (suffix.length() != _settings.getKmerSuffixLength()) {
+        PARSE_ERROR_MSG("Badly formatted index file '" << filename
+                        << "' (line " << line << ": suffix '" << suffix
+                        << "' should have length " << _settings.getKmerSuffixLength() << ").");
       }
 
       try {
@@ -434,16 +431,110 @@ void KmerVariantGraph::_parseFile(const string &filename, size_t prefix) {
   ifs.close();
 }
 
-void KmerVariantGraph::_parseMetadata(const string &filename) {
+void KmerVariantGraph::_parseMetadata(const fs::path &filename) {
   ifstream ifs(filename);
   if (!ifs) {
     PARSE_ERROR_MSG("Unable to open index file '" << filename << "'");
   }
+
+  size_t num = 0;
   string line;
-  static const size_t n = EXTRA_METADATA_TOKEN.size();
+  static const size_t n_extra = METADATA_EXTRA_TOKEN.size();
+  static const size_t n_allele_freq_files = METADATA_ALLELE_FREQUENCY_FILES_TOKEN.size();
+  static const size_t n_kmer_length = METADATA_KMER_LENGTH_TOKEN.size();
+  static const size_t n_kmer_prefix_length = METADATA_KMER_PREFIX_LENGTH_TOKEN.size();
+  static const size_t n_warn = METADATA_WARN_TOKEN.size();
+  static const size_t n_check_consistency = METADATA_CHECK_CONSISTENCY_TOKEN.size();
+  static const size_t n_enabled = METADATA_ENABLED_TOKEN.size();
+  static const size_t n_disabled = METADATA_DISABLED_TOKEN.size();
+  uint8_t check = 0;
+
   do {
     getline(ifs, line);
-  } while (ifs.good() && line.compare(0, n, EXTRA_METADATA_TOKEN));
+    if (!ifs) {
+      if (check != 15) {
+        Exception e;
+        e << "Unexpected error in file " << filename << " at line " << num << ".";
+        throw e;
+      }
+    } else {
+      ++num;
+      if (line.compare(0, 2, "- ") == 0) {
+        if (line.compare(2, n_kmer_length, METADATA_KMER_LENGTH_TOKEN) == 0) {
+          if (check & 1) {
+            Exception e;
+            e << "Error in file '" << filename << "' (line " << num << "): "
+              << "Duplicated " << METADATA_KMER_LENGTH_TOKEN << " information."
+              << "\n"
+              << "'" << line << "'";
+            throw e;
+          }
+          string l = line.substr(n_kmer_length + 4);
+          _settings.setKmerLength(atol(l.c_str()));
+          check |= 1;
+        } else if (line.compare(2, n_kmer_prefix_length, METADATA_KMER_PREFIX_LENGTH_TOKEN) == 0) {
+          if (check & 2) {
+            Exception e;
+            e << "Error in file '" << filename << "' (line " << num << "): "
+              << "Duplicated " << METADATA_KMER_PREFIX_LENGTH_TOKEN << " information."
+              << "\n"
+              << "'" << line << "'";
+            throw e;
+          }
+          string l = line.substr(n_kmer_prefix_length + 4);
+          _settings.setKmerPrefixLength(atol(l.c_str()));
+          check |= 2;
+        } else if (line.compare(2, n_warn, METADATA_WARN_TOKEN) == 0) {
+          if (check & 4) {
+            Exception e;
+            e << "Error in file '" << filename << "' (line " << num << "): "
+              << "Duplicated " << METADATA_WARN_TOKEN << " information."
+              << "\n"
+              << "'" << line << "'";
+            throw e;
+          }
+          string v = line.substr(n_warn + 4);
+          if (v.compare(0, n_enabled, METADATA_ENABLED_TOKEN) == 0) {
+            _settings.warn(true);
+          } else if (v.compare(0, n_disabled, METADATA_DISABLED_TOKEN) == 0) {
+            _settings.warn(false);
+          } else {
+            Exception e;
+            e << "Error in file '" << filename << "' (line " << num << "): "
+              << "Invalid value '" << v << "' for the '" << METADATA_WARN_TOKEN << "' metadata attribute."
+              << "\n"
+              << "'" << line << "'";
+            throw e;
+          }
+          check |= 4;
+        } else if (line.compare(2, n_check_consistency, METADATA_CHECK_CONSISTENCY_TOKEN) == 0) {
+          if (check & 8) {
+            Exception e;
+            e << "Error in file '" << filename << "' (line " << num << "): "
+              << "Duplicated " << METADATA_CHECK_CONSISTENCY_TOKEN << " information."
+              << "\n"
+              << "'" << line << "'";
+            throw e;
+          }
+          string v = line.substr(n_check_consistency + 4);
+          if (v.compare(0, n_enabled, METADATA_ENABLED_TOKEN) == 0) {
+            _settings.checkConsistency(true);
+          } else if (v.compare(0, n_disabled, METADATA_DISABLED_TOKEN) == 0) {
+            _settings.checkConsistency(false);
+          } else {
+            Exception e;
+            e << "Error in file '" << filename << "' (line " << num << "): "
+              << "Invalid value '" << v << "' for the '" << METADATA_CHECK_CONSISTENCY_TOKEN << "' metadata attribute."
+              << "\n"
+              << "'" << line << "'";
+            throw e;
+          }
+          check |= 8;
+        }
+      }
+    }
+  } while (ifs.good() && line.compare(0, n_extra, METADATA_EXTRA_TOKEN));
+
   if (ifs.good()) {
     string m;
     do {
@@ -456,6 +547,9 @@ void KmerVariantGraph::_parseMetadata(const string &filename) {
     } while (ifs.good());
     extraMetadata(m);
   }
+  _settings.freeze();
+  assert(_settings.valid());
+  BoundedSizeString::setMaximalSize(_settings.getKmerSuffixLength());
   ifs.close();
 }
 
@@ -493,7 +587,7 @@ KmerVariantGraph::KmerVariantGraph(Settings &settings, size_t estimated_nb_kmers
   assert(_settings.valid());
 }
 
-bool KmerVariantGraph::load(const string &path) {
+bool KmerVariantGraph::load(const fs::path &path) {
   CHECK_FROZEN_STATE(!frozen(), load);
   clear();
   _kmer_nodes.clear();
@@ -512,6 +606,10 @@ bool KmerVariantGraph::load(const string &path) {
   _settings.setIndexDirectory(path);
   _settings.setKmerLength(size_t(-1));
   // It is not possible to freeze this settings since it is not valid yet.
+
+  _parseMetadata(path / METADATA_FILENAME);
+  total = 1 << (_settings.getKmerPrefixLength() << 1);
+  _resizeSubindexes(total, 0, true);
   while ((entry = readdir(dir))) {
     string fname(entry->d_name);
     if (!fname.empty() && (fname[0] != '.')) {
@@ -522,14 +620,13 @@ bool KmerVariantGraph::load(const string &path) {
       }
       full_fname += fname;
 
-      if (fname != METADATA_FILENAME) {
-        if (!cpt) {
-          _settings.unfreeze();
-          _settings.setKmerPrefixLength(fname.length());
-          // _settings.freeze();
-          total = 1 << (_settings.getKmerPrefixLength() << 1);
-          _resizeSubindexes(total, 0, true);
-        }
+      bool to_parse = (fname != METADATA_FILENAME);
+      map<string, fs::path>::const_iterator it = _allele_frequencies_files.cbegin();
+      while (to_parse && (it != _allele_frequencies_files.end())) {
+        to_parse = (fname != it->second);
+        ++it;
+      }
+      if (to_parse) {
         assert(_settings.getKmerPrefixLength() > 0);
         assert(total > 0);
         size_t prefix = _checkFilenameCorrectness(fname);
@@ -539,9 +636,6 @@ bool KmerVariantGraph::load(const string &path) {
                << (cpt + 1) << " / " << total
                << ": '" << full_fname << "'";
         }
-#ifdef _OPENMP
-#  pragma omp task firstprivate(full_fname,prefix)
-#endif
         _parseFile(full_fname, prefix);
         ++cpt;
         if (_settings.warn()) {
@@ -550,11 +644,6 @@ bool KmerVariantGraph::load(const string &path) {
 #endif
           cerr << " (" << (cpt * 10000 / total) / 100. << "%)\033[K\033[u";
         }
-      } else {
-#ifdef _OPENMP
-#  pragma omp task firstprivate(full_fname)
-#endif
-        _parseMetadata(full_fname);
       }
     }
   }
@@ -575,9 +664,9 @@ bool KmerVariantGraph::load(const string &path) {
   _frozen = true;
   if (_settings.warn()) {
     cerr << "\033[K"
-         << "Number of indexed variants: " << getNbVariants() << endl
-         << "Number of indexed k-mers: " << getNbKmers() << endl
-         << "Number of indexed edges: " << getNbKmerVariantEdges() << endl
+         << "Number of indexed variants: " << getNbVariants() << "\n"
+         << "Number of indexed k-mers: " << getNbKmers() << "\n"
+         << "Number of indexed edges: " << getNbKmerVariantEdges() << "\n"
          << "Index loaded" << endl;
   }
 
@@ -674,7 +763,7 @@ bool KmerVariantGraph::isInReferenceKmer(const std::string &kmer) const {
   return ((r == size_t(-1)) ? kmer_nodes.isInReferenceKmer(r) : false);
 }
 
-void KmerVariantGraph::dump(const string &path, bool overwrite) {
+void KmerVariantGraph::dump(const fs::path &path, bool overwrite) {
   freeze();
   int res = mkdir(path.c_str(), 0700);
   if (res) {
@@ -687,15 +776,15 @@ void KmerVariantGraph::dump(const string &path, bool overwrite) {
     ERROR_MSG(Exception, "Unable to dump graph to '" << path << "' directory:"
               << strerror(errno));
   }
-  ofstream metadata(path + "/" + METADATA_FILENAME);
+  ofstream metadata(path / METADATA_FILENAME);
   metadata << "File created at: " << timestamp() << "\n\n"
            << "Settings:\n"
-           << "- k-mer length: " << _settings.k() << "\n"
-           << "- k-mer prefix length: " << _settings.getKmerPrefixLength() << "\n"
-           << "- k-mer suffix length: " << _settings.getKmerSuffixLength() << "\n"
-           << "- index directory: " << _settings.getIndexDirectory() << "\n"
-           << "- warn: " << (_settings.warn() ? "enabled" : "disabled") << "\n"
-           << "- consistency checking: " << (_settings.checkConsistency() ? "enabled" : "disabled") << "\n\n"
+           << "- " << METADATA_KMER_LENGTH_TOKEN << ": " << _settings.k() << "\n"
+           << "- " << METADATA_KMER_PREFIX_LENGTH_TOKEN << ": " << _settings.getKmerPrefixLength() << "\n"
+           << "- " << METADATA_KMER_SUFFIX_LENGTH_TOKEN << ": " << _settings.getKmerSuffixLength() << "\n"
+           << "- " << METADATA_INDEX_DIRECTORY_TOKEN << ": " << _settings.getIndexDirectory().string() << "\n"
+           << "- " << METADATA_WARN_TOKEN << ": " << (_settings.warn() ? METADATA_ENABLED_TOKEN : METADATA_DISABLED_TOKEN) << "\n"
+           << "- " << METADATA_CHECK_CONSISTENCY_TOKEN << ": " << (_settings.checkConsistency() ? METADATA_ENABLED_TOKEN : METADATA_DISABLED_TOKEN) << "\n\n"
            << "Program informations:\n"
            << "- name: " PACKAGE "\n"
            << "- version: " VERSION "\n"
@@ -730,69 +819,62 @@ void KmerVariantGraph::dump(const string &path, bool overwrite) {
     ofs << _edges[i];
     ofs.close();
   }
-  metadata << "Graph Properties:" << endl
-           << "- Number of indexed k-mers: " << getNbKmers() << endl
-           << "- Number of indexed variants: " << getNbVariants() << endl
-           << "- Number of edges: " << getNbKmerVariantEdges() << endl
-           << endl
-           << "Files written: " << _edges.size() << endl
-           << "- From: " << decode(0, _settings.getKmerPrefixLength()) << endl
-           << "- To: " << decode(_edges.size() - 1, _settings.getKmerPrefixLength()) << endl
-           << endl;
+  metadata << "Graph Properties:" << "\n"
+           << "- Number of indexed k-mers: " << getNbKmers() << "\n"
+           << "- Number of indexed variants: " << getNbVariants() << "\n"
+           << "- Number of edges: " << getNbKmerVariantEdges() << "\n"
+           << "\n"
+           << "Files written: " << _edges.size() << "\n"
+           << "- From: " << decode(0, _settings.getKmerPrefixLength()) << "\n"
+           << "- To: " << decode(_edges.size() - 1, _settings.getKmerPrefixLength()) << "\n"
+           << "\n";
+  if (!_allele_frequencies_files.empty()) {
+    metadata << METADATA_ALLELE_FREQUENCY_FILES_TOKEN << ":\n";
+    for (auto const &[tag, file]: _allele_frequencies_files) {
+      metadata << "- " << tag << (tag.empty() ? "" : ":") << file.string() << "\n";
+    }
+    metadata << "\n";
+  }
   if (!_extra_metadata.empty()) {
-    metadata << EXTRA_METADATA_TOKEN << endl
-             << _extra_metadata << endl
-             << endl;
+    metadata << METADATA_EXTRA_TOKEN << ":\n"
+             << _extra_metadata << "\n"
+             << "\n";
   }
   metadata.close();
 }
 
-void KmerVariantGraph::removeDumpedIndex(const string &path) const {
-  if (path.find_first_not_of("./") == string::npos) {
+void KmerVariantGraph::removeDumpedIndex(const fs::path &path) const {
+
+  if (path.string().find_first_not_of("./") == string::npos) {
     ERROR_MSG(Exception, "The path '" << path << "' is not considered as valid for removal");
   }
   if (_settings.warn()) {
     cerr << "Removing dumped index located at '" << path << "'" << endl;
   }
+
   size_t nb = 1 << (_settings.getKmerPrefixLength() << 1);
 #ifdef _OPENMP
 #  pragma omp parallel for
 #endif
   for (size_t i = 0; i < nb; ++i) {
-    string f = path;
-    f += "/";
-    f += decode(i, _settings.getKmerPrefixLength());
+    fs::path f = decode(i, _settings.getKmerPrefixLength());
 #ifdef DEBUG
 #  ifdef _OPENMP
 #    pragma omp critical
 #  endif
-    cerr << "Removing file '" << f << "'" << endl;
+    cerr << "Removing file '" << (path / f) << "'" << endl;
 #endif
-#ifndef NDEBUG
-    int res =
-#endif
-      unlink(f.c_str());
-    assert(res == 0);
+    remove(path / f);
   }
-  string f = path;
-  f += "/";
-  f += METADATA_FILENAME;
+
 #ifdef DEBUG
-  cerr << "Removing file '" << f << "'" << endl;
 #endif
-#ifndef NDEBUG
-  int res =
 #endif
-    unlink(f.c_str());
-  assert(res == 0);
+    remove(path / METADATA_FILENAME);
 #ifdef DEBUG
   cerr << "Removing directory '" << path << "'" << endl;
 #endif
-#ifndef NDEBUG
-  res =
-#endif
-    rmdir(path.c_str());
-  assert(res == 0);
+  remove(path);
 }
 
 void KmerVariantGraph::clear() {

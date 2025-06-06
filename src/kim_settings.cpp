@@ -115,7 +115,7 @@ BEGIN_KIM_NAMESPACE
   }                                                                     \
   (void) 0
 
-Settings::Settings(size_t k, size_t p, const string &index_directory,
+Settings::Settings(size_t k, size_t p, const fs::path &index_directory,
                    bool warn, bool check_consistency, bool allow_overwrite,
                    double alpha, double threshold, bool weak_mode,
                    bool freeze):
@@ -169,7 +169,7 @@ void Settings::setKmerPrefixLength(size_t p) {
     ERROR_MSG("Can't set the prefix length of the k-mers to 0 (it must be a strictly positive value).");
   }
   _p = p;
-  if (_p + 1 >= _k) {
+  if (_p + 1 > _k) {
     if (_warn) {
       cerr << "The length of k-mers is set to " << _k
            << " but wanted length of the prefixes is " << _p << "."
@@ -181,7 +181,7 @@ void Settings::setKmerPrefixLength(size_t p) {
   _s = _k - _p;
 }
 
-void Settings::validateDirectory(const string &path, bool must_exist, bool must_not_exist) {
+void Settings::validateDirectory(const fs::path &path, bool must_exist, bool must_not_exist) {
   if (must_exist || must_not_exist) {
     fs::file_status s = fs::status(path);
     if (must_exist) {
@@ -212,7 +212,7 @@ void Settings::validateDirectory(const string &path, bool must_exist, bool must_
   }
 }
 
-void Settings::setIndexDirectory(const string &path, bool must_exist, bool must_not_exist) {
+void Settings::setIndexDirectory(const fs::path &path, bool must_exist, bool must_not_exist) {
   CHECK_FROZEN_STATE(!frozen(), setIndexDirectory);
   validateDirectory(path, must_exist, must_not_exist);
   _index_directory = path;

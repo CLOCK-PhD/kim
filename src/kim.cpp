@@ -107,7 +107,7 @@
 
 using namespace std;
 using namespace kim;
-namespace fs = std::filesystem;
+namespace fs = filesystem;
 
 struct Arg: public option::Arg {
 
@@ -507,7 +507,6 @@ const option::Descriptor KimProgram::_OPTION_FOOTER_INDEX_CREATION = {
   "\n      --reference file1.fasta --reference file2.fasta \\"
   "\n      --variants variants_file.vcf \\"
   "\n      --index-dir /where/to/store/index/"
-  "\n"
   "\n"
   "The biological sequence files must be either fasta or fastq formatted.\n"
   "\n"
@@ -1099,7 +1098,7 @@ bool KimProgram::_checkIfFileIsReadable(const fs::path &f) {
 void KimProgram::_assertFileIsReadable(const fs::path &f) {
   if (!_checkIfFileIsReadable(f)) {
     Exception e;
-    e << "Unable to find or open the file '" << f << "'.";
+    e << "Unable to find or open the file " << f << ".";
     throw e;
   }
 }
@@ -1331,7 +1330,7 @@ void KimProgram::_runQuery() {
       ofs.open(out_file);
       if (!ofs) {
         Exception e;
-        e << "Unable to open '" << _output_dir << "' file to print results.";
+        e << "Unable to open " << _output_dir << " file to print results.";
         throw e;
       }
     }
@@ -1362,7 +1361,7 @@ void KimProgram::_runQuery() {
     // Process each k-mer from the current input file
     for (string kmer = reader.getNextKmer(true /* skip degenerate */); !kmer.empty(); kmer = reader.getNextKmer(true /* skip degenerate */)) {
       ++nb_kmers;
-      // cerr << "K-mer : '" << kmer << "'" << endl;
+      // cerr << "k-mer : '" << kmer << "'" << endl;
       list<KmerVariantEdgesSubindex::KmerVariantAssociation> assoc_variant = kim_index.search(kmer);
       // cerr << "assoc_variant size is " << assoc_variant.size() << endl;
 
@@ -1416,7 +1415,7 @@ void KimProgram::_createIndex() {
     // The index directory already exists.
     if (_settings.allowOverwrite()) {
       fake_settings.setIndexDirectory(_settings.getIndexDirectory()
-                                      + "this kind of path should not exist",
+                                      / "this kind of path should not exist",
                                       false, true);
       KmerVariantGraph fake_index(fake_settings);
       if (_settings.warn()) {
@@ -1430,8 +1429,10 @@ void KimProgram::_createIndex() {
     }
   }
 
+  // Prepare variant k-mer enumaration
   VariantKmerEnumerator::init(_settings, _dna_files);
 
+  // Create an empty k-mer to variant graph
   KmerVariantGraph kim_index(_settings);
   kim_index.freeze();
   assert(kim_index.frozen());
@@ -1459,8 +1460,8 @@ void KimProgram::_createIndex() {
       cerr << "]" << endl;
       for (auto const &s: hdr.getSeqnames()) {
         if (!VariantKmerEnumerator::getIndex().getSequenceID(s)) {
-          cerr << "  WARNING: Sequence '" << s << "' is not indexed."
-               << " Thus k-mer variant index may be incomplete."
+          cerr << "WARNING: Sequence '" << s << "' is not indexed.\n"
+               << "         Thus k-mer variant index may be incomplete."
                << endl;
         }
       }
@@ -1609,6 +1610,7 @@ void KimProgram::_createIndex() {
   metadata += Monitor::memoryWithUnit2string(monitor.getMemory());
   metadata += "\n";
   kim_index.extraMetadata(metadata);
+
   kim_index.freeze();
   assert(kim_index.frozen());
 

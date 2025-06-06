@@ -91,6 +91,7 @@
 #define __KMER_VARIANT_GRAPH_H__
 
 #include <cstdlib>
+#include <filesystem>
 #include <list>
 #include <vector>
 #include <string>
@@ -273,13 +274,13 @@ namespace kim {
      * \param prefix The k-mer encoded prefix (the rank of the
      * sub-indexes to load).
      */
-    void _parseFile(const std::string &filename, size_t prefix);
+    void _parseFile(const std::filesystem::path &filename, size_t prefix);
 
     /**
      * parse the given metadata file in order to extract the content
      * of the 'Additional informations' field.
      */
-    void _parseMetadata(const std::string &filename);
+    void _parseMetadata(const std::filesystem::path &filename);
 
 
   public:
@@ -320,7 +321,7 @@ namespace kim {
      * true if the directory exist and the index is successfully
      * loaded.
      */
-    bool load(const std::string &path);
+    bool load(const std::filesystem::path &path);
 
     /**
      * Get this graph settings.
@@ -529,7 +530,7 @@ namespace kim {
      * \param overwrite If true and if path directory already exists,
      * then invokes the removeDumpedIndex() static method.
      */
-    void dump(const std::string &path, bool overwrite = false);
+    void dump(const std::filesystem::path &path, bool overwrite = false);
 
     /**
      * Remove the dumped index located at the given directory and
@@ -538,7 +539,7 @@ namespace kim {
      *
      * \param path Directory where index files are stored.
      */
-    void removeDumpedIndex(const std::string &path) const;
+    void removeDumpedIndex(const std::filesystem::path &path) const;
 
     /**
      * Set extra metadata (used when index is dumped).
