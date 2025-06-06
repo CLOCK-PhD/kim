@@ -215,8 +215,8 @@ int main() {
   FileReader reader;
 
   TestFileProps test_files[] = {
-    { "test-variants.vcf",     82, 9140, FileReader::NO_COMPRESSION },
-    { "test-variants.vcf.gz",  82, 9140, FileReader::GZIP },
+    { "test-variants.vcf",     86, 9940, FileReader::NO_COMPRESSION },
+    { "test-variants.vcf.gz",  86, 9940, FileReader::GZIP },
     { "test-reads.fastq",     112, 5622, FileReader::NO_COMPRESSION },
     { "test-reads.fastq.gz",  112, 5622, FileReader::GZIP },
     { "test-reads.fastq.bz2", 112, 5622, FileReader::BZ2}
