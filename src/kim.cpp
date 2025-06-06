@@ -96,6 +96,7 @@
 #include <vcfpp.h>
 #pragma GCC diagnostic pop
 
+#include <cmath>
 #include <filesystem>
 #include <iostream>
 #include <map>
@@ -314,6 +315,9 @@ private:
 
   // Closes opened VAF files (either temporary or from index)
   void _closeVafFiles();
+
+  // Computes kim scores.
+  map<string, double> _computeKimScores(const KmerVariantGraph &index, const ReadAnalyzer::VariantScores &result);
 
   // Check whether the given string is an URL.
   static bool _isURL(const string &f);
@@ -1268,6 +1272,17 @@ void _dumpResultsVariants(const ReadAnalyzer::VariantScores &results,
   }
 }
 
+void _dumpResultsKimScores(const map<string, double> &scores, ostream &os) {
+  os << "Identification metrics:\n";
+  for (auto const &[tag, score]: scores) {
+    if (!isnan(score)) {
+      os << "- " << tag << ":\n"
+         << "    probability: " << score << "\n"
+         << "    e-value (1G. people): " << (score * 1e9) << "\n";
+    }
+  }
+}
+
 void _dumpResultsFooter(Monitor &monitor, ostream &os) {
   os << "Monitoring:" << endl
      << "  Wallclock time: "
@@ -1461,10 +1476,15 @@ void KimProgram::_runQuery() {
     _readAnalyzerCallback(read_analyzer, read_infos, os);
     one_file_monitor.stop();
 
+    // Analyse reads for variants
     const ReadAnalyzer::VariantScores &result = read_analyzer.result();
 
-    // Write the result to output stream
+    // Compute the kim scores
+    map<string, double> scores = _computeKimScores(kim_index, result);
+
+    // Write the result and scores to output stream
     _dumpResultsVariants(result, kim_index.getNbKmers(), nb_kmers, os);
+    _dumpResultsKimScores(scores, os);
     _dumpResultsFooter(one_file_monitor, os);
 
     if (ofs.is_open()) {
@@ -1630,6 +1650,147 @@ void KimProgram::_dump2temporaryVafFiles(VariantAlleleFrequencies &vaf) {
     }
   }
 }
+
+double __extractFrequency(istream &is) {
+  assert(is);
+  unsigned char bytes[2];
+#ifdef DEBUG
+  cerr << "Reading two bytes" << endl;
+#endif
+  is.read(reinterpret_cast<char*>(bytes), 2);
+  assert(is);
+  uint16_t encoded_af = (uint16_t)((bytes[0] << 8) | bytes[1]);
+#ifdef DEBUG
+  cerr << "Value is " << (int) encoded_af << endl;
+#endif
+  if (encoded_af >= encoded_af_delta) encoded_af -= encoded_af_delta;
+  if (encoded_af == encoded_af_missing) return -1;
+  double af = double(encoded_af) / double(encoded_af_max);
+#ifdef DEBUG
+  cerr << "Decoded value is " << af << endl;
+#endif
+  assert(af >= 0);
+  assert(af <= 1.);
+  return af;
+}
+
+map<string, double> KimProgram::_computeKimScores(const KmerVariantGraph &index, const ReadAnalyzer::VariantScores &result) {
+  map<string, double> scores;
+  for (auto const &tag: _settings.getAlleleFrequencyTags()) {
+#ifdef DEBUG
+    cerr << "Initialization of scores[" << tag << "] to 1" << endl;
+#endif
+    scores[tag] = nan("");
+  }
+  _loadIndexVafFiles(index);
+  assert(_vaf_files.find("") != _vaf_files.cend());
+  istream &v_is = _vaf_files[""];
+#ifdef DEBUG
+  cerr << "Parsing " << VARIANT_ALLELE_FREQUENCIES_BASENAME << " file" << endl;
+#endif
+  while (v_is) {
+
+    // Using "AF" tag to detect alternative alleles.
+    assert(_vaf_files.find("AF") != _vaf_files.cend());
+    fstream &af_is = _vaf_files["AF"];
+
+    size_t nb_alt = -1;
+    size_t variant_pos = -1;
+    string variant;
+
+    double af = 0.0;
+    double af_complement = 1.0;
+
+    do {
+      ++nb_alt;
+      string line;
+      getline(v_is, line);
+      if (v_is) {
+#ifdef DEBUG
+        cerr << "Checking variant '" << line << "'" << endl;
+#endif
+        assert(v_is);
+        assert(!line.empty());
+        double cur_af = __extractFrequency(af_is);
+        if (cur_af >= 0) {
+          assert(cur_af <= af_complement);
+          af_complement -= cur_af;
+#ifdef DEBUG
+          cerr << "AF frequency is " << cur_af << " and complement is now " << af_complement << endl;
+#endif
+          const VariantNodesIndex::const_iterator &it = index.getVariantNodesIndex().find(line);
+          if ((it != index.getVariantNodesIndex().cend()) && (result.find(it) != result.end())) {
+#ifdef DEBUG
+            cerr << "*** Variant '" << line << "' is at rank " << nb_alt << endl;
+#endif
+            variant_pos = nb_alt;
+            assert(variant.empty());
+            variant = line;
+            assert(!variant.empty());
+            af = cur_af;
+#ifdef DEBUG
+            cerr << "The AF is " << af << endl;
+#endif
+          }
+        }
+      }
+    } while (v_is && af_is && (af_is.peek() & 128));
+
+    assert(!v_is || (nb_alt != (size_t) -1));
+    if (v_is) {
+#ifdef DEBUG
+      cerr << "The score for AF is " << scores["AF"] << endl;
+      cerr << "variant is " << variant << " (at pos " << variant_pos << ")" << endl;
+      cerr << "af_complement is " << af_complement << " and af " << af << endl;
+#endif
+      if (af >= 0) {
+        double &s = scores["AF"];
+        if (isnan(s)) s = 1.0;
+        s *= (variant.empty() ? af_complement : af);
+      }
+
+      // Compute the probability for the other tags
+      for (auto const &tag: _settings.getAlleleFrequencyTags()) {
+        if (tag != "AF") {
+          af = -1.0;
+          af_complement = 1.0;
+          for (size_t i = 0; i < nb_alt; ++i) {
+#ifdef DEBUG
+            cerr << "Checking af for '" << tag << "'" << endl;
+#endif
+            assert(_vaf_files.find(tag) != _vaf_files.cend());
+            fstream &tag_is = _vaf_files[tag];
+            double cur_af = __extractFrequency(tag_is);
+            if (cur_af >= 0) {
+              assert(cur_af <= af_complement);
+              af_complement -= cur_af;
+#ifdef DEBUG
+              cerr << tag << " frequency is " << cur_af << " and complement is now " << af_complement << endl;
+#endif
+              if (i == variant_pos) {
+                af = cur_af;
+#ifdef DEBUG
+                cerr << "The " << tag << " is " << af << endl;
+#endif
+              }
+            }
+          }
+          if (af >= 0) {
+            double &s = scores[tag];
+            if (isnan(s)) s = 1.0;
+            s *= (variant.empty() ? af_complement : af);
+          }
+        }
+#ifdef DEBUG
+        cerr << "The score for " << tag << " is now " << scores[tag] << endl;
+#endif
+      }
+    }
+  }
+  _closeVafFiles();
+  return scores;
+}
+
 
 void KimProgram::_createIndex() {
 

@@ -1,5 +1,11 @@
 2025-06-06  DoccY <alban.mancheron@lirmm.fr>
 
+	* src/kim.cpp:
+	Add computation of Kim Scores.
+	
+	
+2025-06-06  DoccY <alban.mancheron@lirmm.fr>
+
 	* src/kim.cpp, src/kmer_variant_graph.cpp,
 	src/variant_nodes_index.h:
 	Add some comments in code.
