@@ -107,6 +107,7 @@ namespace fs = std::filesystem;
 BEGIN_KIM_NAMESPACE
 
 static const fs::path METADATA_FILENAME = "0_metadata";
+static const string METADATA_ALLELE_FREQUENCY_FILES_TOKEN = "Allele Frequency Files";
 static const string METADATA_EXTRA_TOKEN = "Additional informations";
 static const string METADATA_KMER_LENGTH_TOKEN = "k-mer length";
 static const string METADATA_KMER_PREFIX_LENGTH_TOKEN = "k-mer prefix length";
@@ -533,7 +534,26 @@ void KmerVariantGraph::_parseMetadata(const fs::path &filename) {
         }
       }
     }
-  } while (ifs.good() && line.compare(0, n_extra, METADATA_EXTRA_TOKEN));
+  } while (ifs.good() && line.compare(0, n_allele_freq_files, METADATA_ALLELE_FREQUENCY_FILES_TOKEN) && line.compare(0, n_extra, METADATA_EXTRA_TOKEN));
+
+  if (ifs.good() && line.compare(0, n_allele_freq_files, METADATA_ALLELE_FREQUENCY_FILES_TOKEN) == 0) {
+    do {
+      getline(ifs, line);
+      if (ifs) {
+        ++num;
+        if (line.compare(0, 2, "- ") == 0) {
+          size_t p = line.find_first_of(":");
+          if (p != string::npos) {
+            string tag = line.substr(2, p - 2);
+            string file = line.substr(p + 1);
+            addVariantAlleleFrequencyFile(tag, file);
+          } else {
+            addVariantAlleleFrequencyFile("", line.substr(2));
+          }
+        }
+      }
+    } while (ifs.good() && line.compare(0, n_extra, METADATA_EXTRA_TOKEN));
+  }
 
   if (ifs.good()) {
     string m;
@@ -867,8 +887,22 @@ void KmerVariantGraph::removeDumpedIndex(const fs::path &path) const {
     remove(path / f);
   }
 
+  Settings s(2, 1);
+  KmerVariantGraph tmp(s);
+  s.unfreeze();
+  tmp._parseMetadata(path / METADATA_FILENAME);
+  for (auto const &[t,f]: tmp.variantAlleleFrequencyFiles()) {
 #ifdef DEBUG
+#  ifdef _OPENMP
+#    pragma omp critical
+#  endif
+    cerr << "Removing file " << (path / f) << "." << endl;
 #endif
+    fs::remove(path / f);
+  }
+
+#ifdef DEBUG
+  cerr << "Removing file '" << (path / METADATA_FILENAME) << "'" << endl;
 #endif
     remove(path / METADATA_FILENAME);
 #ifdef DEBUG
@@ -959,5 +993,11 @@ void KmerVariantGraph::extraMetadata(const string &metadata) {
     }
   } while (start_pos < n);
 }
+
+void KmerVariantGraph::addVariantAlleleFrequencyFile(const string &tag, const fs::path &file) {
+  CHECK_FROZEN_STATE(!frozen(), addVariantAlleleFrequencyFile);
+  _allele_frequencies_files[tag] = file;
+}
+
 
 END_KIM_NAMESPACE

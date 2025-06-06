@@ -119,6 +119,7 @@ pkginclude_HEADERS =	\
   monitor.h			\
   read_analyzer.h		\
   sort_helper.h                 \
+  variant_allele_frequencies.h	\
   variant_kmer_enumerator.h	\
   variant_nodes_index.h
 
@@ -197,11 +198,12 @@ libkim_la_SOURCES =						\
   monitor.h monitor.cpp						\
   read_analyzer.h read_analyzer.cpp				\
   sort_helper.h sort_helper.cpp					\
-  variant_kmer_enumerator.h variant_kmer_enumerator.cpp		\
+  variant_allele_frequencies.h variant_allele_frequencies.cpp	\
   variant_filter.h variant_filter.cpp				\
   variant_filter_driver.h variant_filter_driver.cpp		\
   variant_filter_parser.ypp					\
   variant_filter_scanner.lpp					\
+  variant_kmer_enumerator.h variant_kmer_enumerator.cpp		\
   variant_nodes_index.h variant_nodes_index.cpp
 
 libkim_la_configdir   = $(libdir)/$(install_dirname)/include

@@ -202,6 +202,7 @@ private:
   static const option::Descriptor _OPTION_INDEX_CREATION_OPTIONS_REFERENCE;
   static const option::Descriptor _OPTION_INDEX_CREATION_OPTIONS_VARIANTS;
   static const option::Descriptor _OPTION_INDEX_CREATION_OPTIONS_VARIANT_FILTER;
+  static const option::Descriptor _OPTION_INDEX_CREATION_OPTIONS_ALLELE_FREQUENCY_TAG;
   static const option::Descriptor _OPTION_QUERY_OPTIONS_HEADER;
   static const option::Descriptor _OPTION_QUERY_OPTIONS_OUTPUT_DIR;
   static const option::Descriptor _OPTION_QUERY_OPTIONS_ALPHA;
@@ -228,13 +229,17 @@ private:
   };
 
   enum  _OptionIndex {
+    // Information options
     UNKNOWN_OPT,
     HELP_OPT,
     COPYRIGHT_OPT,
     VERSION_OPT,
+    // Common options
     QUIET_OPT,
     FORCE_OPT,
     INDEX_DIRECTORY_OPT,
+    CONSISTENCY_CHECKING_OPT,
+    // Index creation options
     CREATE_INDEX_OPT,
     VARIANT_FILTER_OPT,
     KMER_LENGTH_OPT,
@@ -242,7 +247,8 @@ private:
     KMER_FILTER_OPT,
     REFERENCE_OPT,
     VARIANTS_OPT,
-    CONSISTENCY_CHECKING_OPT,
+    ALLELE_FREQUENCY_TAG_OPT,
+    // Index query options
     OUTPUT_OPT,
     ALPHA_OPT,
     THRESHOLD_OPT,
@@ -262,6 +268,8 @@ private:
   vector<string> _variant_filters;
   vector<string> _dna_files;
   vector<fs::path> _variants_files;
+  map<string, fstream> _vaf_files;
+  fs::path _tmpdir;
   fs::path _output_dir;
 
   KimProgram(int argv, char **argc);
@@ -272,6 +280,40 @@ private:
   void _runQuery();
   void _createIndex();
   fs::path _buildResultFile(const fs::path &f) const;
+
+  // Creates a temporary directory (to store computed allele
+  // frequencies on the fly).
+  void _createTemporaryDirectory();
+
+  // Creates temporary VAF files (open output streams)
+  void _createTemporaryVafFiles(KmerVariantGraph &index);
+
+  // Dump the allele frequencies of the given variant for all
+  // populations tags.
+  //
+  // Since frequencies are in the range [0;1] instead of using 32 bits
+  // float encoding, we choose to encode this range using a 16 bits
+  // integer. The first bit is used to denote alternative alleles (the
+  // first alternative allele is thus in range [0; 32767) and the
+  // others are in [32768; 65535), so the correct allele frequencies
+  // for those one are computed by substracting 32768). That way, a
+  // final value of 0 denotes a frequency of 0 and a final value of
+  // 32766 denotes a frequency of 1. A final value of i denotes a
+  // frequency of i/32766, leading to a precision of 3e-5. The special
+  // value 32767 is reserved to denode the value which doesn't exist.
+  void _dump2temporaryVafFiles(VariantAlleleFrequencies &vaf);
+
+  // Closes and deletes temporary VAF files
+  void _deleteTemporaryDirectory();
+
+  // Saves temporary VAF files to final index directory
+  void _saveTemporaryVafFiles();
+
+  // Load VAF files (open input streams) from index directory
+  void _loadIndexVafFiles(const KmerVariantGraph &index);
+
+  // Closes opened VAF files (either temporary or from index)
+  void _closeVafFiles();
 
   static bool _isURL(const string &f);
   static bool _checkIfFileIsReadable(const fs::path &f);
@@ -303,6 +345,10 @@ public:
 #define KIM_DEFAULT_ALPHA               "1%"
 #define KIM_DEFAULT_THRESHOLD           "0%"
 #define KIM_DEFAULT_MODE                "weak"
+static const string VARIANT_ALLELE_FREQUENCIES_BASENAME = "0_vaf";
+string _buildVafFilename(const string &tag) {
+  return VARIANT_ALLELE_FREQUENCIES_BASENAME + "_" + tag + ".bin";
+}
 
 #define _str(x) #x
 #define stringify(x) _str(x)
@@ -440,6 +486,18 @@ const option::Descriptor KimProgram::_OPTION_INDEX_CREATION_OPTIONS_VARIANT_FILT
   "provided multiple time, each expression must be satisfyed for the "
   "variant to be added into the index. See filter syntax explanation "
   "below for additional details."
+};
+
+const option::Descriptor KimProgram::_OPTION_INDEX_CREATION_OPTIONS_ALLELE_FREQUENCY_TAG = {
+  ALLELE_FREQUENCY_TAG_OPT, 0, "T", "allele-frequency-tag", Arg::Required,
+  "  -T | --allele-frequency-tag> \t"
+  "Set an extra tag to use for variant allele frequencies. During index "
+  "creation, the default variant allele frequencies comes from the 'AF' "
+  "info tag of, if this field is missing, they are computed from the 'AC' "
+  "and 'AN' info tags if available (see VCF specification). Using this "
+  "option allows you to provide an additional allele frequency tag "
+  "(providing this option several time allows you to add as many new "
+  "tags)."
 };
 
 const option::Descriptor KimProgram::_OPTION_QUERY_OPTIONS_HEADER = {
@@ -609,7 +667,26 @@ const option::Descriptor KimProgram::_OPTION_FOOTER_INDEX_CREATION = {
   "In the end, even if the kim program makes possible to filter variants on the"
   " fly while creating the index, it should be more efficient to create the"
   " filtered VCF file(s) first by using any third party software of your choice,"
-  " then use this(these) filtered VCF file(s) to create the index."
+  " then use this(these) filtered VCF file(s) to create the index.\n"
+  "\n"
+  "Custom Variant Allele Frequencies\n"
+  "---------------------------------\n"
+  "\n"
+  "You may want to compute identification metrics for various populations "
+  "(e.g., \"EUR_AF\", \"AFR_AF\", ...) or use a VCF file that uses a non "
+  "standard info tag to define the variant allele frequencies (e.g., "
+  "\"FREQ\", ...). In such case, you can provide the VCF info tag to use "
+  "in addition to the standard (\"AF\" [or \"AC\"/\"AN\"]) allele "
+  "frequencies. The following example uses \"FR_FREQ\" and \"AU_FREQ\" to "
+  "detect the French and Australian frequencies:\n"
+  "\n"
+  "\n  kim --create-index \\"
+  "\n      --kmer-length 27 --kmer-prefix-length 6 \\"
+  "\n      --reference file1.fasta --reference file2.fasta \\"
+  "\n      --variants variants_file.vcf \\"
+  "\n      --allele-frequency-tag FR_FREQ \\"
+  "\n      --allele-frequency-tag AU_FREQ \\"
+  "\n      --index-dir /where/to/store/index/"
 };
 
 const option::Descriptor KimProgram::_OPTION_FOOTER_QUERY = {
@@ -644,7 +721,7 @@ const option::Descriptor KimProgram::_OPTION_FOOTER_QUERY = {
   "strict mode may improve the query results. But for \"standard\" values "
   "of k, running in weak mode (default) should give better results. The "
   "mode can be changed using:\n"
-  "\n  kim --index-dir /path/to/my/index/ --mode strict file1.fastq file2.fastq"
+  "\n  kim --index-dir /path/to/my/index/ --mode strict file1.fastq file2.fastq\n"
 };
 
 const option::Descriptor KimProgram::_OPTION_END = {0, 0, 0, 0, 0, 0};
@@ -688,6 +765,7 @@ const option::Descriptor KimProgram::_create_index_usage[] = {
   _OPTION_INDEX_CREATION_OPTIONS_REFERENCE,
   _OPTION_INDEX_CREATION_OPTIONS_VARIANTS,
   _OPTION_INDEX_CREATION_OPTIONS_VARIANT_FILTER,
+  _OPTION_INDEX_CREATION_OPTIONS_ALLELE_FREQUENCY_TAG,
   _OPTION_EMPTY_LINE,
   _OPTION_FOOTER_INDEX_CREATION,
   _OPTION_EMPTY_LINE,
@@ -739,6 +817,7 @@ const option::Descriptor KimProgram::_full_usage[] = {
   _OPTION_INDEX_CREATION_OPTIONS_REFERENCE,
   _OPTION_INDEX_CREATION_OPTIONS_VARIANTS,
   _OPTION_INDEX_CREATION_OPTIONS_VARIANT_FILTER,
+  _OPTION_INDEX_CREATION_OPTIONS_ALLELE_FREQUENCY_TAG,
   _OPTION_EMPTY_LINE,
   _OPTION_QUERY_OPTIONS_HEADER,
   _OPTION_QUERY_OPTIONS_OUTPUT_DIR,
@@ -882,6 +961,15 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
     // Ensure that at least one variant file is provided
     if (_opts.options[VARIANTS_OPT].count() < 1) {
       throw Exception("At least one variant file must be provided for index creation.");
+    }
+
+    // Add extra allele frequency tags
+    _settings.addAlleleFrequencyTag("AF");
+    for (option::Option* opt = _opts.options[ALLELE_FREQUENCY_TAG_OPT]; opt; opt = opt->next()) {
+      if (!_settings.addAlleleFrequencyTag(opt->arg) && _settings.warn()) {
+        cerr << "WARNING: Allele frequency tag '" << opt->arg << "' was probably given twice."
+             << endl;
+      }
     }
 
     // Reserve memory for k-mer exclusion filters, then fill the
@@ -1403,10 +1491,149 @@ void KimProgram::_runQuery() {
        << "# - Memory: " << Monitor::memoryWithUnit2string(monitor.getMemory()) << endl;
 }
 
+void KimProgram::_createTemporaryDirectory() {
+  const string tmpdir_template = (fs::temp_directory_path() / "kimAF_XXXXXX").string();
+  char *tmpdir = new char[tmpdir_template.size() + 1];
+  copy(tmpdir_template.begin(), tmpdir_template.end(), tmpdir);
+  tmpdir[tmpdir_template.size()] = '\0';
+  if (mkdtemp(tmpdir) == NULL) {
+    Exception e;
+    e << "The following error occurs while trying to create the temporary directory '" << tmpdir << "': " << strerror(errno);
+    delete [] tmpdir;
+    throw e;
+  }
+  _tmpdir = tmpdir;
+  delete [] tmpdir;
+  if (_settings.warn()) {
+    cerr << "* Temporary directory " << _tmpdir << " created." << endl;
+  }
+}
+
+void KimProgram::_deleteTemporaryDirectory() {
+  if (!fs::remove(_tmpdir)) {
+    Exception e;
+    e << "Unable to remove the directory '" << _tmpdir << ".";
+    throw e;
+  }
+  if (_settings.warn()) {
+    cerr << "* Temporary directory " << _tmpdir << " deleted." << endl;
+  }
+}
+
+void KimProgram::_createTemporaryVafFiles(KmerVariantGraph &index) {
+  bool frozen = index.frozen();
+  if (frozen) index.unfreeze();
+  if (_tmpdir.empty()) {
+    _createTemporaryDirectory();
+  }
+  assert(!_tmpdir.empty());
+  fs::path current_file = _tmpdir / VARIANT_ALLELE_FREQUENCIES_BASENAME;
+  assert(_vaf_files.find(VARIANT_ALLELE_FREQUENCIES_BASENAME) == _vaf_files.end());
+  fstream &os = _vaf_files[VARIANT_ALLELE_FREQUENCIES_BASENAME];
+  os.open(current_file, ios::out | ios::trunc);
+  if (!os.is_open()) {
+    Exception e;
+    e << "An error occurs while trying to create the file " << current_file << ".";
+    throw e;
+  }
+  index.addVariantAlleleFrequencyFile("", VARIANT_ALLELE_FREQUENCIES_BASENAME);
+
+  for (auto const &tag: _settings.getAlleleFrequencyTags()) {
+    fs::path current_file_basename = _buildVafFilename(tag);
+    current_file = _tmpdir / current_file_basename;
+    assert(_vaf_files.find(tag) == _vaf_files.end());
+    fstream &os = _vaf_files[tag];
+    os.open(current_file, ios::out | ios::trunc | ios::binary);
+    if (!os.is_open()) {
+      _closeVafFiles();
+      Exception e;
+      e << "An error occurs while trying to create the file " << current_file << ".";
+      throw e;
+    }
+    index.addVariantAlleleFrequencyFile(tag, current_file_basename);
+  }
+  if (frozen) index.freeze();
+}
+
+void moveFile(const fs::path &old_p, const fs::path &new_p) {
+  try {
+    fs::rename(old_p, new_p);
+  } catch (...) {
+    fs::copy_file(old_p, new_p);
+    fs::remove(old_p);
+  }
+}
+
+void KimProgram::_saveTemporaryVafFiles() {
+  assert(!_tmpdir.empty());
+  assert(!_settings.getIndexDirectory().empty());
+  if (_settings.warn()) {
+    cerr << "* Saving variant allele frequencies to '" << _settings.getIndexDirectory() << "'." << endl;
+  }
+  _closeVafFiles();
+  fs::path current_file = VARIANT_ALLELE_FREQUENCIES_BASENAME;
+  moveFile(_tmpdir / current_file, _settings.getIndexDirectory() / current_file);
+  for (auto const &tag: _settings.getAlleleFrequencyTags()) {
+    current_file = _buildVafFilename(tag);
+    moveFile(_tmpdir / current_file, _settings.getIndexDirectory() / current_file);
+    if (_settings.warn()) {
+      cerr << "  - File " << current_file << " saved." << endl;
+    }
+  }
+}
+
+void KimProgram::_loadIndexVafFiles(const KmerVariantGraph &index) {
+
+  assert(!_settings.getIndexDirectory().empty());
+  fs::path _index_dir = _settings.getIndexDirectory();
+  for (auto const &[tag, file]: index.variantAlleleFrequencyFiles()) {
+    string t = tag.empty() ? VARIANT_ALLELE_FREQUENCIES_BASENAME : tag;
+    fs::path current_file = _index_dir / file;
+    assert(_vaf_files.find(tag) == _vaf_files.end());
+    fstream &is = _vaf_files[tag];
+    is.open(current_file, ios::in | ios::binary);
+    if (!is.is_open()) {
+      Exception e;
+      e << "An error occurs while trying to open the file " << current_file << ".";
+      throw e;
+    }
+  }
+}
+
+void KimProgram::_closeVafFiles() {
+  for (auto &[fname, fstr]: _vaf_files) {
+    fstr.close();
+  }
+}
+
+void KimProgram::_dump2temporaryVafFiles(VariantAlleleFrequencies &vaf) {
+  if (vaf.getCurrentVariantAlleleFrequencies().empty()) return;
+  assert(_vaf_files.find(VARIANT_ALLELE_FREQUENCIES_BASENAME) != _vaf_files.end());
+  fstream &v_os = _vaf_files[VARIANT_ALLELE_FREQUENCIES_BASENAME];
+  assert(v_os.is_open());
+  uint16_t delta = 0;
+  for (auto const &vpaf: vaf.getCurrentVariantAlleleFrequencies()) {
+    if (vpaf.variant != "-") {
+      v_os << vpaf.variant << "\n";
+      for (auto const &tag: _settings.getAlleleFrequencyTags()) {
+        assert(_vaf_files.find(tag) != _vaf_files.end());
+        fstream &os = _vaf_files[tag];
+        assert(os.is_open());
+        map<string, float>::const_iterator it = vpaf.population_af.find(tag);
+        uint16_t encoded_af = ((it == vpaf.population_af.cend()) ? 32767 : (it->second * 32766));
+        encoded_af += delta;
+        os.write((char*) &encoded_af, 2);
+      }
+      delta = 32768;
+    }
+  }
+}
+
 void KimProgram::_createIndex() {
 
   Monitor monitor;
 
+  // Checks validity of current settings
   Settings fake_settings(_settings);
   try {
     fake_settings.unfreeze();
@@ -1440,6 +1667,10 @@ void KimProgram::_createIndex() {
   assert(kim_index.getNbKmers() == 0);
   assert(kim_index.getNbVariants() == 0);
 
+  // Prepare variant allele frequency computation
+  VariantAlleleFrequencies vaf(_settings.getAlleleFrequencyTags());
+  _createTemporaryVafFiles(kim_index);
+
   // Processing Variants files
   for (auto const &f: _variants_files) {
     if (_settings.warn()) {
@@ -1449,7 +1680,53 @@ void KimProgram::_createIndex() {
 #ifdef _OPENMP
     vcf.setThreads(omp_get_num_threads());
 #endif
-    const vcfpp::BcfHeader &hdr = vcf.getHeader();
+    const vcfpp::BcfHeader &hdr = vcf.header;
+
+    // set<string> usable_tags;
+    int tag_type = hdr.getInfoType("AF");
+    bool allele_frequency_available = (tag_type != -1)
+      || ((hdr.getInfoType("AC") != -1) && (hdr.getInfoType("AN") != 1));
+    bool allele_frequency_usable = (tag_type == 2)
+      || ((hdr.getInfoType("AC") == 1) && (hdr.getInfoType("AN") == 1));
+    // if (allele_frequency_usable) {
+    //   usable_tags.insert("AF");
+    // }
+    if (_settings.warn()) {
+      cerr << "  - Variant Allele frequency:\n";
+      if (allele_frequency_available && !allele_frequency_usable) {
+        cerr << "WARNING: The default allele frequency doesn't follows the VCF specification and thus can't be used.\n";
+      }
+      cerr << "  - Variant Allele frequency:\n"
+           << "    - Default: "
+           << (allele_frequency_usable ? "available" : "not available")
+           << "\n";
+    }
+    for (auto const &tag: _settings.getAlleleFrequencyTags()) {
+      tag_type = hdr.getInfoType(tag);
+      bool current_tag_allele_frequency_usable = (tag_type == 2);
+      bool current_tag_allele_frequency_available = (tag_type != -1);
+      allele_frequency_usable |= current_tag_allele_frequency_usable;
+      // if (current_tag_allele_frequency_usable) {
+      //   usable_tags.insert(tag);
+      // }
+      if (_settings.warn()) {
+        if (current_tag_allele_frequency_available && !current_tag_allele_frequency_usable) {
+          cerr << "WARNING: The '" << tag << "' variant allele frequency type ('"
+               << ((tag_type == 1) ? "int" : "string")
+               << "') is not handled.\n"
+               << "         Only tags of type Float are handled.\n";
+        }
+        cerr << "    - " << tag << ": "
+             << (current_tag_allele_frequency_usable ? "available" : "not available")
+             << endl;
+      }
+    }
+    if (!allele_frequency_available && _settings.warn()) {
+      cerr << "WARNING: No usable variant allele frequency tag found in the file " << f << "\n"
+           << "         This is not detrimental, but indentification metric won't take into account variants from this file"
+           << endl;
+    }
+
     if (_settings.warn()) {
       cerr << "  - Number of sequences: " << hdr.getSeqnames().size() << endl;
       cerr << "  - Number of samples: " << hdr.nSamples() << " [";
@@ -1487,6 +1764,11 @@ void KimProgram::_createIndex() {
              << ": " << variant.REF() << " => " << variant.ALT() << endl;
 #endif
         VariantKmerEnumerator vke(variant);
+
+        // Compute allele frequencies for all tags
+        vaf.compute(vke);
+        _dump2temporaryVafFiles(vaf);
+
         while (vke.nextVariantKmer()) {
           KmerVariantGraph::Edge e = vke.getCurrentKmerVariantEdge();
           bool skip = false;
@@ -1536,6 +1818,7 @@ void KimProgram::_createIndex() {
     assert(kim_index.frozen());
   }
   assert(kim_index.frozen());
+  _closeVafFiles();
 
   kim_index.unfreeze();
   assert(!kim_index.frozen());
@@ -1620,6 +1903,8 @@ void KimProgram::_createIndex() {
          << endl;
   }
   kim_index.dump(_settings.getIndexDirectory(), _settings.allowOverwrite());
+  _saveTemporaryVafFiles();
+  _deleteTemporaryDirectory();
 }
 
 int KimProgram::run() {

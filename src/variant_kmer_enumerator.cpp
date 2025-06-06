@@ -157,7 +157,7 @@ void VariantKmerEnumerator::init(const Settings &settings,
 
 VariantKmerEnumerator::VariantKmerEnumerator(const vcfpp::BcfRecord &v):
   _v(v), _id(v.ID() == "." ? "MI" + to_string(++_missing) : v.ID()),
-  _sub_id(), _left_kmer(), _right_kmer(), _pos(-1), _alt(), _cur_alt(0),
+  _sub_ids(), _left_kmer(), _right_kmer(), _pos(-1), _alt(), _cur_alt(0),
   _kmer()
 {
 
@@ -225,13 +225,22 @@ VariantKmerEnumerator::VariantKmerEnumerator(const vcfpp::BcfRecord &v):
               _alt.push_back(s);
             }
           }
+        } else {
+          _alt.push_back("-");
         }
         start = end + 1;
       } while (start);
+      _sub_ids.reserve(_alt.size());
       if (_alt.size() > 1) {
-        _sub_id = _id + "_" + to_string(_cur_alt + 1);
+        for (size_t i = 0; i < _alt.size(); ++i) {
+          if (_alt[i] == "-") {
+            _sub_ids.push_back("-");
+          } else {
+            _sub_ids.push_back(_id + "_" + to_string(i + 1));
+          }
+        }
       } else {
-        _sub_id = _id;
+        _sub_ids.push_back(_id);
       }
       if (!_alt.empty()) {
         _pos = 0;
@@ -256,11 +265,10 @@ bool VariantKmerEnumerator::nextVariantKmer() {
   size_t nl = _left_kmer.size();
   size_t nm = s.size();
   size_t nr = _right_kmer.size();
-  if ((nl + nm + nr) < (_pos + k)) {
+  if (s == "-" || ((nl + nm + nr) < (_pos + k))) {
     // there is no more available k-mer for the current variant alt.
     if (++_cur_alt < _alt.size()) {
       // Processing the next variant alt
-      _sub_id = _id + "_" + to_string(_cur_alt + 1);
       _pos = 0;
       return nextVariantKmer();
     } else {
@@ -308,7 +316,36 @@ bool VariantKmerEnumerator::nextVariantKmer() {
 KmerVariantGraph::Edge VariantKmerEnumerator::getCurrentKmerVariantEdge() const {
   assert(_kmer.size() == _settings->k());
   assert(_pos > 0);
-  return { _kmer, _pos - 1, _sub_id };
+  return { _kmer, _pos - 1, _sub_ids[_cur_alt] };
+}
+
+bool VariantKmerEnumerator::getAlleleFrequencies(vector<float> &af, const string &tag) const {
+  bool ok = true;
+  vcfpp::BcfRecord v = _v;
+
+  try {
+    ok = v.getINFO(tag, af);
+  } catch (const invalid_argument &) {
+    ok = false;
+  }
+  if (!ok && (tag == "AF")) {
+    // Trying with 'AC' and 'AN' fields
+    try {
+      vector<int> ac;
+      int an = 0;
+      ok = v.getINFO("AN", an) && (an != 0) && v.getINFO("AC", ac);
+      if (ok) {
+        af.resize(ac.size());
+        for (size_t i = 0; i < ac.size(); ++i) {
+          af[i] = ((float) ac[i]) / (float) an;
+        }
+      }
+    } catch (const invalid_argument &e) {
+      ok = false;
+    }
+  }
+  assert(!ok || (af.size() == _sub_ids.size()));
+  return ok;
 }
 
 END_KIM_NAMESPACE

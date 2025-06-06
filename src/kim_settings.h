@@ -91,6 +91,7 @@
 #define __SETTINGS_H__
 
 #include <filesystem>
+#include <set>
 #include <string>
 
 #include <kim_exception.h>
@@ -177,6 +178,11 @@ namespace kim {
      * only k-mers that are not in the reference are considered.
      */
     bool _weak_mode;
+
+    /**
+     * The variant allele frequency [extra] tags
+     */
+    std::set<std::string> _allele_frequency_tags;
 
     /**
      * The settings can't be modified if _frozen is set to true.
@@ -530,6 +536,40 @@ namespace kim {
      * \param mode The strict mode status.
      */
     void strictMode(bool mode);
+
+    /**
+     * Get the available variant allele frequency [extra] tags.
+     *
+     * \return Returns the set of available variant allele frequency
+     * extra tags.
+     */
+    inline const std::set<std::string> &getAlleleFrequencyTags() const {
+      return _allele_frequency_tags;
+    }
+
+    /**
+     * Add the given tag to the set of variant allele frequency tags.
+     *
+     * \param tag The variant allele frequency tag to add.
+     *
+     * \return Returns true if the tag was added and false if it was
+     * already in the set. Notice that the tag comparison is case
+     * sensitive, thus adding "Freq" while "FREQ" is already in the
+     * set will succeed and both "Freq" and "FREQ" will be in the set.
+     */
+    bool addAlleleFrequencyTag(const std::string &tag);
+
+    /**
+     * Remove the given tag to the set of variant allele frequency tags.
+     *
+     * \param tag The variant allele frequency tag to remove.
+     *
+     * \return Returns true if the tag was removed and false
+     * otherwise. Notice that the tag comparison is case sensitive,
+     * thus removing "Freq" while only "FREQ" is in the set will fail
+     * and "FREQ" will still be in the set.
+     */
+    bool removeAlleleFrequencyTag(const std::string &tag);
 
     /**
      * Check whether the given directory meets expected status.

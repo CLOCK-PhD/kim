@@ -277,11 +277,12 @@ am__objects_1 = libkim_debug_la-bounded_size_string.lo \
 	libkim_debug_la-kmer_variant_graph.lo \
 	libkim_debug_la-monitor.lo libkim_debug_la-read_analyzer.lo \
 	libkim_debug_la-sort_helper.lo \
-	libkim_debug_la-variant_kmer_enumerator.lo \
+	libkim_debug_la-variant_allele_frequencies.lo \
 	libkim_debug_la-variant_filter.lo \
 	libkim_debug_la-variant_filter_driver.lo \
 	libkim_debug_la-variant_filter_parser.lo \
 	libkim_debug_la-variant_filter_scanner.lo \
+	libkim_debug_la-variant_kmer_enumerator.lo \
 	libkim_debug_la-variant_nodes_index.lo
 am_libkim_debug_la_OBJECTS = $(am__objects_1)
 libkim_debug_la_OBJECTS = $(am_libkim_debug_la_OBJECTS)
@@ -301,10 +302,11 @@ am_libkim_la_OBJECTS = libkim_la-bounded_size_string.lo \
 	libkim_la-kmer_variant_edges_subindex.lo \
 	libkim_la-kmer_variant_graph.lo libkim_la-monitor.lo \
 	libkim_la-read_analyzer.lo libkim_la-sort_helper.lo \
-	libkim_la-variant_kmer_enumerator.lo \
+	libkim_la-variant_allele_frequencies.lo \
 	libkim_la-variant_filter.lo libkim_la-variant_filter_driver.lo \
 	libkim_la-variant_filter_parser.lo \
 	libkim_la-variant_filter_scanner.lo \
+	libkim_la-variant_kmer_enumerator.lo \
 	libkim_la-variant_nodes_index.lo
 libkim_la_OBJECTS = $(am_libkim_la_OBJECTS)
 libkim_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -343,6 +345,7 @@ am__depfiles_remade = ./$(DEPDIR)/kim-kim.Po \
 	./$(DEPDIR)/libkim_debug_la-monitor.Plo \
 	./$(DEPDIR)/libkim_debug_la-read_analyzer.Plo \
 	./$(DEPDIR)/libkim_debug_la-sort_helper.Plo \
+	./$(DEPDIR)/libkim_debug_la-variant_allele_frequencies.Plo \
 	./$(DEPDIR)/libkim_debug_la-variant_filter.Plo \
 	./$(DEPDIR)/libkim_debug_la-variant_filter_driver.Plo \
 	./$(DEPDIR)/libkim_debug_la-variant_filter_parser.Plo \
@@ -361,6 +364,7 @@ am__depfiles_remade = ./$(DEPDIR)/kim-kim.Po \
 	./$(DEPDIR)/libkim_la-monitor.Plo \
 	./$(DEPDIR)/libkim_la-read_analyzer.Plo \
 	./$(DEPDIR)/libkim_la-sort_helper.Plo \
+	./$(DEPDIR)/libkim_la-variant_allele_frequencies.Plo \
 	./$(DEPDIR)/libkim_la-variant_filter.Plo \
 	./$(DEPDIR)/libkim_la-variant_filter_driver.Plo \
 	./$(DEPDIR)/libkim_la-variant_filter_parser.Plo \
@@ -676,6 +680,7 @@ pkginclude_HEADERS = \
   monitor.h			\
   read_analyzer.h		\
   sort_helper.h                 \
+  variant_allele_frequencies.h	\
   variant_kmer_enumerator.h	\
   variant_nodes_index.h
 
@@ -713,11 +718,12 @@ libkim_la_SOURCES = \
   monitor.h monitor.cpp						\
   read_analyzer.h read_analyzer.cpp				\
   sort_helper.h sort_helper.cpp					\
-  variant_kmer_enumerator.h variant_kmer_enumerator.cpp		\
+  variant_allele_frequencies.h variant_allele_frequencies.cpp	\
   variant_filter.h variant_filter.cpp				\
   variant_filter_driver.h variant_filter_driver.cpp		\
   variant_filter_parser.ypp					\
   variant_filter_scanner.lpp					\
+  variant_kmer_enumerator.h variant_kmer_enumerator.cpp		\
   variant_nodes_index.h variant_nodes_index.cpp
 
 libkim_la_configdir = $(libdir)/$(install_dirname)/include
@@ -911,6 +917,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-monitor.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-read_analyzer.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-sort_helper.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_allele_frequencies.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_filter.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_filter_driver.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_debug_la-variant_filter_parser.Plo@am__quote@ # am--include-marker
@@ -929,6 +936,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-monitor.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-read_analyzer.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-sort_helper.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_allele_frequencies.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_filter.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_filter_driver.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libkim_la-variant_filter_parser.Plo@am__quote@ # am--include-marker
@@ -1047,12 +1055,12 @@ libkim_debug_la-sort_helper.lo: sort_helper.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-sort_helper.lo `test -f 'sort_helper.cpp' || echo '$(srcdir)/'`sort_helper.cpp
 
-libkim_debug_la-variant_kmer_enumerator.lo: variant_kmer_enumerator.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-variant_kmer_enumerator.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Tpo -c -o libkim_debug_la-variant_kmer_enumerator.lo `test -f 'variant_kmer_enumerator.cpp' || echo '$(srcdir)/'`variant_kmer_enumerator.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Tpo $(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_kmer_enumerator.cpp' object='libkim_debug_la-variant_kmer_enumerator.lo' libtool=yes @AMDEPBACKSLASH@
+libkim_debug_la-variant_allele_frequencies.lo: variant_allele_frequencies.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-variant_allele_frequencies.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-variant_allele_frequencies.Tpo -c -o libkim_debug_la-variant_allele_frequencies.lo `test -f 'variant_allele_frequencies.cpp' || echo '$(srcdir)/'`variant_allele_frequencies.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_debug_la-variant_allele_frequencies.Tpo $(DEPDIR)/libkim_debug_la-variant_allele_frequencies.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_allele_frequencies.cpp' object='libkim_debug_la-variant_allele_frequencies.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-variant_kmer_enumerator.lo `test -f 'variant_kmer_enumerator.cpp' || echo '$(srcdir)/'`variant_kmer_enumerator.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-variant_allele_frequencies.lo `test -f 'variant_allele_frequencies.cpp' || echo '$(srcdir)/'`variant_allele_frequencies.cpp
 
 libkim_debug_la-variant_filter.lo: variant_filter.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-variant_filter.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-variant_filter.Tpo -c -o libkim_debug_la-variant_filter.lo `test -f 'variant_filter.cpp' || echo '$(srcdir)/'`variant_filter.cpp
@@ -1081,6 +1089,13 @@ libkim_debug_la-variant_filter_scanner.lo: variant_filter_scanner.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_filter_scanner.cpp' object='libkim_debug_la-variant_filter_scanner.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-variant_filter_scanner.lo `test -f 'variant_filter_scanner.cpp' || echo '$(srcdir)/'`variant_filter_scanner.cpp
+
+libkim_debug_la-variant_kmer_enumerator.lo: variant_kmer_enumerator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-variant_kmer_enumerator.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Tpo -c -o libkim_debug_la-variant_kmer_enumerator.lo `test -f 'variant_kmer_enumerator.cpp' || echo '$(srcdir)/'`variant_kmer_enumerator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Tpo $(DEPDIR)/libkim_debug_la-variant_kmer_enumerator.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_kmer_enumerator.cpp' object='libkim_debug_la-variant_kmer_enumerator.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_debug_la-variant_kmer_enumerator.lo `test -f 'variant_kmer_enumerator.cpp' || echo '$(srcdir)/'`variant_kmer_enumerator.cpp
 
 libkim_debug_la-variant_nodes_index.lo: variant_nodes_index.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_debug_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_debug_la-variant_nodes_index.lo -MD -MP -MF $(DEPDIR)/libkim_debug_la-variant_nodes_index.Tpo -c -o libkim_debug_la-variant_nodes_index.lo `test -f 'variant_nodes_index.cpp' || echo '$(srcdir)/'`variant_nodes_index.cpp
@@ -1173,12 +1188,12 @@ libkim_la-sort_helper.lo: sort_helper.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-sort_helper.lo `test -f 'sort_helper.cpp' || echo '$(srcdir)/'`sort_helper.cpp
 
-libkim_la-variant_kmer_enumerator.lo: variant_kmer_enumerator.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-variant_kmer_enumerator.lo -MD -MP -MF $(DEPDIR)/libkim_la-variant_kmer_enumerator.Tpo -c -o libkim_la-variant_kmer_enumerator.lo `test -f 'variant_kmer_enumerator.cpp' || echo '$(srcdir)/'`variant_kmer_enumerator.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-variant_kmer_enumerator.Tpo $(DEPDIR)/libkim_la-variant_kmer_enumerator.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_kmer_enumerator.cpp' object='libkim_la-variant_kmer_enumerator.lo' libtool=yes @AMDEPBACKSLASH@
+libkim_la-variant_allele_frequencies.lo: variant_allele_frequencies.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-variant_allele_frequencies.lo -MD -MP -MF $(DEPDIR)/libkim_la-variant_allele_frequencies.Tpo -c -o libkim_la-variant_allele_frequencies.lo `test -f 'variant_allele_frequencies.cpp' || echo '$(srcdir)/'`variant_allele_frequencies.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-variant_allele_frequencies.Tpo $(DEPDIR)/libkim_la-variant_allele_frequencies.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_allele_frequencies.cpp' object='libkim_la-variant_allele_frequencies.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-variant_kmer_enumerator.lo `test -f 'variant_kmer_enumerator.cpp' || echo '$(srcdir)/'`variant_kmer_enumerator.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-variant_allele_frequencies.lo `test -f 'variant_allele_frequencies.cpp' || echo '$(srcdir)/'`variant_allele_frequencies.cpp
 
 libkim_la-variant_filter.lo: variant_filter.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-variant_filter.lo -MD -MP -MF $(DEPDIR)/libkim_la-variant_filter.Tpo -c -o libkim_la-variant_filter.lo `test -f 'variant_filter.cpp' || echo '$(srcdir)/'`variant_filter.cpp
@@ -1207,6 +1222,13 @@ libkim_la-variant_filter_scanner.lo: variant_filter_scanner.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_filter_scanner.cpp' object='libkim_la-variant_filter_scanner.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-variant_filter_scanner.lo `test -f 'variant_filter_scanner.cpp' || echo '$(srcdir)/'`variant_filter_scanner.cpp
+
+libkim_la-variant_kmer_enumerator.lo: variant_kmer_enumerator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-variant_kmer_enumerator.lo -MD -MP -MF $(DEPDIR)/libkim_la-variant_kmer_enumerator.Tpo -c -o libkim_la-variant_kmer_enumerator.lo `test -f 'variant_kmer_enumerator.cpp' || echo '$(srcdir)/'`variant_kmer_enumerator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libkim_la-variant_kmer_enumerator.Tpo $(DEPDIR)/libkim_la-variant_kmer_enumerator.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='variant_kmer_enumerator.cpp' object='libkim_la-variant_kmer_enumerator.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -c -o libkim_la-variant_kmer_enumerator.lo `test -f 'variant_kmer_enumerator.cpp' || echo '$(srcdir)/'`variant_kmer_enumerator.cpp
 
 libkim_la-variant_nodes_index.lo: variant_nodes_index.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libkim_la_CXXFLAGS) $(CXXFLAGS) -MT libkim_la-variant_nodes_index.lo -MD -MP -MF $(DEPDIR)/libkim_la-variant_nodes_index.Tpo -c -o libkim_la-variant_nodes_index.lo `test -f 'variant_nodes_index.cpp' || echo '$(srcdir)/'`variant_nodes_index.cpp
@@ -1439,6 +1461,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libkim_debug_la-monitor.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-read_analyzer.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-sort_helper.Plo
+	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_allele_frequencies.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_filter.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_filter_driver.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_filter_parser.Plo
@@ -1457,6 +1480,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libkim_la-monitor.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-read_analyzer.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-sort_helper.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-variant_allele_frequencies.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_filter.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_filter_driver.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_filter_parser.Plo
@@ -1523,6 +1547,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libkim_debug_la-monitor.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-read_analyzer.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-sort_helper.Plo
+	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_allele_frequencies.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_filter.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_filter_driver.Plo
 	-rm -f ./$(DEPDIR)/libkim_debug_la-variant_filter_parser.Plo
@@ -1541,6 +1566,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libkim_la-monitor.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-read_analyzer.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-sort_helper.Plo
+	-rm -f ./$(DEPDIR)/libkim_la-variant_allele_frequencies.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_filter.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_filter_driver.Plo
 	-rm -f ./$(DEPDIR)/libkim_la-variant_filter_parser.Plo

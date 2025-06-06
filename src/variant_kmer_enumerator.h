@@ -160,11 +160,13 @@ namespace kim {
     std::string _id;
 
     /**
-     * The variant ID used when variant has multiple alleles. The ID
-     * is built using the variant ID and by appending an underscore
-     * ('_') then an allele counter.
+     * The variant subIDs. If the variant has a single allele, then th
+     * subIDs has the varaint ID as single element, otherwise (variant
+     * has multiple alleles), The subIDs are built using the variant
+     * ID and by appending an underscore ('_') then the allele counter
+     * value (starting from 1).
      */
-    std::string _sub_id;
+    std::vector<std::string> _sub_ids;
 
     /**
      * The left flanking sequence of the variant. It is at most of
@@ -215,6 +217,18 @@ namespace kim {
     VariantKmerEnumerator(const vcfpp::BcfRecord &v);
 
     /**
+     * Get the "computed" variant IDs.
+     *
+     * \return The retruned vector has as many IDs as the number of
+     * alleles. If some variant has more than a unique alternate
+     * allele, then the IDs result from appending a counter (starting
+     * from 1) to the original variant ID.
+     */
+    inline const std::vector<std::string> &getCurrentVariantIDs() const {
+      return _sub_ids;
+    }
+
+    /**
      * Compute the next k-mer associated to the variant handled by
      * this enumerator.
      *
@@ -251,6 +265,24 @@ namespace kim {
     inline static const DNAFileIndex &getIndex() {
       return *_index;
     }
+
+    /**
+     * Fill the allele frequencies array for the given population TAG.
+     *
+     * \param af The allele frequencies array to fill for each
+     * alternate allele of the current variant.
+     *
+     * \param tag The population tag from which to retrieve the allele
+     * frequencies.
+     *
+     * \return Returns true if the allele frequencies exist for the
+     * given tag (and thus if the af array has been sucessfully
+     * filled). If the given tag is ommited (or set to 'AF') and if
+     * the "AF" info tag isn't available for the current record, the
+     * allele frequencies are computed using the "AC" and "AN" info
+     * tags if available.
+     */
+    bool getAlleleFrequencies(std::vector<float> &af, const std::string &tag = "AF") const;
 
     /**
      * Initialize the internal shared DNA file index needed to compute

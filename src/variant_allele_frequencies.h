@@ -1,6 +1,6 @@
 /******************************************************************************
 *                                                                             *
-*  Copyright © 2023-2025 -- IGH / LIRMM / CNRS / UM                           *
+*  Copyright © 2025      -- IGH / LIRMM / CNRS / UM                           *
 *                           (Institut de Génétique Humaine /                  *
 *                           Laboratoire d'Informatique, de Robotique et de    *
 *                           Microélectronique de Montpellier /                *
@@ -87,186 +87,155 @@
 *                                                                             *
 ******************************************************************************/
 
-#include "kim_settings.h"
+#ifndef __VARIANT_ALLELE_FREQUENCIES_H__
+#define __VARIANT_ALLELE_FREQUENCIES_H__
 
-#include "config.h"
+#include <map>
+#include <ostream>
+#include <set>
+#include <string>
+#include <vector>
 
-#include <cassert>
-#include <iostream>
-#include <filesystem>
+#include <variant_kmer_enumerator.h>
 
-using namespace std;
-namespace fs = std::filesystem;
+namespace kim {
 
-BEGIN_KIM_NAMESPACE
+  /**
+   * Handles allele frequencies of some given variant
+   *
+   * For a given variant, this class allows to retrieve the allel
+   * frequency for each of its alternative allele and for each given
+   * population tag.
+   */
+  class VariantAlleleFrequencies {
 
-#define ERROR_MSG(msg)          \
-  do {                          \
-    BadSettingsException error; \
-    error << msg;               \
-    throw error;                \
-  } while (0)
+  public:
 
-#define CHECK_FROZEN_STATE(expected_state, mth)                         \
-  if (!(expected_state)) {                                              \
-    ERROR_MSG("Settings must be " << (expected_state ? "frozen" : "unfrozen") \
-              << " before calling Settings::" << #mth                   \
-              << "() method.");                                         \
-  }                                                                     \
-  (void) 0
+    /**
+     * Data structure to store allele frequencies of some variant
+     * allele.
+     */
+    struct VariantPopulationAlleleFrequency {
+      /**
+       * The variant name (associated to one alternative allele).
+       */
+      std::string variant;
+      /**
+       * The allele frequency of each population tag.
+       */
+      std::map<std::string, float> population_af;
 
-Settings::Settings(size_t k, size_t p, const fs::path &index_directory,
-                   bool warn, bool check_consistency, bool allow_overwrite,
-                   double alpha, double threshold, bool weak_mode,
-                   bool freeze):
-  _k(0), _p(0), _s(0), _index_directory(index_directory),
-  _warn(false), _check_consistency(check_consistency),
-  _allow_overwrite(allow_overwrite),
-  _alpha(alpha), _threshold(threshold), _weak_mode(weak_mode),
-  _frozen(false) {
-  if (k || p) {
-    setKmerLength(k);
-    _warn = warn;
-    setKmerPrefixLength(p);
-  }
-  _warn = warn;
-  _frozen = freeze;
-  assert(_alpha >= 0);
-  assert(_alpha <= 1);
-  assert(_threshold >= 0);
-  assert(_threshold <= 1);
-}
+      /**
+       * Handler for allele frequencies of some given variant.
+       *
+       * \param v The variant name.
+       *
+       * \param population_af The population allele frequencies for
+       * this variant (default is empty).
+       */
+      VariantPopulationAlleleFrequency(const std::string &v,
+                                       const std::map<std::string, float> &population_af = std::map<std::string, float>());
 
-void Settings::freeze() {
-  if (!valid()) {
-    ERROR_MSG("Settings aren't valid, thus calling the Settings::freeze() method is not allowed.");
-  }
-  _frozen = true;
-}
+    };
 
-void Settings::setKmerLength(size_t k) {
-  CHECK_FROZEN_STATE(!frozen(), setKmerLength);
-  if (k < 2) {
-    ERROR_MSG("Can't set the length of the k-mers to " << k
-              << " (length must be greater or equal to 2).");
-  }
-  _k = k;
-  if (_p + 1 >= _k) {
-    if (_warn) {
-      cerr << "The length of k-mers is set to " << _k
-           << " but current length of the prefixes was " << _p << "."
-           << " Setting the length of the prefixes to " << (_k - 1)
-           << "." << endl;
-    }
-    _p = _k - 1;
-  }
-  _s = _k - _p;
-}
+  private:
 
-void Settings::setKmerPrefixLength(size_t p) {
-  CHECK_FROZEN_STATE(!frozen(), setKmerPrefixLength);
-  if (p == 0) {
-    ERROR_MSG("Can't set the prefix length of the k-mers to 0 (it must be a strictly positive value).");
-  }
-  _p = p;
-  if (_p + 1 > _k) {
-    if (_warn) {
-      cerr << "The length of k-mers is set to " << _k
-           << " but wanted length of the prefixes is " << _p << "."
-           << " Setting the length of the prefixes to " << (_k - 1)
-           << "." << endl;
-    }
-    _p = _k - 1;
-  }
-  _s = _k - _p;
-}
+    /**
+     * The collection of alternative alleles with their frequencies
+     * for each given population tag.
+     */
+    std::vector<VariantPopulationAlleleFrequency> _vpaf_array;
 
-void Settings::validateDirectory(const fs::path &path, bool must_exist, bool must_not_exist) {
-  if (must_exist || must_not_exist) {
-    fs::file_status s = fs::status(path);
-    if (must_exist) {
-      if (!fs::is_directory(s)) {
-        BadSettingsException e;
-        e << "The directory '" << path << "' doesn't exist or you don't have enough access rights";
-        throw e;
-      }
+  public:
 
-      fs::perms permissions = s.permissions();
-      static const fs::perms urx = fs::perms::owner_read | fs::perms::owner_exec;
-      static const fs::perms grx = fs::perms::group_read | fs::perms::group_exec;
-      static const fs::perms orx = fs::perms::others_read | fs::perms::others_exec;
-      if (((permissions & urx) != urx)       // permissions doesn't match 'dr.x......'
-          && ((permissions & grx) != grx)    // permissions doesn't match 'd...r.x...'
-          && ((permissions & orx) != orx)) { // permissions doesn't match 'd......r.x'
-        BadSettingsException e;
-        e << "The directory '" << path << "' is not readable";
-        throw e;
-      }
+    /**
+     * Build an allele frequencies handler for the given population tags.
+     *
+     * \param tags The population tags.
+     */
+    VariantAlleleFrequencies(const std::set<std::string> &tags);
+
+    /**
+     * The population tags.
+     */
+    const std::set<std::string> &tags;
+
+    /**
+     * Computes the allele frequencies of some variant for the handled
+     * population tags.
+     *
+     * \param vke The variant k-mer enumerator for which to compute
+     * the allele frequencies.
+     *
+     * \return Return the allele frequencies of the given variant for
+     * the handled population tags.
+     */
+    VariantAlleleFrequencies &compute(const VariantKmerEnumerator &vke);
+
+    /**
+     * The collection of alternative alleles with their frequencies
+     * for each handled population tag.
+     *
+     * \return Returns an array containing the alleles frequencies for
+     * each handled populations of each alternative allele.
+     */
+    inline const std::vector<VariantPopulationAlleleFrequency> &getCurrentVariantAlleleFrequencies() const {
+      return _vpaf_array;
     }
 
-    if (must_not_exist && fs::exists(s)) {
-      BadSettingsException e;
-      e << "The directory '" << path << "' already exists";
-      throw e;
-    }
-  }
+    /**
+     * Get the variant name of each alternate allele.
+     *
+     * \return Returns the sorted list of the alternative alleles of
+     * the last handled variant.
+     */
+    std::vector<std::string> getAlternateAlleleVariants() const;
+
+    /**
+     * Get the allele frequencies of each alternative allele for all
+     * population tags.
+     *
+     * \param alternate_allele The name of the alternate allele.
+     *
+     * \return Returns the allele frequency of the given allele for
+     * each population tag. If the given allele name doesn't belong to
+     * the last handled variant, then an exception is thrown with an
+     * explicit message.
+     */
+    const VariantPopulationAlleleFrequency &getAlleleFrequency(const std::string &alternate_allele) const;
+
+    /**
+     * Print the CSV header for the handled population tags
+     *
+     * \param os The stream on which to print the CSV header line.
+     */
+    void printCSVHeader(std::ostream &os) const;
+
+    /**
+     * Print the CSV row for the last handled variant.
+     *
+     * \param os The stream on which to print the CSV last handled
+     * variant row.
+     */
+    void toCSV(std::ostream &os) const;
+  };
+
+  /**
+   * Operator to print a variant allele frequency object.
+   *
+   * \param os The stream on which to print the CSV row of the last
+   * variant handled by the given VariantAlleleFrequencies instance.
+   *
+   * \param vpaf The variant allele frequencies helper instance to
+   * print.
+   *
+   * \return Returns the updated output stream.
+   */
+  std::ostream &operator<<(std::ostream& os, const VariantAlleleFrequencies &vaf);
+
 }
 
-void Settings::setIndexDirectory(const fs::path &path, bool must_exist, bool must_not_exist) {
-  CHECK_FROZEN_STATE(!frozen(), setIndexDirectory);
-  validateDirectory(path, must_exist, must_not_exist);
-  _index_directory = path;
-}
-
-void Settings::warn(bool status) {
-  CHECK_FROZEN_STATE(!frozen(), warn);
-  _warn = status;
-}
-
-void Settings::checkConsistency(bool status) {
-  CHECK_FROZEN_STATE(!frozen(), warn);
-  _check_consistency = status;
-}
-
-void Settings::allowOverwrite(bool status) {
-  CHECK_FROZEN_STATE(!frozen(), warn);
-  _allow_overwrite = status;
-}
-
-void Settings::alpha(double v) {
-  CHECK_FROZEN_STATE(!frozen(), alpha);
-  assert(v >= 0);
-  assert(v <= 1);
-  _alpha = v;
-}
-
-void Settings::threshold(double v) {
-  CHECK_FROZEN_STATE(!frozen(), threshold);
-  assert(v >= 0);
-  assert(v <= 1);
-  _threshold = v;
-}
-
-void Settings::weakMode(bool b) {
-  CHECK_FROZEN_STATE(!frozen(), weakMode);
-  _weak_mode = b;
-  assert(weakMode() == !strictMode());
-}
-
-void Settings::strictMode(bool b) {
-  CHECK_FROZEN_STATE(!frozen(), strictMode);
-  _weak_mode = !b;
-  assert(strictMode() == !weakMode());
-}
-
-bool Settings::addAlleleFrequencyTag(const string &tag) {
-  CHECK_FROZEN_STATE(!frozen(), addAlleleFrequencyTag);
-  return _allele_frequency_tags.insert(tag).second;
-}
-
-bool Settings::removeAlleleFrequencyTag(const string &tag) {
-  CHECK_FROZEN_STATE(!frozen(), removeAlleleFrequencyTag);
-  return _allele_frequency_tags.erase(tag) == 1;
-}
-
-END_KIM_NAMESPACE
+#endif
+// Local Variables:
+// mode:c++
+// End:

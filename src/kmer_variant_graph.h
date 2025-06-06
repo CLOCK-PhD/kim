@@ -228,6 +228,12 @@ namespace kim {
     std::string _extra_metadata;
 
     /**
+     * The allele frequencies files of each population tag related to
+     * this graph.
+     */
+    std::map<std::string, std::filesystem::path> _allele_frequencies_files;
+
+    /**
      * Clear and resize sub-indexes to the given size.
      *
      * \param total The number of sub-indexes.
@@ -583,6 +589,28 @@ namespace kim {
      */
     inline const std::string &extraMetadata() const {
       return _extra_metadata;
+    }
+
+    /**
+     * Register the given variant allele frequency file for the given
+     * population tag.
+     *
+     * \param tag The population frequencies (the special empty tag is
+     * reserved for the indexed variants).
+     *
+     * \param file The file to register.
+     */
+    void addVariantAlleleFrequencyFile(const std::string &tag, const std::filesystem::path &file);
+
+    /**
+     * Get the list of registered variant allele frequency files.
+     *
+     * \return Returns the list of registered file to use to compute
+     * identification metrics for each available population tag (the
+     * empty tag corresponds to the indexed variant file).
+     */
+    inline const std::map<std::string, std::filesystem::path> &variantAlleleFrequencyFiles() const {
+      return _allele_frequencies_files;
     }
 
     /**

@@ -109,6 +109,7 @@
 #include <variant_filter_driver.h>
 #include <variant_filter_parser.h>
 #include <variant_filter_scanner.h>
+#include <variant_allele_frequencies.h>
 #include <variant_kmer_enumerator.h>
 #include <variant_nodes_index.h>
 

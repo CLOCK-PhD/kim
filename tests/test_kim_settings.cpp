@@ -118,6 +118,7 @@ int main() {
   assert(s.threshold() == 0);
   assert(s.weakMode());
   assert(!s.strictMode());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Setting k-mer length to 3" << endl;
   s.setKmerLength(3);
@@ -132,6 +133,7 @@ int main() {
   assert(s.threshold() == 0);
   assert(s.weakMode());
   assert(!s.strictMode());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Setting k-mer prefix length to 1" << endl;
   s.setKmerPrefixLength(1);
@@ -147,6 +149,7 @@ int main() {
   assert(s.weakMode());
   assert(!s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Trying to set k-mer prefix length to 4 (should lead to 2)" << endl;
   s.setKmerPrefixLength(4);
@@ -164,6 +167,7 @@ int main() {
   assert(s.weakMode());
   assert(!s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Setting k-mer length to 10" << endl;
   s.setKmerLength(10);
@@ -181,6 +185,7 @@ int main() {
   assert(s.weakMode());
   assert(!s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Setting k-mer prefix length to 4" << endl;
   s.setKmerPrefixLength(4);
@@ -198,6 +203,7 @@ int main() {
   assert(s.weakMode());
   assert(!s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Setting index directory to '/some/path'" << endl;
   s.setIndexDirectory("/some/path");
@@ -215,6 +221,7 @@ int main() {
   assert(s.weakMode());
   assert(!s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
 
   for (auto const &p: { "/some/path/that/must/not/exist", "/tmp"}) {
     for (bool must_exist: {false, true}) {
@@ -258,6 +265,7 @@ int main() {
   assert(s.weakMode());
   assert(!s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Enable warnings." << endl;
   s.warn(true);
@@ -275,6 +283,7 @@ int main() {
   assert(s.weakMode());
   assert(!s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Disable warnings." << endl;
   s.warn(false);
@@ -292,6 +301,7 @@ int main() {
   assert(s.weakMode());
   assert(!s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Enable warnings again." << endl;
   s.warn(true);
@@ -309,6 +319,7 @@ int main() {
   assert(s.weakMode());
   assert(!s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Enable consistency checking." << endl;
   s.checkConsistency(true);
@@ -326,6 +337,7 @@ int main() {
   assert(s.weakMode());
   assert(!s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Disable consistency checking." << endl;
   s.checkConsistency(false);
@@ -343,6 +355,7 @@ int main() {
   assert(s.weakMode());
   assert(!s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Allow overwrite." << endl;
   s.allowOverwrite(true);
@@ -360,6 +373,7 @@ int main() {
   assert(s.weakMode());
   assert(!s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Forbid overwrite." << endl;
   s.allowOverwrite(false);
@@ -377,6 +391,7 @@ int main() {
   assert(s.weakMode());
   assert(!s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Set error of type I to 0.05." << endl;
   s.alpha(0.05);
@@ -394,6 +409,7 @@ int main() {
   assert(s.weakMode());
   assert(!s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Set k-mer rate threshold to 0.15." << endl;
   s.threshold(0.15);
@@ -411,6 +427,7 @@ int main() {
   assert(s.weakMode());
   assert(!s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Set weak mode to false." << endl;
   s.weakMode(false);
@@ -428,6 +445,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Set strict mode to false." << endl;
   s.strictMode(false);
@@ -445,6 +463,7 @@ int main() {
   assert(s.weakMode());
   assert(!s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
 
   cout << "Set strict mode to true." << endl;
   s.strictMode(true);
@@ -462,6 +481,102 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().empty());
+
+  cout << "Add 'FREQ' allele frequency tag." << endl;
+  bool b = s.addAlleleFrequencyTag("FREQ");
+  assert(b);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
+  assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
+
+  cout << "Add 'FREQ' allele frequency tag again." << endl;
+  b = s.addAlleleFrequencyTag("FREQ");
+  assert(!b);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
+  assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
+
+  cout << "Add 'Freq' allele frequency tag (case sensitive)." << endl;
+  b = s.addAlleleFrequencyTag("Freq");
+  assert(b);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
+  assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 2);
+
+  cout << "Remove 'FREQ' allele frequency tag." << endl;
+  b = s.removeAlleleFrequencyTag("FREQ");
+  assert(b);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
+  assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
+
+  cout << "Remove 'FREQ' allele frequency tag again." << endl;
+  b = s.removeAlleleFrequencyTag("FREQ");
+  assert(!b);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(!s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
+  assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   cout << "Freeze settings." << endl;
   s.freeze();
@@ -479,6 +594,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   exception_thrown = false;
   try {
@@ -503,6 +619,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   exception_thrown = false;
   try {
@@ -527,6 +644,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   exception_thrown = false;
   try {
@@ -551,6 +669,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   exception_thrown = false;
   try {
@@ -575,6 +694,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   exception_thrown = false;
   try {
@@ -599,6 +719,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   exception_thrown = false;
   try {
@@ -623,6 +744,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   exception_thrown = false;
   try {
@@ -647,6 +769,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   exception_thrown = false;
   try {
@@ -671,6 +794,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   exception_thrown = false;
   try {
@@ -695,6 +819,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   exception_thrown = false;
   try {
@@ -719,6 +844,59 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
+
+  exception_thrown = false;
+  try {
+    cout << "Trying to add allele frequency tag (should throw a BadSettingsException)" << endl;
+    s.addAlleleFrequencyTag("fake");
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
+  assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
+  assert(s.getAlleleFrequencyTags().find("fake") == s.getAlleleFrequencyTags().cend());
+
+  exception_thrown = false;
+  try {
+    cout << "Trying to remove allele frequency tag (should throw a BadSettingsException)" << endl;
+    s.addAlleleFrequencyTag("Freq");
+  } catch (const BadSettingsException &e) {
+    cout << "The following exception was thrown: " << e.what() << endl;
+    exception_thrown = true;
+  }
+  assert(exception_thrown);
+  assert(s.warn());
+  assert(!s.allowOverwrite());
+  assert(!s.checkConsistency());
+  assert(s.getIndexDirectory().empty());
+  assert(s.frozen());
+  assert(s.getKmerLength() == s.k());
+  assert(s.getKmerLength() == 10);
+  assert(s.getKmerPrefixLength() == 4);
+  assert(s.getKmerSuffixLength() == 6);
+  assert(s.alpha() == 0.05);
+  assert(s.threshold() == 0.15);
+  assert(!s.weakMode());
+  assert(s.strictMode());
+  assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
+  assert(s.getAlleleFrequencyTags().find("Freq") != s.getAlleleFrequencyTags().cend());
 
   cout << "Unfreeze settings." << endl;
   s.unfreeze();
@@ -736,6 +914,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   cout << "Enable consistency checking." << endl;
   s.checkConsistency(true);
@@ -753,6 +932,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   cout << "Freeze settings again." << endl;
   s.freeze();
@@ -770,6 +950,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   exception_thrown = false;
   try {
@@ -790,6 +971,7 @@ int main() {
   assert(s.getKmerPrefixLength() == 4);
   assert(s.getKmerSuffixLength() == 6);
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   exception_thrown = false;
   try {
@@ -814,6 +996,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   exception_thrown = false;
   try {
@@ -838,6 +1021,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   exception_thrown = false;
   try {
@@ -862,6 +1046,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   exception_thrown = false;
   try {
@@ -886,6 +1071,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   exception_thrown = false;
   try {
@@ -910,6 +1096,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   exception_thrown = false;
   try {
@@ -934,6 +1121,7 @@ int main() {
   assert(!s.weakMode());
   assert(s.strictMode());
   assert(s.valid());
+  assert(s.getAlleleFrequencyTags().size() == 1);
 
   Settings s2(15, 5, "/some/path", true, true, true, 0.2, 0.99999, false, true);
   assert(s2.warn());
@@ -950,6 +1138,7 @@ int main() {
   assert(!s2.weakMode());
   assert(s2.strictMode());
   assert(s2.valid());
+  assert(s2.getAlleleFrequencyTags().empty());
 
   cout << "That's All, Folk!!!" << endl;
   return 0;

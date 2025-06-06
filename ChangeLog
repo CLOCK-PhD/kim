@@ -1,5 +1,16 @@
 2025-06-06  DoccY <alban.mancheron@lirmm.fr>
 
+	* src/Makefile.am, src/Makefile.in, src/kim.cpp, src/kim.h,
+	src/kim_settings.cpp, src/kim_settings.h,
+	src/kmer_variant_graph.cpp, src/kmer_variant_graph.h,
+	src/variant_allele_frequencies.cpp,
+	src/variant_allele_frequencies.h, src/variant_kmer_enumerator.cpp,
+	src/variant_kmer_enumerator.h, tests/test_kim_settings.cpp:
+	Add the computation of the allele frequencies on index creation.
+	
+	
+2025-06-06  DoccY <alban.mancheron@lirmm.fr>
+
 	* external/vcfpp:
 	Update vcfpp external library.
 	
