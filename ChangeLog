@@ -1,3 +1,23 @@
+2025-06-06  DoccY <alban.mancheron@lirmm.fr>
+
+	* external/vcfpp:
+	Update vcfpp external library.
+	
+	
+2025-06-06  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/kim.cpp, src/kim_settings.cpp, src/kim_settings.h,
+	src/kmer_variant_graph.cpp, src/kmer_variant_graph.h:
+	Rewrite [some] file/direcotry manipulations by using std::filesystem facility.
+	
+	
+2025-06-06  DoccY <alban.mancheron@lirmm.fr>
+
+	* resources/test-variants.vcf, tests/Makefile.in,
+	tests/test_file_reader.cpp:
+	Add allele frequencies using standard and custom info tags in VCF test files.
+	
+	
 2025-06-03  DoccY <alban.mancheron@lirmm.fr>
 
 	* src/variant_nodes_index.h, tests/Makefile.am, tests/Makefile.in:
