@@ -315,11 +315,23 @@ private:
   // Closes opened VAF files (either temporary or from index)
   void _closeVafFiles();
 
+  // Check whether the given string is an URL.
   static bool _isURL(const string &f);
+
+  // Check if the given file is readable.
   static bool _checkIfFileIsReadable(const fs::path &f);
+
+  // Ensures that the given file is readable.
   static void _assertFileIsReadable(const fs::path &f);
+
+  // Dump the file content (up to the number of given characters) to
+  // the given stream.
   static void _dumpFile(const fs::path &filename, size_t n = size_t(-1), ostream &os = cout);
+
+  // Display the kim program [summary or full content] copyright
   static void _showCopyright(bool full);
+
+  // Compute the common prefix of the given path
   static fs::path _commonPathPrefix(const vector<string> &files);
 
 
@@ -1039,32 +1051,18 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
 
     // Prevent using options defined for other mode(s) than index
     // creation.
-    if (_opts.options[OUTPUT_OPT]) {
-      Exception e;
-      e << "Option '" << _opts.options[OUTPUT_OPT].name << "'"
-        " is not available for index creation.";
-      throw e;
-    }
-
-    if (_opts.options[ALPHA_OPT]) {
-      Exception e;
-      e << "Option '" << _opts.options[ALPHA_OPT].name << "'"
-        " is not available for index creation.";
-      throw e;
-    }
-
-    if (_opts.options[THRESHOLD_OPT]) {
-      Exception e;
-      e << "Option '" << _opts.options[THRESHOLD_OPT].name << "'"
-        " is not available for index creation.";
-      throw e;
-    }
-
-    if (_opts.options[MODE_OPT]) {
-      Exception e;
-      e << "Option '" << _opts.options[MODE_OPT].name << "'"
-        " is not available for index creation.";
-      throw e;
+    for (auto o: {
+        OUTPUT_OPT,
+        ALPHA_OPT,
+        THRESHOLD_OPT,
+        MODE_OPT,
+      }) {
+      if (_opts.options[o]) {
+        Exception e;
+        e << "Option '" << _opts.options[o].name << "'"
+          " is not available for index creation.";
+        throw e;
+      }
     }
 
   } else {
@@ -1128,29 +1126,21 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
 
     // Prevent using options defined for other mode(s) than index
     // querying.
-    if (_opts.options[KMER_LENGTH_OPT]) {
-      Exception e;
-      e << "Option '" << _opts.options[KMER_LENGTH_OPT].name << "'"
-        " is not available for index querying.";
-      throw e;
-    }
-    if (_opts.options[KMER_PREFIX_LENGTH_OPT]) {
-      Exception e;
-      e << "Option '" << _opts.options[KMER_PREFIX_LENGTH_OPT].name << "'"
-        " is not available for index querying.";
-      throw e;
-    }
-    if (_opts.options[REFERENCE_OPT]) {
-      Exception e;
-      e << "Option '" << _opts.options[REFERENCE_OPT].name << "'"
-        " is not available for index querying.";
-      throw e;
-    }
-    if (_opts.options[VARIANTS_OPT]) {
-      Exception e;
-      e << "Option '" << _opts.options[VARIANTS_OPT].name << "'"
-        " is not available for index querying.";
-      throw e;
+    for (auto o: {
+        VARIANT_FILTER_OPT,
+        KMER_LENGTH_OPT,
+        KMER_PREFIX_LENGTH_OPT,
+        KMER_FILTER_OPT,
+        REFERENCE_OPT,
+        VARIANTS_OPT,
+        ALLELE_FREQUENCY_TAG_OPT
+      }) {
+      if (_opts.options[o]) {
+        Exception e;
+        e << "Option '" << _opts.options[o].name << "'"
+          " is not available for index querying.";
+        throw e;
+      }
     }
 
   }
@@ -1528,8 +1518,8 @@ void KimProgram::_createTemporaryVafFiles(KmerVariantGraph &index) {
   }
   assert(!_tmpdir.empty());
   fs::path current_file = _tmpdir / VARIANT_ALLELE_FREQUENCIES_BASENAME;
-  assert(_vaf_files.find(VARIANT_ALLELE_FREQUENCIES_BASENAME) == _vaf_files.end());
-  fstream &os = _vaf_files[VARIANT_ALLELE_FREQUENCIES_BASENAME];
+  assert(_vaf_files.find("") == _vaf_files.end());
+  fstream &os = _vaf_files[""];
   os.open(current_file, ios::out | ios::trunc);
   if (!os.is_open()) {
     Exception e;
@@ -1583,14 +1573,16 @@ void KimProgram::_saveTemporaryVafFiles() {
 }
 
 void KimProgram::_loadIndexVafFiles(const KmerVariantGraph &index) {
-
   assert(!_settings.getIndexDirectory().empty());
   fs::path _index_dir = _settings.getIndexDirectory();
   for (auto const &[tag, file]: index.variantAlleleFrequencyFiles()) {
+#ifdef DEBUG
+    cerr << "Opening file " << file << " for " << (tag.empty() ? "Variant List" : tag) << endl;
+#endif
     string t = tag.empty() ? VARIANT_ALLELE_FREQUENCIES_BASENAME : tag;
     fs::path current_file = _index_dir / file;
-    assert(_vaf_files.find(tag) == _vaf_files.end());
     fstream &is = _vaf_files[tag];
+    assert(!is.is_open());
     is.open(current_file, ios::in | ios::binary);
     if (!is.is_open()) {
       Exception e;
@@ -1602,14 +1594,21 @@ void KimProgram::_loadIndexVafFiles(const KmerVariantGraph &index) {
 
 void KimProgram::_closeVafFiles() {
   for (auto &[fname, fstr]: _vaf_files) {
+#ifdef DEBUG
+    cerr << "Closing file " << (fname.empty() ? "Variant List": fname) << endl;
+#endif
     fstr.close();
   }
 }
 
+static const uint16_t encoded_af_delta = 32768;
+static const uint16_t encoded_af_missing = 32767;
+static const uint16_t encoded_af_max = 32766;
+
 void KimProgram::_dump2temporaryVafFiles(VariantAlleleFrequencies &vaf) {
   if (vaf.getCurrentVariantAlleleFrequencies().empty()) return;
-  assert(_vaf_files.find(VARIANT_ALLELE_FREQUENCIES_BASENAME) != _vaf_files.end());
-  fstream &v_os = _vaf_files[VARIANT_ALLELE_FREQUENCIES_BASENAME];
+  assert(_vaf_files.find("") != _vaf_files.end());
+  fstream &v_os = _vaf_files[""];
   assert(v_os.is_open());
   uint16_t delta = 0;
   for (auto const &vpaf: vaf.getCurrentVariantAlleleFrequencies()) {
@@ -1620,11 +1619,14 @@ void KimProgram::_dump2temporaryVafFiles(VariantAlleleFrequencies &vaf) {
         fstream &os = _vaf_files[tag];
         assert(os.is_open());
         map<string, float>::const_iterator it = vpaf.population_af.find(tag);
-        uint16_t encoded_af = ((it == vpaf.population_af.cend()) ? 32767 : (it->second * 32766));
+        uint16_t encoded_af = ((it == vpaf.population_af.cend()) ? encoded_af_missing : (it->second * encoded_af_max));
         encoded_af += delta;
-        os.write((char*) &encoded_af, 2);
+        unsigned char bytes[2];
+	bytes[0] = (unsigned char)(encoded_af >> 8);
+	bytes[1] = (unsigned char)(encoded_af);
+        os.write(reinterpret_cast<char*>(bytes), 2);
       }
-      delta = 32768;
+      delta = encoded_af_delta;
     }
   }
 }

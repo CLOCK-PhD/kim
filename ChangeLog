@@ -1,5 +1,13 @@
 2025-06-06  DoccY <alban.mancheron@lirmm.fr>
 
+	* src/kim.cpp, src/kmer_variant_graph.cpp,
+	src/variant_nodes_index.h:
+	Add some comments in code.
+	Refactor option restrictions.
+	
+	
+2025-06-06  DoccY <alban.mancheron@lirmm.fr>
+
 	* src/Makefile.am, src/Makefile.in, src/kim.cpp, src/kim.h,
 	src/kim_settings.cpp, src/kim_settings.h,
 	src/kmer_variant_graph.cpp, src/kmer_variant_graph.h,

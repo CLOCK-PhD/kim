@@ -547,6 +547,7 @@ void KmerVariantGraph::_parseMetadata(const fs::path &filename) {
             string tag = line.substr(2, p - 2);
             string file = line.substr(p + 1);
             addVariantAlleleFrequencyFile(tag, file);
+            _settings.addAlleleFrequencyTag(tag);
           } else {
             addVariantAlleleFrequencyFile("", line.substr(2));
           }

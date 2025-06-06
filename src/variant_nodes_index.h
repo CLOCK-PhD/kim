@@ -171,6 +171,7 @@ namespace kim {
     using std::map<std::string, uint16_t>::cend;
     using std::map<std::string, uint16_t>::crbegin;
     using std::map<std::string, uint16_t>::crend;
+    using std::map<std::string, uint16_t>::find;
     using std::map<std::string, uint16_t>::size;
     using std::map<std::string, uint16_t>::max_size;
     using std::map<std::string, uint16_t>::empty;
