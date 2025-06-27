@@ -1,3 +1,37 @@
+2025-06-27  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/kim.cpp:
+	Remove output of deteted variants per read by default and add option '--read-analysis' to perform a better per read analysis.
+	This commit also adds some code refactoring and fixes some bad display issues when multiple threads write to standard error channel.
+	
+	
+2025-06-27  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/read_analyzer.cpp, src/read_analyzer.h:
+	Improve ReadAnalyzer class in order to:
+	- add a z-score to detected variants
+	- separate completion of analysis and getting results
+	- add a post analysis behavior in order to output only "significant" variants detected in reads.
+	
+	
+2025-06-27  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/kim.h:
+	Add Gauss class header to global kim header.
+	
+	
+2025-06-27  DoccY <alban.mancheron@lirmm.fr>
+
+	* README.md:
+	Update README.
+	
+	
+2025-06-27  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/gauss.h, tests/test_gauss.cpp:
+	Add (tailed) statistical tests.
+	
+	
 2025-06-06  DoccY <alban.mancheron@lirmm.fr>
 
 	* src/kim.cpp:

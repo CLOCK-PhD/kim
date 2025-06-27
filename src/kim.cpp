@@ -209,6 +209,7 @@ private:
   static const option::Descriptor _OPTION_QUERY_OPTIONS_ALPHA;
   static const option::Descriptor _OPTION_QUERY_OPTIONS_THRESHOLD;
   static const option::Descriptor _OPTION_QUERY_OPTIONS_MODE;
+  static const option::Descriptor _OPTION_QUERY_OPTIONS_DUMP_READ_ANALYSIS;
   static const option::Descriptor _OPTION_FOOTER_ABOUT;
   static const option::Descriptor _OPTION_FOOTER_INDEX_CREATION;
   static const option::Descriptor _OPTION_FOOTER_QUERY;
@@ -253,7 +254,8 @@ private:
     OUTPUT_OPT,
     ALPHA_OPT,
     THRESHOLD_OPT,
-    MODE_OPT
+    MODE_OPT,
+    DUMP_READ_ANALYSIS_OPT
   };
 
   enum _RunningMode {
@@ -264,6 +266,7 @@ private:
 
   string _progname;
   Settings _settings;
+  bool _dump_read_analysis_opt;
   _RunningMode _running_mode;
   vector<pair<string, regex>>  _kmer_filters;
   vector<string> _variant_filters;
@@ -303,6 +306,13 @@ private:
   // frequency of i/32766, leading to a precision of 3e-5. The special
   // value 32767 is reserved to denode the value which doesn't exist.
   void _dump2temporaryVafFiles(VariantAlleleFrequencies &vaf);
+
+  friend void _readAnalyzerDumpCallback(const KimProgram &prog, ReadAnalyzer &r, _currentReadInfos &infos, ostream &os);
+  void _dumpResultsHeader(const string &input_fname, ostream &os) const;
+  void _dumpResultsRead(const ReadAnalyzer::VariantKmerRates &res, const _currentReadInfos &infos, ostream &os) const;
+  void _dumpResultsVariants(const ReadAnalyzer::VariantScores &results, ostream &os) const;
+  static void _dumpResultsKimScores(const map<string, double> &scores, ostream &os);
+  static void _dumpResultsFooter(Monitor &monitor, ostream &os);
 
   // Closes and deletes temporary VAF files
   void _deleteTemporaryDirectory();
@@ -552,6 +562,15 @@ const option::Descriptor KimProgram::_OPTION_QUERY_OPTIONS_MODE = {
   "k-mers to [try to] detect variants whereas a strict mode means that "
   "this analyzer uses only k-mers that are not in the reference (default:"
   KIM_DEFAULT_MODE ")."
+};
+
+const option::Descriptor KimProgram::_OPTION_QUERY_OPTIONS_DUMP_READ_ANALYSIS = {
+  DUMP_READ_ANALYSIS_OPT, 0, "R", "read-analysis", Arg::None,
+  "  -R | --read-analysis \t"
+  "Dump per read analysis. This requires two passes over the reads (up to "
+  "twice the time required without this option) and may lead to very huge "
+  "result files. Unless you really need per read analysis, you shouldn't "
+  "run queries with this option."
 };
 
 const option::Descriptor KimProgram::_OPTION_FOOTER_ABOUT = {
@@ -806,6 +825,7 @@ const option::Descriptor KimProgram::_query_usage[] = {
   _OPTION_QUERY_OPTIONS_ALPHA,
   _OPTION_QUERY_OPTIONS_THRESHOLD,
   _OPTION_QUERY_OPTIONS_MODE,
+  _OPTION_QUERY_OPTIONS_DUMP_READ_ANALYSIS,
   _OPTION_EMPTY_LINE,
   _OPTION_FOOTER_QUERY,
   _OPTION_EMPTY_LINE,
@@ -840,6 +860,7 @@ const option::Descriptor KimProgram::_full_usage[] = {
   _OPTION_QUERY_OPTIONS_ALPHA,
   _OPTION_QUERY_OPTIONS_THRESHOLD,
   _OPTION_QUERY_OPTIONS_MODE,
+  _OPTION_QUERY_OPTIONS_DUMP_READ_ANALYSIS,
   _OPTION_EMPTY_LINE,
   _OPTION_FOOTER_ABOUT,
   _OPTION_EMPTY_LINE,
@@ -1060,6 +1081,7 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
         ALPHA_OPT,
         THRESHOLD_OPT,
         MODE_OPT,
+        DUMP_READ_ANALYSIS_OPT,
       }) {
       if (_opts.options[o]) {
         Exception e;
@@ -1127,6 +1149,8 @@ void KimProgram::_processOptions(_OptionHandler &_opts) {
         << "for option '" << _opts.options[MODE_OPT].name << "'.";
       throw e;
     }
+
+    _dump_read_analysis_opt = _opts.options[DUMP_READ_ANALYSIS_OPT];
 
     // Prevent using options defined for other mode(s) than index
     // querying.
@@ -1211,20 +1235,18 @@ void KimProgram::_dumpFile(const fs::path &filename, size_t n, ostream &os) {
   }
 }
 
-void _dumpResultsHeader(const string &input_fname, const Settings &settings, ostream &os) {
+void KimProgram::_dumpResultsHeader(const string &input_fname, ostream &os) const {
   os << "---\n"
      << "Informations:\n"
      << "  File: " << input_fname << "\n"
-     << "  Index: " << settings.getIndexDirectory() << "\n"
-     << "  k-mer length: " << settings.k() << "\n"
-     << "  Alpha: " << settings.alpha() << "\n"
-     << "  Threshold: " << settings.threshold() << "\n"
-     << "  Mode: " << (settings.weakMode() ? "Weak" : "Strict") << "\n"
-     << "Read Analysis:\n";
+     << "  Index: " << _settings.getIndexDirectory() << "\n"
+     << "  k-mer length: " << _settings.k() << "\n"
+     << "  Alpha: " << _settings.alpha() << "\n"
+     << "  Threshold: " << _settings.threshold() << "\n"
+     << "  Mode: " << (_settings.weakMode() ? "Weak" : "Strict") << "\n";
 }
 
-
-void _dumpResultsRead(const ReadAnalyzer::VariantKmerRates &res, const _currentReadInfos &infos, ostream &os) {
+void KimProgram::_dumpResultsRead(const ReadAnalyzer::VariantKmerRates &res, const _currentReadInfos &infos, ostream &os) const {
   os << "- Read: " << infos.description << "\n"
      << "  Id: " << infos.id << "\n"
      << "  Variants:\n";
@@ -1234,45 +1256,78 @@ void _dumpResultsRead(const ReadAnalyzer::VariantKmerRates &res, const _currentR
     ReadAnalyzer::VariantKmerRatesConstIteratorWrapper vs(it);
     os << "  - id: "  << vs.node.variant << "\n"
        << "    associated k-mers: " << vs.node.in_degree << "\n"
-       << "    found k-mer rate: " << vs.rate << "\n";
+       << "    found k-mer rate: " << vs.rate << "\n"
+       << "    z-score: " << vs.zscore << "\n";
   }
 }
 
-void _dumpResultsVariants(const ReadAnalyzer::VariantScores &results,
-                          size_t indexed_kmers, size_t total_kmers, ostream &os) {
+double log2(double x) {
+  return log(x) / log(2);
+}
+
+void KimProgram::_dumpResultsVariants(const ReadAnalyzer::VariantScores &results, ostream &os) const {
+
   os << "Variants:" << (results.empty() ? " []" : "") << "\n";
-  assert(total_kmers);
-  double coef = double(indexed_kmers) / double(total_kmers);
-  coef *= (1.0 - coef);
+
+  /*
+   * Let consider the Bernouilli distribution of having $X$ k-mers
+   * associated to the current variant in some read due to random.
+   *
+   * The parameter of this distribution are:
+   * - $n$ The number of k-mers in a read
+   * - $p$ The probability of some k-mer to be one of the variant
+   *   associated k-mer
+   * - $X$ The variable following a binomial distribution of
+   *   parameters n and p (the number of indexed k-mers in a read
+   *   having $n$ k-mers due to random).
+   *
+   * Thus $E[X] = n\,p$ and $V[X] = n\,p\,(1-p)$.
+   *
+   * The Bienaymé–Chebyshev inequality states that:
+   * \begin{align*}
+   *   P\left(|X - n\,p| > x\right)                  & \leq \frac{n\,p\,(1 - p)}{{(n\,x)}^2} \\
+   *   P\left(|X - n\,p| > x\right)                  & \leq \frac{n\,p\,(1 - p)}{{(n\,x)}^2} \\
+   *   P\left(|\frac{X}{n} - p| > \frac{x}{n}\right) & \leq \frac{n\,p\,(1 - p)}{{(n\,x)}^2} \\
+   *   P\left(|\frac{X}{n} - p| > \frac{x}{n}\right) & \leq \frac{p\,(1 - p)}{n\,x^2} \\
+   * \end{align*}
+   *
+   * Here $x$ is the observed number of associated k-mers, thus
+   * \frac{x}{n} is the observed rate of associated k-mers due to
+   * random in the read.
+   *
+   * For convenience, let define $Y = \frac{X}{n}$ and $y
+   * =\frac{x}{n}$ (and recall that $n \geq k$). This gives:
+   * \begin{align*}
+   *               P\left(|Y - p| > y\right) & \leq \frac{p\,(1 - p)}{n^3\,y^2} \\
+   *   \Rightarrow P\left(|Y - p| > y\right) & \ll \frac{p\,(1 - p)}{k^3\,y^2}
+   * \end{align*}
+   *
+   * The $\frac{p\,(1 - p)}{k^3\,y^2}$ value is an over-estimate
+   * upper bound of the probability of seeing the k-mer associated
+   * to the current variant due to random, thus the under-estimate
+   * confidence lower bound is its complement to 1.
+   */
+
+  static const size_t nb_kmers = 1 << (_settings.k() << 1);
+
   for (ReadAnalyzer::VariantScores::const_iterator it = results.cbegin();
        it != results.cend();
        ++it) {
     ReadAnalyzer::VariantScoreConstIteratorWrapper vs(it);
-    os << "- id: " << vs.node.variant << endl
-       << "  stats:" << endl
-       << "    mean: " << vs.stats.mean << endl
-       << "    variance: " << vs.stats.variance << endl
-       << "    count: " << vs.stats.count << endl
-       << "    confidence (lower bound): " << 1 - (coef / vs.stats.mean / vs.stats.mean) << endl;
-    // The Bienaymé–Chebyshev inequality states that:
-    // $P(|\frac{X}{n} - p| > x) <= \frac{p\,(1 - p)}{n\,x^2}$
-    // With:
-    // - $n$ The number of k-mers in a read
-    // - $p$ The probability of some k-mer to be indexed
-    // - $X$ The variable following a binomial distribution of
-    //   parameters n and p (the number of indexed k-mers in a read
-    //   having $n$ k-mers due to random).
-    // - $x$ The observed rate of indexed k-mers.
-    // In pratice, it follows that:
-    // - $\frac{p\,(1 - p)}{n\,x^2} \leq \frac{p\,(1 - p)}{x^2}$
-    // - $p \ll x$, thus $P(|\frac{X}{n} - p| > x) \simeq P(\frac{X}{n} > x)$
-    // This upper bound is then the probability of seeing this variant
-    // due to random, thus the confidence lower bound is its
-    // complement to 1.
+    double p = double(vs.node.in_degree) / nb_kmers;
+    double uncertainty = (p * (1.0 - p) / vs.stats.mean / vs.stats.mean / _settings.k() / _settings.k() / _settings.k());
+    os << "- id: " << vs.node.variant << "\n"
+       << "    associated k-mers: " << vs.node.in_degree << "\n"
+       << "  stats:" << "\n"
+       << "    mean: " << vs.stats.mean << "\n"
+       << "    variance: " << vs.stats.variance << "\n"
+       << "    count: " << vs.stats.count << "\n"
+       << "    uncertainty: " << uncertainty << "\n"
+      ;
   }
 }
 
-void _dumpResultsKimScores(const map<string, double> &scores, ostream &os) {
+void KimProgram::_dumpResultsKimScores(const map<string, double> &scores, ostream &os) {
   os << "Identification metrics:\n";
   for (auto const &[tag, score]: scores) {
     if (!isnan(score)) {
@@ -1283,11 +1338,11 @@ void _dumpResultsKimScores(const map<string, double> &scores, ostream &os) {
   }
 }
 
-void _dumpResultsFooter(Monitor &monitor, ostream &os) {
-  os << "Monitoring:" << endl
+void KimProgram::_dumpResultsFooter(Monitor &monitor, ostream &os) {
+  os << "Monitoring:" << "\n"
      << "  Wallclock time: "
-     << (monitor.getWallClockTime() / 1s) << "s" << endl
-     << "  User CPU time: " << (monitor.getUserTime() / 1s) << "s" << endl
+     << (monitor.getWallClockTime() / 1s) << "s" << "\n"
+     << "  User CPU time: " << (monitor.getUserTime() / 1s) << "s" << "\n"
      << "  System CPU time: " << (monitor.getSystemTime() / 1s) << "s" << endl;
 }
 
@@ -1371,6 +1426,9 @@ fs::path KimProgram::_buildResultFile(const fs::path &f) const {
 
   if (_checkIfFileIsReadable(out_file)) {
     if (_settings.allowOverwrite()) {
+#ifdef _OPENMP
+#  pragma omp critical
+#endif
       cerr << "File " << out_file << " already exist and will be overwritten." << endl;
     } else {
       Exception e;
@@ -1386,15 +1444,17 @@ void _updateReadInfosCallback(const DNAFileReader &reader, _currentReadInfos &in
   infos.id = reader.getCurrentSequenceID();
 }
 
-void _readAnalyzerCallback(ReadAnalyzer &r, _currentReadInfos &infos, ostream &os) {
-  // cerr << "Analyze callback for read '" << infos.id << "'" << endl;
+void _readAnalyzerCallback(ReadAnalyzer &r) {
+  r.analyze();
+  r.reset();
+}
+
+void _readAnalyzerDumpCallback(const KimProgram &prog, ReadAnalyzer &r, _currentReadInfos &infos, ostream &os) {
   const ReadAnalyzer::VariantKmerRates &res = r.analyze();
-  // cerr << "Analysis done" << endl;
   if (!res.empty()) {
-    _dumpResultsRead(res, infos, os);
+    prog._dumpResultsRead(res, infos, os);
     r.reset();
   }
-  // cerr << "===" << endl;
 }
 
 void KimProgram::_runQuery() {
@@ -1405,17 +1465,18 @@ void KimProgram::_runQuery() {
 
   kim_index.freeze();
 
+  double indexed_kmer_probability = kim_index.getNbKmers();
+  indexed_kmer_probability /= (1 << (_settings.k() << 1));
   // Process each input file
 #ifdef _OPENMP
   if (_output_dir.empty()) {
-    // Disable multthreading if results are output on the terminal
+    // Disable multithreading if results are output on the terminal
     omp_set_num_threads(1);
   }
 #  pragma omp parallel for
 #endif
   for (auto const &f: _dna_files) {
 
-    size_t nb_kmers = 0;
     ofstream ofs;
     // Write the result to output stream
     if (!_output_dir.empty()) {
@@ -1429,11 +1490,14 @@ void KimProgram::_runQuery() {
     }
     ostream &os = ofs.is_open() ? ofs : cout;
 
-    _dumpResultsHeader(f, _settings, os);
+    _dumpResultsHeader(f, os);
 
     Monitor one_file_monitor;
 
     if (_settings.warn()) {
+#ifdef _OPENMP
+#  pragma omp critical
+#endif
       cerr << "Processing file '" << f << "'" << endl;
     }
     DNAFileReader reader(_settings.k(), f, _settings.warn());
@@ -1444,36 +1508,74 @@ void KimProgram::_runQuery() {
     read_infos.description = reader.getCurrentSequenceDescription();
     read_infos.id = reader.getCurrentSequenceID();
 
-    reader.addOnNewSequenceCallback([&read_analyzer, &read_infos, &os](const DNAFileReader &) {
-      _readAnalyzerCallback(read_analyzer, read_infos, os);
-    });
-    reader.addOnNewSequenceCallback([&read_infos](const DNAFileReader &reader) {
+    const DNAFileReader::onNewSequenceFct readAnalyzerFct = [&read_analyzer](const DNAFileReader &) {
+      _readAnalyzerCallback(read_analyzer);
+    };
+
+    const DNAFileReader::onNewSequenceFct readAnalyzerDumpFct = [this, &read_analyzer, &read_infos, &os](const DNAFileReader &) {
+      _readAnalyzerDumpCallback(*this, read_analyzer, read_infos, os);
+    };
+    const DNAFileReader::onNewSequenceFct updateReadInfosFct = [&read_infos](const DNAFileReader &reader) {
       _updateReadInfosCallback(reader, read_infos);
-    });
+    };
 
-    // Process each k-mer from the current input file
-    for (string kmer = reader.getNextKmer(true /* skip degenerate */); !kmer.empty(); kmer = reader.getNextKmer(true /* skip degenerate */)) {
-      ++nb_kmers;
-      // cerr << "k-mer : '" << kmer << "'" << endl;
-      list<KmerVariantEdgesSubindex::KmerVariantAssociation> assoc_variant = kim_index.search(kmer);
-      // cerr << "assoc_variant size is " << assoc_variant.size() << endl;
+    size_t pass_number = 0, nb_pass = _dump_read_analysis_opt ? 2 : 1;
 
-      // We don't care of in_ref if the k-mer is not associated to som
-      // variant, thus we can assign any value. Although, when the
-      // k-mer is not indexed, calling isInReferenceKmer() will throw
-      // an exception. So the lazy evaluation when assigning true will
-      // prevent this exception.
-      bool in_ref = assoc_variant.empty() || kim_index.isInReferenceKmer(kmer);
-      for (list<KmerVariantEdgesSubindex::KmerVariantAssociation>::const_iterator it = assoc_variant.cbegin(); it != assoc_variant.cend(); ++it) {
-        // cerr << "Current variant association concerns variant '" << it->variant_node.variant << "' which concerns " << it->variant_node.in_degree << " k-mers" << endl;
-        // cerr << "This variant is potentially seen in read " << reader.getCurrentSequenceDescription()
-        //      << " by the k-mer at position " << reader.getCurrentKmerRelativePosition()
-        //      << " in the read" << endl;
-        read_analyzer.add(it->variant_node, it->rank, in_ref);
+    do {
+      reader.reset();
+      reader.removeOnNewSequenceCallback(readAnalyzerFct);
+      reader.removeOnNewSequenceCallback(readAnalyzerDumpFct);
+      reader.removeOnNewSequenceCallback(updateReadInfosFct);
+      switch (++pass_number) {
+      case 1:
+        reader.addOnNewSequenceCallback(readAnalyzerFct);
+        break;
+      case 2:
+        os << "Read Analysis:\n";
+        reader.addOnNewSequenceCallback(readAnalyzerDumpFct);
+        reader.addOnNewSequenceCallback(updateReadInfosFct);
+        break;
+      default:
+        throw Exception("BUG");
       }
-    }
 
-    _readAnalyzerCallback(read_analyzer, read_infos, os);
+      // Process each k-mer from the current input file
+      for (string kmer = reader.getNextKmer(true /* skip degenerate */);
+           !kmer.empty();
+           kmer = reader.getNextKmer(true /* skip degenerate */)) {
+        // cerr << "k-mer : '" << kmer << "'" << endl;
+        list<KmerVariantEdgesSubindex::KmerVariantAssociation> assoc_variant = kim_index.search(kmer);
+        // cerr << "assoc_variant size is " << assoc_variant.size() << endl;
+
+        // We don't care of in_ref if the k-mer is not associated to som
+        // variant, thus we can assign any value. Although, when the
+        // k-mer is not indexed, calling isInReferenceKmer() will throw
+        // an exception. So the lazy evaluation when assigning true will
+        // prevent this exception.
+        bool in_ref = assoc_variant.empty() || kim_index.isInReferenceKmer(kmer);
+        for (list<KmerVariantEdgesSubindex::KmerVariantAssociation>::const_iterator it = assoc_variant.cbegin(); it != assoc_variant.cend(); ++it) {
+          // cerr << "Current variant association concerns variant '" << it->variant_node.variant << "' which concerns " << it->variant_node.in_degree << " k-mers" << endl;
+          // cerr << "This variant is potentially seen in read " << reader.getCurrentSequenceDescription()
+          //      << " by the k-mer at position " << reader.getCurrentKmerRelativePosition()
+          //      << " in the read" << endl;
+          read_analyzer.add(it->variant_node, it->rank, in_ref);
+        }
+      }
+
+      switch (pass_number) {
+      case 1:
+        _readAnalyzerCallback(read_analyzer);
+        read_analyzer.complete();
+        break;
+      case 2:
+        _readAnalyzerDumpCallback(*this, read_analyzer, read_infos, os);
+        _updateReadInfosCallback(reader, read_infos);
+        break;
+      default:
+        throw Exception("BUG");
+      }
+    } while (pass_number < nb_pass);
+
     one_file_monitor.stop();
 
     // Analyse reads for variants
@@ -1483,7 +1585,7 @@ void KimProgram::_runQuery() {
     map<string, double> scores = _computeKimScores(kim_index, result);
 
     // Write the result and scores to output stream
-    _dumpResultsVariants(result, kim_index.getNbKmers(), nb_kmers, os);
+    _dumpResultsVariants(result, os);
     _dumpResultsKimScores(scores, os);
     _dumpResultsFooter(one_file_monitor, os);
 
