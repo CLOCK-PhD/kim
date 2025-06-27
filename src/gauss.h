@@ -318,6 +318,100 @@ namespace kim {
      */
     static double CDF(double x, double mu = 0, double sigma = 1);
 
+    /**
+     * Types of hypothesis tests that can be performed.
+     */
+    enum HypothesisTest {
+
+      /**
+       * Represents a left-tailed hypothesis test.
+       *
+       * A left-tailed test is used to determine if a parameter is
+       * significantly less than a specified value.
+       */
+      LEFT_TAILED_HYPOTHESIS_TEST,
+
+      /**
+       * Represents a right-tailed hypothesis test.
+       *
+       * A right-tailed test is used to determine if a parameter is
+       * significantly greater than a specified value.
+       */
+      RIGHT_TAILED_HYPOTHESIS_TEST,
+
+      /**
+       * Represents a two-tailed hypothesis test.
+       *
+       * A two-tailed test is used to determine if a parameter is
+       * significantly different (either greater or less) from a
+       * specified value.
+       */
+      TWO_TAILED_HYPOTHESIS_TEST
+
+    };
+
+    /**
+     * Perform a statistical test of conformity.
+     *
+     * \param x The value to test.
+     *
+     * \param alpha The significance level of the test (the
+     * probability of making a Type I error, which occurs when the
+     * null hypothesis is incorrectly rejected when it is actually
+     * true).
+     *
+     * \param t The kind of tailed test.
+     *
+     * \return This returns true if the given x value belongs to
+     * expected values under the Gaussian law characterized by the
+     * given mean and the given standard deviation.
+     */
+    inline bool test(double x, double alpha, HypothesisTest t = TWO_TAILED_HYPOTHESIS_TEST) {
+      return hypothesisTest(x, alpha, t, _mu, _sigma);
+    }
+
+    /**
+     * Perform a statistical test of conformity.
+     *
+     * \param x The value to test.
+     *
+     * \param alpha The significance level of the test (the
+     * probability of making a Type I error, which occurs when the
+     * null hypothesis is incorrectly rejected when it is actually
+     * true).
+     *
+     * \param t The kind of tailed test.
+     *
+     * \param mu The mean of the Gaussian random variable.
+     *
+     * \param sigma The standard deviation of the Gaussian random
+     * variable. If you are comparing the mean observed on some sample
+     * to the variable mean, then your null hypothesis is to consider
+     * that the observed mean is equal to the random variable mean. In
+     * such case, remember to to devide the standard deviation by the
+     * square root of the sample size.
+     *
+     * \return This returns true if the given x value belongs to
+     * expected values under the Gaussian law characterized by the
+     * given mean and the given standard deviation.
+     */
+    static inline bool hypothesisTest(double x, double alpha, HypothesisTest t = TWO_TAILED_HYPOTHESIS_TEST, double mu = 0, double sigma = 1) {
+      double p = CDF(x, mu, sigma);
+      bool r;
+      switch (t) {
+      case LEFT_TAILED_HYPOTHESIS_TEST:
+        r = (p >= alpha);
+        break;
+      case RIGHT_TAILED_HYPOTHESIS_TEST:
+        r = (p <= (1 - alpha));
+        break;
+      case TWO_TAILED_HYPOTHESIS_TEST:
+        if (p < 0.5) p = 1 - p;
+        r = (p <= (1 - alpha / 2));
+      }
+      return r;
+    }
+
   };
 
 }

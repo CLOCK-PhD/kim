@@ -138,5 +138,413 @@ int main() {
     compare(v, q, e);
   }
 
+  double alpha_values[6] = { 0., 0.01, 0.025, 0.05, 0.1, 0.5 };
+  double x_values[4] = {1., 1.64, 1.96, 2.57 };
+  bool expected_results[3][12][8] = {
+    /* LEFT_TAILED_HYPOTHESIS_TEST */
+    {
+      /* 0. */ {
+        /* 1. */ true,
+        /* -1. */ true,
+        /* 1.64 */ true,
+        /* -1.64 */ true,
+        /* 1.96 */ true,
+        /* -1.96 */ true,
+        /* 2.57 */ true,
+        /* -2.57 */ true
+      },
+      /* 1 - 0. */ {
+        /* 1. */ false,
+        /* -1. */ false,
+        /* 1.64 */ false,
+        /* -1.64 */ false,
+        /* 1.96 */ false,
+        /* -1.96 */ false,
+        /* 2.57 */ false,
+        /* -2.57 */ false
+      },
+      /* 0.01 */ {
+        /* 1. */ true,
+        /* -1. */ true,
+        /* 1.64 */ true,
+        /* -1.64 */ true,
+        /* 1.96 */ true,
+        /* -1.96 */ true,
+        /* 2.57 */ true,
+        /* -2.57 */ false
+      },
+      /* 1 - 0.01 */ {
+        /* 1. */ false,
+        /* -1. */ false,
+        /* 1.64 */ false,
+        /* -1.64 */ false,
+        /* 1.96 */ false,
+        /* -1.96 */ false,
+        /* 2.57 */ true,
+        /* -2.57 */ false
+      },
+      /* 0.025, */ {
+        /* 1. */ true,
+        /* -1. */ true,
+        /* 1.64 */ true,
+        /* -1.64 */ true,
+        /* 1.96 */ true,
+        /* -1.96 */ false,
+        /* 2.57 */ true,
+        /* -2.57 */ false
+      },
+      /* 1 - 0.025, */ {
+        /* 1. */ false,
+        /* -1. */ false,
+        /* 1.64 */ false,
+        /* -1.64 */ false,
+        /* 1.96 */ true,
+        /* -1.96 */ false,
+        /* 2.57 */ true,
+        /* -2.57 */ false
+      },
+      /* 0.05 */ {
+        /* 1. */ true,
+        /* -1. */ true,
+        /* 1.64 */ true,
+        /* -1.64 */ true,
+        /* 1.96 */ true,
+        /* -1.96 */ false,
+        /* 2.57 */ true,
+        /* -2.57 */ false
+      },
+      /* 1 - 0.05 */ {
+        /* 1. */ false,
+        /* -1. */ false,
+        /* 1.64 */ false,
+        /* -1.64 */ false,
+        /* 1.96 */ true,
+        /* -1.96 */ false,
+        /* 2.57 */ true,
+        /* -2.57 */ false
+      },
+      /* 0.1 */ {
+        /* 1. */ true,
+        /* -1. */ true,
+        /* 1.64 */ true,
+        /* -1.64 */ false,
+        /* 1.96 */ true,
+        /* -1.96 */ false,
+        /* 2.57 */ true,
+        /* -2.57 */ false
+      },
+      /* 1 - 0.1 */ {
+        /* 1. */ false,
+        /* -1. */ false,
+        /* 1.64 */ true,
+        /* -1.64 */ false,
+        /* 1.96 */ true,
+        /* -1.96 */ false,
+        /* 2.57 */ true,
+        /* -2.57 */ false
+      },
+      /* 0.5 */ {
+        /* 1. */ true,
+        /* -1. */ false,
+        /* 1.64 */ true,
+        /* -1.64 */ false,
+        /* 1.96 */ true,
+        /* -1.96 */ false,
+        /* 2.57 */ true,
+        /* -2.57 */ false
+      },
+      /* 1 - 0.5 */ {
+        /* 1. */ true,
+        /* -1. */ false,
+        /* 1.64 */ true,
+        /* -1.64 */ false,
+        /* 1.96 */ true,
+        /* -1.96 */ false,
+        /* 2.57 */ true,
+        /* -2.57 */ false
+      },
+    },
+
+    /* RIGHT_TAILED_HYPOTHESIS_TEST */
+    {
+      /* 0. */ {
+        /* 1. */ true,
+        /* -1. */ true,
+        /* 1.64 */ true,
+        /* -1.64 */ true,
+        /* 1.96 */ true,
+        /* -1.96 */ true,
+        /* 2.57 */ true,
+        /* -2.57 */ true
+      },
+      /* 1 - 0. */ {
+        /* 1. */ false,
+        /* -1. */ false,
+        /* 1.64 */ false,
+        /* -1.64 */ false,
+        /* 1.96 */ false,
+        /* -1.96 */ false,
+        /* 2.57 */ false,
+        /* -2.57 */ false
+      },
+      /* 0.01 */ {
+        /* 1. */ true,
+        /* -1. */ true,
+        /* 1.64 */ true,
+        /* -1.64 */ true,
+        /* 1.96 */ true,
+        /* -1.96 */ true,
+        /* 2.57 */ false,
+        /* -2.57 */ true
+      },
+      /* 1 - 0.01 */ {
+        /* 1. */ false,
+        /* -1. */ false,
+        /* 1.64 */ false,
+        /* -1.64 */ false,
+        /* 1.96 */ false,
+        /* -1.96 */ false,
+        /* 2.57 */ false,
+        /* -2.57 */ true
+      },
+      /* 0.025, */ {
+        /* 1. */ true,
+        /* -1. */ true,
+        /* 1.64 */ true,
+        /* -1.64 */ true,
+        /* 1.96 */ false,
+        /* -1.96 */ true,
+        /* 2.57 */ false,
+        /* -2.57 */ true
+      },
+      /* 1 - 0.025, */ {
+        /* 1. */ false,
+        /* -1. */ false,
+        /* 1.64 */ false,
+        /* -1.64 */ false,
+        /* 1.96 */ false,
+        /* -1.96 */ true,
+        /* 2.57 */ false,
+        /* -2.57 */ true
+      },
+      /* 0.05 */ {
+        /* 1. */ true,
+        /* -1. */ true,
+        /* 1.64 */ true,
+        /* -1.64 */ true,
+        /* 1.96 */ false,
+        /* -1.96 */ true,
+        /* 2.57 */ false,
+        /* -2.57 */ true
+      },
+      /* 1 - 0.05 */ {
+        /* 1. */ false,
+        /* -1. */ false,
+        /* 1.64 */ false,
+        /* -1.64 */ false,
+        /* 1.96 */ false,
+        /* -1.96 */ true,
+        /* 2.57 */ false,
+        /* -2.57 */ true
+      },
+      /* 0.1 */ {
+        /* 1. */ true,
+        /* -1. */ true,
+        /* 1.64 */ false,
+        /* -1.64 */ true,
+        /* 1.96 */ false,
+        /* -1.96 */ true,
+        /* 2.57 */ false,
+        /* -2.57 */ true
+      },
+      /* 1 - 0.1 */ {
+        /* 1. */ false,
+        /* -1. */ false,
+        /* 1.64 */ false,
+        /* -1.64 */ true,
+        /* 1.96 */ false,
+        /* -1.96 */ true,
+        /* 2.57 */ false,
+        /* -2.57 */ true
+      },
+      /* 0.5 */ {
+        /* 1. */ false,
+        /* -1. */ true,
+        /* 1.64 */ false,
+        /* -1.64 */ true,
+        /* 1.96 */ false,
+        /* -1.96 */ true,
+        /* 2.57 */ false,
+        /* -2.57 */ true
+      },
+      /* 1 - 0.5 */ {
+        /* 1. */ false,
+        /* -1. */ true,
+        /* 1.64 */ false,
+        /* -1.64 */ true,
+        /* 1.96 */ false,
+        /* -1.96 */ true,
+        /* 2.57 */ false,
+        /* -2.57 */ true
+      },
+    },
+
+    /* TWO_TAILED_HYPOTHESIS_TEST */
+    {
+      /* 0. */ {
+        /* 1. */ true,
+        /* -1. */ true,
+        /* 1.64 */ true,
+        /* -1.64 */ true,
+        /* 1.96 */ true,
+        /* -1.96 */ true,
+        /* 2.57 */ true,
+        /* -2.57 */ true
+      },
+      /* 1 - 0. */ {
+        /* 1. */ false,
+        /* -1. */ false,
+        /* 1.64 */ false,
+        /* -1.64 */ false,
+        /* 1.96 */ false,
+        /* -1.96 */ false,
+        /* 2.57 */ false,
+        /* -2.57 */ false
+      },
+      /* 0.01 */ {
+        /* 1. */ true,
+        /* -1. */ true,
+        /* 1.64 */ true,
+        /* -1.64 */ true,
+        /* 1.96 */ true,
+        /* -1.96 */ true,
+        /* 2.57 */ true,
+        /* -2.57 */ true
+      },
+      /* 1 - 0.01 */ {
+        /* 1. */ false,
+        /* -1. */ false,
+        /* 1.64 */ false,
+        /* -1.64 */ false,
+        /* 1.96 */ false,
+        /* -1.96 */ false,
+        /* 2.57 */ false,
+        /* -2.57 */ false
+      },
+      /* 0.025, */ {
+        /* 1. */ true,
+        /* -1. */ true,
+        /* 1.64 */ true,
+        /* -1.64 */ true,
+        /* 1.96 */ true,
+        /* -1.96 */ true,
+        /* 2.57 */ false,
+        /* -2.57 */ false
+      },
+      /* 1 - 0.025, */ {
+        /* 1. */ false,
+        /* -1. */ false,
+        /* 1.64 */ false,
+        /* -1.64 */ false,
+        /* 1.96 */ false,
+        /* -1.96 */ false,
+        /* 2.57 */ false,
+        /* -2.57 */ false
+      },
+      /* 0.05 */ {
+        /* 1. */ true,
+        /* -1. */ true,
+        /* 1.64 */ true,
+        /* -1.64 */ true,
+        /* 1.96 */ false,
+        /* -1.96 */ false,
+        /* 2.57 */ false,
+        /* -2.57 */ false
+      },
+      /* 1 - 0.05 */ {
+        /* 1. */ false,
+        /* -1. */ false,
+        /* 1.64 */ false,
+        /* -1.64 */ false,
+        /* 1.96 */ false,
+        /* -1.96 */ false,
+        /* 2.57 */ false,
+        /* -2.57 */ false
+      },
+      /* 0.1 */ {
+        /* 1. */ true,
+        /* -1. */ true,
+        /* 1.64 */ true,
+        /* -1.64 */ true,
+        /* 1.96 */ false,
+        /* -1.96 */ false,
+        /* 2.57 */ false,
+        /* -2.57 */ false
+      },
+      /* 1 - 0.1 */ {
+        /* 1. */ false,
+        /* -1. */ false,
+        /* 1.64 */ false,
+        /* -1.64 */ false,
+        /* 1.96 */ false,
+        /* -1.96 */ false,
+        /* 2.57 */ false,
+        /* -2.57 */ false
+      },
+      /* 0.5 */ {
+        /* 1. */ false,
+        /* -1. */ false,
+        /* 1.64 */ false,
+        /* -1.64 */ false,
+        /* 1.96 */ false,
+        /* -1.96 */ false,
+        /* 2.57 */ false,
+        /* -2.57 */ false
+      },
+      /* 1 - 0.5 */ {
+        /* 1. */ false,
+        /* -1. */ false,
+        /* 1.64 */ false,
+        /* -1.64 */ false,
+        /* 1.96 */ false,
+        /* -1.96 */ false,
+        /* 2.57 */ false,
+        /* -2.57 */ false
+      },
+    },
+
+  };
+
+  for (Gauss::HypothesisTest test = Gauss::LEFT_TAILED_HYPOTHESIS_TEST;
+       (int) test <= (int) Gauss::TWO_TAILED_HYPOTHESIS_TEST;
+       test = (Gauss::HypothesisTest) ((int) test + 1)) {
+    for (size_t alpha_cpt = 0; alpha_cpt < 6; ++alpha_cpt) {
+      for (size_t alpha_complement = 0; alpha_complement < 2; ++alpha_complement) {
+        double alpha = alpha_complement ? 1 - alpha_values[alpha_cpt] : alpha_values[alpha_cpt];
+        for (size_t x_cpt = 0; x_cpt < 4; ++x_cpt) {
+          for (size_t x_opposite = 0; x_opposite < 2; ++x_opposite) {
+            double x = x_opposite ? -x_values[x_cpt] : x_values[x_cpt];
+            bool t;
+            bool expected_t = expected_results[(int) test][2 * alpha_cpt + alpha_complement][2 * x_cpt + x_opposite];
+            t = Gauss::hypothesisTest(x, alpha, test);
+            cerr << "p(X < " << x << ") = " << Gauss::CDF(x) << endl;
+
+            cout << "hypothesisTest(x = " << x << ","
+                 << " alpha = " << alpha << ","
+                 << " test = " << ((test == Gauss::LEFT_TAILED_HYPOTHESIS_TEST)
+                                   ? "LEFT_TAILED_HYPOTHESIS_TEST"
+                                   : ((test == Gauss::RIGHT_TAILED_HYPOTHESIS_TEST)
+                                      ? "RIGHT_TAILED_HYPOTHESIS_TEST"
+                                      : "TWO_TAILED_HYPOTHESIS_TEST")) << ") => "
+                 << (t ? "true" : "false")
+                 << " (expecting: " << (expected_t ? "true" : "false") << ")"
+                 << endl;
+            assert(t == expected_t);
+          }
+        }
+      }
+    }
+  }
+
   return 0;
 }
