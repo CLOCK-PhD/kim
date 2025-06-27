@@ -112,9 +112,8 @@ ReadAnalyzer::ReadAnalyzer(double alpha, double threshold, bool weak_mode):
 
 const ReadAnalyzer::VariantKmerRates &ReadAnalyzer::analyze() {
 
-  assert(!_completed);
-
   VariantKmerRates::iterator it = _variant_kmer_rates.begin();
+
   while (it != _variant_kmer_rates.end()) {
     VariantKmerRatesIteratorWrapper vr(it);
     // cerr << "looking for k-mers of variant '" << vr.node.variant << endl;
@@ -123,12 +122,35 @@ const ReadAnalyzer::VariantKmerRates &ReadAnalyzer::analyze() {
 
     if (vr.rate >= threshold) {
       VariantStatistics &stats = _variant_scores[vr.node];
-      // update mean and variance using the Welford's algorithm
-      double delta = vr.rate - stats.mean;
-      ++stats.count;
-      stats.mean += delta / stats.count;
-      stats.variance += (vr.rate - stats.mean) * delta;
-      ++it;
+      if (_completed) {
+        assert(stats.count > 0);
+        Gauss g(stats.mean, sqrt(stats.variance));
+        vr.zscore = g.getZscore(vr.rate);
+        // double p = 1 - g.getCDF(vr.rate);
+        // cerr << vr.node.variant << " rate " << vr.rate << " zscore " << vr.zscore << " => p = " << p << endl;
+        if (g.test(vr.rate, alpha)) {
+          // cerr << "Keeping variant '" << vr.node.variant << "'"
+          //      << " since rate is " << vr.rate
+          //      << " and zscore is " << vr.zscore
+          //      << " leading to accepted type I error " << p
+          //      << endl;
+          ++it;
+        } else {
+          // cerr << "Removing variant '" << vr.node.variant << "'"
+          //      << " since rate is " << vr.rate
+          //      << " and zscore is " << vr.zscore
+          //      << " leading to rejected type I error " << p
+          //      << endl;
+          it = _variant_kmer_rates.erase(it);
+        }
+      } else {
+        // update mean and variance using the Welford's algorithm
+        double delta = vr.rate - stats.mean;
+        ++stats.count;
+        stats.mean += delta / stats.count;
+        stats.variance += (vr.rate - stats.mean) * delta;
+        ++it;
+      }
     } else {
       // cerr << "Removing variant '" << vr.node.variant << " since rate is " << vr.rate << endl;
       it = _variant_kmer_rates.erase(it);
@@ -140,7 +162,6 @@ const ReadAnalyzer::VariantKmerRates &ReadAnalyzer::analyze() {
 }
 
 void ReadAnalyzer::reset() {
-  assert(!_completed);
   _variant_kmer_rates.clear();
 }
 
@@ -149,7 +170,6 @@ void ReadAnalyzer::reset() {
 #endif
 
 void ReadAnalyzer::add(const VariantNodesIndex::VariantNode &node, uint16_t __UNUSED__(kmer_rank), bool in_ref) {
-  assert(!_completed);
   // cerr << "Add kmer at pos " << kmer_rank
   //      << " of variant " << node.variant
   //      << (in_ref
@@ -157,14 +177,16 @@ void ReadAnalyzer::add(const VariantNodesIndex::VariantNode &node, uint16_t __UN
   //             ? " (keepd since in ref but weak mode"
   //             : " (skipped since in ref and in strict mode")
   //          : "") << endl;
-  _variant_kmer_rates[node] += _weak_mode || !in_ref;
-  // cerr << "Now mean (count) = " << _variant_kmer_rates[node] << endl;
+  if (!_completed || (_variant_scores.find(node) != _variant_scores.end())) {
+    _variant_kmer_rates[node].rate += _weak_mode || !in_ref;
+  }
+  // cerr << "Now mean (count) = " << _variant_kmer_rates[node].rate << endl;
 }
 
-const ReadAnalyzer::VariantScores &ReadAnalyzer::result() {
+void ReadAnalyzer::complete() {
   if (!_completed) {
     // cerr << "Ending computation of variant scores" << endl;
-    ReadAnalyzer::VariantScores::iterator it = _variant_scores.begin();
+    VariantScores::iterator it = _variant_scores.begin();
     while (it != _variant_scores.end()) {
       VariantScoreIteratorWrapper vs(it);
       double error = INFINITY;
@@ -195,6 +217,10 @@ const ReadAnalyzer::VariantScores &ReadAnalyzer::result() {
     }
     _completed = true;
   }
+}
+
+const ReadAnalyzer::VariantScores &ReadAnalyzer::result() {
+  complete();
   return _variant_scores;
 }
 

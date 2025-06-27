@@ -107,9 +107,32 @@ namespace kim {
   public:
 
     /**
-     * Type to store k-mer rates of variants in some read.
+     * Structure to handle variant k-mer rate and z-score.
      */
-    typedef std::map<VariantNodesIndex::VariantNode, double> VariantKmerRates;
+    struct VariantKmerRate {
+
+      /**
+       * The k-mer rate of some variant in the current read.
+       */
+      double rate;
+
+      /**
+       * The Z-score of this k-mer rate (if available).
+       */
+      double zscore;
+
+      /**
+       * Builds a default instance having rate 0 and Z-score 0.
+       */
+      VariantKmerRate(): rate(0), zscore(0) {
+      }
+    };
+
+    /**
+     * Type to store k-mer rates (and associated Z-scores) of variants
+     * in some read.
+     */
+    typedef std::map<VariantNodesIndex::VariantNode, VariantKmerRate> VariantKmerRates;
 
     /**
      * A simple wrapper over VariantKmerRates::iterator to rename its
@@ -128,12 +151,17 @@ namespace kim {
       double& rate;
 
       /**
+       * The zscore attribute.
+       */
+      double& zscore;
+
+      /**
        * Builds an iterator wrapper.
        *
        * \param it The iterator to wrap.
        */
       inline VariantKmerRatesIteratorWrapper(VariantKmerRates::iterator &it):
-        node(it->first), rate(it->second) {
+        node(it->first), rate(it->second.rate), zscore(it->second.zscore) {
       }
 
     };
@@ -155,12 +183,17 @@ namespace kim {
       const double& rate;
 
       /**
+       * The zscore attribute.
+       */
+      const double& zscore;
+
+      /**
        * Builds a const_iterator wrapper.
        *
        * \param it The const_iterator to wrap.
        */
       inline VariantKmerRatesConstIteratorWrapper(VariantKmerRates::const_iterator &it):
-        node(it->first), rate(it->second) {
+        node(it->first), rate(it->second.rate), zscore(it->second.zscore) {
       }
 
     };
@@ -186,6 +219,10 @@ namespace kim {
        */
       size_t count;
 
+      /**
+       * Builds an initial default variant statistics instance.
+       */
+      VariantStatistics(): mean(0), variance(0), count(0) {}
     };
 
     /**
@@ -349,8 +386,9 @@ namespace kim {
      * This method should be called each time a read has been fully
      * processed.
      *
-     * \remark This method can't be called once the analysis is
-     * completed.
+     * If the analysis isn't completed (no previous call to the
+     * complete() nor result() method), then the variant scores are
+     * updated.
      *
      * \return Returns the k-mer rates computed for all variants.
      */
@@ -361,9 +399,6 @@ namespace kim {
      *
      * This method should be called before starting a new read
      * analysis.
-     *
-     * \remark This method can't be called once the analysis is
-     * completed.
      */
     void reset();
 
@@ -397,11 +432,20 @@ namespace kim {
     }
 
     /**
+     * Completes the variant scores computation.
+     *
+     * This methods ends the statistics computations.
+     *
+     * This does nothing if the analysis is already completed.
+     */
+    void complete();
+
+    /**
      * Return the completed result.
      *
      * If the analysis wasn't already completed, then completes it
-     * (ends the statistics computations) prior to returning the
-     * analysis result.
+     * (invoke the complete() method) prior to returning the analysis
+     * result.
      *
      * \return Returns the result of the complete analysis.
      */
