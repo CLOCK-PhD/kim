@@ -22,7 +22,9 @@ Installation
 KIM requires:
 
 * A C++ compiler such as `g++` or `clang`.
-* The `zlib` development files (on Debian/Ubuntu it corresponds to the packages `zlib1g-dev`).
+* A lexical anlayser compiler such as `flex`.
+* A grammatical anlayser compiler such as `bison`.
+* The `zlib` development files (on Debian/Ubuntu it corresponds to the package `zlib1g-dev`).
 * `Doxygen`, `cloc` and `ohcount` (recommanded but not mandatory)
 
 
@@ -33,7 +35,7 @@ To download and install `KIM` into some user local directory (e.g.,
 
 First, it is needed to clone the `kim` repository
 ```sh
-git clone https://github.com/CLOCK-PhD/kim.git
+git clone --recurse-submodules https://github.com/CLOCK-PhD/kim.git
 ```
 
 Once cloned, go to the newly created directory and artificially
@@ -44,8 +46,7 @@ infinite loop or an error during the built.
 
 ```sh
 cd kim
-touch configure.ac aclocal.m4 Makefile.am */Makefile.am
-touch configure Makefile.in */Makefile.in
+./config/fix-timestamp.sh
 ```
 
 Now, run the `configure` script, build the program and install it.
