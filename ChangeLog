@@ -1,3 +1,9 @@
+2025-06-30  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/read_analyzer.cpp, src/read_analyzer.h:
+	Code refactoring: code optimization to reduce time used by read analysis.
+	
+	
 2025-06-27  DoccY <alban.mancheron@lirmm.fr>
 
 	* src/kim.cpp:

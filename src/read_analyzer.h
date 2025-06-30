@@ -316,6 +316,48 @@ namespace kim {
      */
     const double _quantile;
 
+    /**
+     * When some read is analyzed for the first time for variant
+     * identification, the global variant statistics are updated.
+     *
+     * \param vr The current variant rate iterator wrapper.
+     *
+     * \param stats The current variant global statistics to update.
+     *
+     * \return This always returns true.
+     */
+    bool _firstPassAnalyzis(const VariantKmerRatesIteratorWrapper &vr, VariantStatistics &stats);
+
+    /**
+     * If some read is analyzed for the second time for variant
+     * identification, then its rate is tested against the variant
+     * gaussian distribution for variant indentification under the
+     * null hypothesis that the observed rate in the analyzed read
+     * corresponds to the global variant rate mean (with a type I
+     * error of alpha).
+     *
+     * \param vr The current variant rate iterator wrapper.
+     *
+     * \param stats The current variant global statistics to test
+     * against.
+     *
+     * \return This returns true if the observed rate corresponds to
+     * the expected variant k-mer rate mean (i.e., if the variant
+     * appears in this read) and false otherwise.
+     */
+    bool _secondPassAnalyzis(const VariantKmerRatesIteratorWrapper &vr, VariantStatistics &stats);
+
+    /**
+     * The read analysis to perform.
+     *
+     * Instead of testing for each read if we have to perform a first
+     * pass analysis or a seco,d pass analysis, this member method
+     * pointer stores the address of the analysis method to use. While
+     * not completed, this is the _firstPassAnalyzis() method and
+     * while completed, this is the _secondPassAnalyzis() method.
+     */
+    bool (ReadAnalyzer::*_analyzis)(const VariantKmerRatesIteratorWrapper &vr, VariantStatistics &stats);
+
   public:
 
     /**

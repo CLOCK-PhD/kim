@@ -103,11 +103,33 @@ BEGIN_KIM_NAMESPACE
 ReadAnalyzer::ReadAnalyzer(double alpha, double threshold, bool weak_mode):
   _variant_kmer_rates(), _variant_scores(), _weak_mode(weak_mode), _completed(false),
   _quantile(Gauss::quantile(alpha)),
-  alpha(alpha), threshold(threshold) {
+  _analyzis(&ReadAnalyzer::_firstPassAnalyzis),
+  alpha(alpha), threshold(threshold)
+{
   assert(alpha >= 0);
   assert(alpha <= 1);
   assert(threshold >= 0);
   assert(threshold <= 1);
+}
+
+bool ReadAnalyzer::_firstPassAnalyzis(const ReadAnalyzer::VariantKmerRatesIteratorWrapper &vr, ReadAnalyzer::VariantStatistics &stats) {
+  assert(!_completed);
+  // update mean and variance using the Welford's algorithm
+  double delta = vr.rate - stats.mean;
+  ++stats.count;
+  stats.mean += delta / stats.count;
+  stats.variance += (vr.rate - stats.mean) * delta;
+  return true;
+}
+
+bool ReadAnalyzer::_secondPassAnalyzis(const ReadAnalyzer::VariantKmerRatesIteratorWrapper &vr, ReadAnalyzer::VariantStatistics &stats) {
+  assert(_completed);
+  assert(stats.count > 0);
+  Gauss g(stats.mean, sqrt(stats.variance));
+  vr.zscore = g.getZscore(vr.rate);
+  // double p = 1 - g.getCDF(vr.rate);
+  // cerr << vr.node.variant << " rate " << vr.rate << " zscore " << vr.zscore << " => p = " << p << endl;
+  return g.test(vr.rate, alpha);
 }
 
 const ReadAnalyzer::VariantKmerRates &ReadAnalyzer::analyze() {
@@ -121,35 +143,10 @@ const ReadAnalyzer::VariantKmerRates &ReadAnalyzer::analyze() {
     if (vr.rate > 1.0) vr.rate = 1.0;
 
     if (vr.rate >= threshold) {
-      VariantStatistics &stats = _variant_scores[vr.node];
-      if (_completed) {
-        assert(stats.count > 0);
-        Gauss g(stats.mean, sqrt(stats.variance));
-        vr.zscore = g.getZscore(vr.rate);
-        // double p = 1 - g.getCDF(vr.rate);
-        // cerr << vr.node.variant << " rate " << vr.rate << " zscore " << vr.zscore << " => p = " << p << endl;
-        if (g.test(vr.rate, alpha)) {
-          // cerr << "Keeping variant '" << vr.node.variant << "'"
-          //      << " since rate is " << vr.rate
-          //      << " and zscore is " << vr.zscore
-          //      << " leading to accepted type I error " << p
-          //      << endl;
-          ++it;
-        } else {
-          // cerr << "Removing variant '" << vr.node.variant << "'"
-          //      << " since rate is " << vr.rate
-          //      << " and zscore is " << vr.zscore
-          //      << " leading to rejected type I error " << p
-          //      << endl;
-          it = _variant_kmer_rates.erase(it);
-        }
-      } else {
-        // update mean and variance using the Welford's algorithm
-        double delta = vr.rate - stats.mean;
-        ++stats.count;
-        stats.mean += delta / stats.count;
-        stats.variance += (vr.rate - stats.mean) * delta;
+      if ((this->*_analyzis)(vr, _variant_scores[vr.node])) {
         ++it;
+      } else {
+        it = _variant_kmer_rates.erase(it);
       }
     } else {
       // cerr << "Removing variant '" << vr.node.variant << " since rate is " << vr.rate << endl;
@@ -215,6 +212,7 @@ void ReadAnalyzer::complete() {
         ++it;
       }
     }
+    _analyzis = &ReadAnalyzer::_secondPassAnalyzis;
     _completed = true;
   }
 }
