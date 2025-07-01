@@ -1,3 +1,9 @@
+2025-07-01  DoccY <alban.mancheron@lirmm.fr>
+
+	* src/read_analyzer.cpp, src/read_analyzer.h:
+	Use floats instead of double for variant k-mer rates to avoid precision errors in computations (we observed non nul variance when with count=1 which lead to erroneous detected variants).
+	
+	
 2025-06-30  DoccY <alban.mancheron@lirmm.fr>
 
 	* src/read_analyzer.cpp, src/read_analyzer.h:

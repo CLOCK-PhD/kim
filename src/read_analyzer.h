@@ -114,7 +114,7 @@ namespace kim {
       /**
        * The k-mer rate of some variant in the current read.
        */
-      double rate;
+      float rate;
 
       /**
        * The Z-score of this k-mer rate (if available).
@@ -148,7 +148,7 @@ namespace kim {
       /**
        * The rate attribute.
        */
-      double& rate;
+      float& rate;
 
       /**
        * The zscore attribute.
@@ -180,7 +180,7 @@ namespace kim {
       /**
        * The rate attribute.
        */
-      const double& rate;
+      const float& rate;
 
       /**
        * The zscore attribute.

@@ -115,7 +115,7 @@ ReadAnalyzer::ReadAnalyzer(double alpha, double threshold, bool weak_mode):
 bool ReadAnalyzer::_firstPassAnalyzis(const ReadAnalyzer::VariantKmerRatesIteratorWrapper &vr, ReadAnalyzer::VariantStatistics &stats) {
   assert(!_completed);
   // update mean and variance using the Welford's algorithm
-  double delta = vr.rate - stats.mean;
+  float delta = vr.rate - stats.mean;
   ++stats.count;
   stats.mean += delta / stats.count;
   stats.variance += (vr.rate - stats.mean) * delta;
